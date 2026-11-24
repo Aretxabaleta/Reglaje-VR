@@ -46,8 +46,9 @@ canvas{display:block}
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 {
-const MM = 0.001, R = 5, Hy0 = 1.23, SPX = 0, SPZ = -0.95, T0 = SPX - 0.203, Tz0 = SPZ + 0.152;
+const MM = 0.001, R = 5, Hy0 = 1.295, MESA_Y = 0.945, SPX = 0, SPZ = -0.95, T0 = SPX - 0.203, Tz0 = SPZ + 0.152;
 const LIM = { X: [-406, 0], Y: [-305, 0], Z: [-254, 0] };
 const INCS = [0.001, 0.01, 0.1, 1];
 const COL = { bg: '#151a1f', box: '#1f262d', line: '#33404b', ink: '#e8ecef', quiet: '#8fa0ad', cyan: '#2ec5e6', green: '#2fbf71', amber: '#f2a20c', red: '#e5484d' };
@@ -71,9 +72,9 @@ const scene = new THREE.Scene();
 const BG = new THREE.Color('#23292f');
 scene.background = BG.clone();
 const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.01, 30);
-camera.position.set(0.15, 1.6, 0.45);
+camera.position.set(0.05, 1.65, 0.9);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0.1, 1.15, -0.85); controls.update();
+controls.target.set(0.15, 1.2, -0.55); controls.update();
 scene.add(new THREE.HemisphereLight('#dfe8ef', '#3a3f44', 1.6));
 const sun = new THREE.DirectionalLight('#ffffff', 1.6); sun.position.set(1.5, 3, 1.5); scene.add(sun);
 const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.65, metalness: 0.1 });
@@ -84,21 +85,18 @@ const cyl = (r, h, mat, parent, y) => { const m = new THREE.Mesh(new THREE.Cylin
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), M('#3b4148')); floor.rotation.x = -Math.PI / 2; scene.add(floor);
 const grid = new THREE.GridHelper(8, 16, '#4a525a', '#434a51'); grid.position.y = 0.001; scene.add(grid);
 const white = M('#d9dde1'), dark = M('#2b3138'), blue = M('#5d6b78');
-box(1.4, 0.86, 0.95, white, 0, 0.43, -1.05);                 // bancada
-box(0.5, 1.35, 0.35, white, 0, 0.86 + 0.675, -1.475);        // columna
-box(1.42, 0.04, 0.97, dark, 0, 0.80, -1.05);                 // faja oscura
+const grey = [box(1.4, 0.92, 0.95, white, 0, 0.46, -1.05), box(0.5, 1.35, 0.35, white, 0, 0.92 + 0.675, -1.475)];
 const mesa = new THREE.Group(); scene.add(mesa);
-box(0.914, 0.04, 0.305, M('#6f7a84'), 0, 0, 0, mesa);
-for (const dz of [-0.09, 0, 0.09]) box(0.914, 0.002, 0.016, dark, 0, 0.0205, dz, mesa);
+grey.push(box(0.914, 0.04, 0.305, M('#6f7a84'), 0, 0, 0, mesa));
+for (const dz of [-0.09, 0, 0.09]) grey.push(box(0.914, 0.002, 0.016, dark, 0, 0.0205, dz, mesa));
 const cab = new THREE.Group(); scene.add(cab);
-box(0.3, 0.36, 0.4, white, 0, 0.13 + 0.18, -0.15, cab);      // cabezal
-cyl(0.045, 0.04, dark, cab, 0.13 + 0.0);                     // nariz husillo
+grey.push(box(0.3, 0.36, 0.4, white, 0, 0.13 + 0.18, -0.15, cab), cyl(0.045, 0.04, dark, cab, 0.13));
 const holder = cyl(0.02, 0.06, dark, cab, 0.1);
 const shank = cyl(0.005, 0.06, metal, cab, 0.04);
 const tipMat = new THREE.MeshStandardMaterial({ color: '#b8c2cc', roughness: 0.3, metalness: 0.6, emissive: '#000000' });
 const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.01, 24), tipMat); tip.position.y = 0.005; cab.add(tip);
 
-const lx = X => (X + 203) * MM, lz = Y => -(Y + 152) * MM, ly = Z => Hy0 + Z * MM - 0.88;
+const lx = X => (X + 203) * MM, lz = Y => -(Y + 152) * MM, ly = Z => Hy0 + Z * MM - MESA_Y;
 const viseGroup = new THREE.Group(); mesa.add(viseGroup);
 const POM = M('#f1efe8');
 function slab(x0, x1, y0, y1, z0, z1, mat) { const m = new THREE.Mesh(new THREE.BoxGeometry((x1 - x0) * MM, (z1 - z0) * MM, (y1 - y0) * MM), mat); m.position.set(lx((x0 + x1) / 2), ly((z0 + z1) / 2), lz((y0 + y1) / 2)); viseGroup.add(m); return m; }
@@ -123,6 +121,22 @@ function newPart() {
   cpBtn.hidden = true; afterMove(true);
 }
 
+/* ---------- modelo real (STEP) ---------- */
+const TBL = [-0.1445, 0.278 + SPZ - 0.0145], NOSE = 1.105;
+let model = null; const parts = { x: [], y: [], z: [] };
+new GLTFLoader().load('minimill.glb', gl => {
+  model = gl.scene; model.position.set(0, 0, SPZ - 0.0145);
+  model.traverse(o => {
+    if (!o.isMesh) return;
+    const n = o.name || '';
+    if (n.startsWith('mesa_x')) parts.x.push(o); else if (n.startsWith('carro_y')) parts.y.push(o); else if (n.startsWith('cabezal_z')) parts.z.push(o);
+    if (n.startsWith('puerta')) o.position.x = -0.42;
+    if (n.endsWith('MMH-01-20')) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.18; o.material.depthWrite = false; }
+    if (n.endsWith('MMH-01-05_1')) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.25; o.material.depthWrite = false; }
+  });
+  scene.add(model); for (const m of grey) m.visible = false;
+}, undefined, () => setMsg('No se pudo cargar el modelo 3D: se usa la versión simplificada', 'warn'));
+
 /* ---------- etiquetas ---------- */
 function label(text, w, h, px, bg, fg) {
   const c = document.createElement('canvas'); c.width = Math.round(w * px); c.height = Math.round(h * px);
@@ -132,30 +146,31 @@ function label(text, w, h, px, bg, fg) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t }));
 }
-const sticker = label('MENDIZABALA', 0.36, 0.07, 1000, '#1f5f8b', '#ffffff'); sticker.position.set(0, 0.62, -0.574); scene.add(sticker);
+const sticker = label('MENDIZABALA', 0.36, 0.07, 1000, '#1f5f8b', '#ffffff'); sticker.position.set(-0.61, 1.594, 0.6455 + SPZ - 0.0145); sticker.scale.setScalar(0.42); scene.add(sticker);
 
 /* ---------- lupa ---------- */
 const rt = new THREE.WebGLRenderTarget(512, 512); rt.texture.colorSpace = THREE.SRGBColorSpace;
 const lupaCam = new THREE.PerspectiveCamera(18, 1, 0.005, 3);
 const lupa = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.34), new THREE.MeshBasicMaterial({ map: rt.texture }));
-lupa.position.set(-0.74, 1.42, -0.68); lupa.rotation.y = 0.55; scene.add(lupa);
-const lupaFrame = box(0.36, 0.40, 0.01, dark, -0.743, 1.437, -0.686); lupaFrame.rotation.y = 0.55;
+lupa.position.set(-0.56, 1.42, -0.1); lupa.rotation.y = 0.45; scene.add(lupa);
+const ln = new THREE.Vector3(Math.sin(0.45), 0, Math.cos(0.45));
+const lupaFrame = box(0.36, 0.40, 0.01, dark, -0.56 - ln.x * 0.008, 1.437, -0.1 - ln.z * 0.008); lupaFrame.rotation.y = 0.45;
 const lupaLbl = label('LUPA · punta del buscabordes', 0.34, 0.035, 1500, '#2b3138', '#e8ecef');
-lupaLbl.position.set(-0.74, 1.612, -0.678); lupaLbl.rotation.y = 0.55; scene.add(lupaLbl);
+lupaLbl.position.set(-0.56 + ln.x * 0.001, 1.612, -0.1 + ln.z * 0.001); lupaLbl.rotation.y = 0.45; scene.add(lupaLbl);
 
 /* ---------- panel ---------- */
 const PW = 1024, PH = 1000;
 const pc = document.createElement('canvas'); pc.width = PW; pc.height = PH;
 const g = pc.getContext('2d');
 const ptex = new THREE.CanvasTexture(pc); ptex.colorSpace = THREE.SRGBColorSpace; ptex.anisotropy = 4;
-const panel = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6 * PH / PW), new THREE.MeshBasicMaterial({ map: ptex }));
-panel.position.set(0.78, 1.3, -0.72); panel.rotation.y = -0.6; scene.add(panel);
-const pn = new THREE.Vector3(Math.sin(-0.6), 0, Math.cos(-0.6));
-const pback = box(0.63, 0.62, 0.03, dark, 0.78 - pn.x * 0.02, 1.3, -0.72 - pn.z * 0.02); pback.rotation.y = -0.6;
+const panel = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 0.52 * PH / PW), new THREE.MeshBasicMaterial({ map: ptex }));
+panel.position.set(0.62, 1.42, -0.1); panel.rotation.y = -0.4; scene.add(panel);
+const pn = new THREE.Vector3(Math.sin(-0.4), 0, Math.cos(-0.4));
+const pback = box(0.55, 0.54, 0.03, dark, 0.62 - pn.x * 0.02, 1.42, -0.1 - pn.z * 0.02); pback.rotation.y = -0.4;
 const wheel = new THREE.Group();
 const wdisc = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.025, 40), dark); wdisc.rotation.x = Math.PI / 2; wheel.add(wdisc);
 const wmark = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.03, 0.03), M('#2ec5e6')); wmark.position.y = 0.04; wheel.add(wmark);
-const wpiv = new THREE.Group(); wpiv.add(wheel); wpiv.position.set(0.66, 0.92, -0.58); wpiv.rotation.y = -0.6; scene.add(wpiv);
+const wpiv = new THREE.Group(); wpiv.add(wheel); wpiv.position.set(0.5, 1.06, 0.0); wpiv.rotation.y = -0.4; scene.add(wpiv);
 const wlbl = label('VOLANTE', 0.12, 0.025, 1500, '#2b3138', '#e8ecef'); wlbl.position.set(0, 0.075, 0); wpiv.add(wlbl);
 
 const BTN = [];
@@ -398,7 +413,7 @@ function ctrlHit(c) { tmpM.identity().extractRotation(c.matrixWorld); ray.ray.or
 let lastStick = 0;
 
 /* ---------- vistas de escritorio ---------- */
-const views = { v1: [[0.15, 1.6, 0.45], [0.1, 1.15, -0.85]], v2: [[0.35, 1.38, -0.15], [0.78, 1.3, -0.72]], v3: [[-0.2, 1.25, -0.6], [0, 1.0, -0.95]] };
+const views = { v1: [[0.05, 1.65, 0.9], [0.15, 1.2, -0.55]], v2: [[0.3, 1.45, 0.35], [0.62, 1.42, -0.1]], v3: [[-0.16, 1.32, -0.5], [0, 1.08, -0.95]] };
 for (const id in views) document.getElementById(id).onclick = () => { camera.position.set(...views[id][0]); controls.target.set(...views[id][1]); controls.update(); document.getElementById('help').open = false; };
 const cpBtn = document.getElementById('cp');
 cpBtn.onclick = async () => { try { await navigator.clipboard.writeText(S.result.text); cpBtn.textContent = 'Copiado'; } catch (e) { cpBtn.textContent = 'No se pudo copiar'; } setTimeout(() => cpBtn.textContent = 'Copiar resumen', 1500); };
@@ -416,7 +431,8 @@ renderer.setAnimationLoop(t => {
     let h = null; for (const c of ctrls) { const k = btnAt(ctrlHit(c)); if (k) h = k; }
     if (h !== hover) { hover = h; dirty = true; }
   }
-  mesa.position.set(T0 - S.mx * MM, 0.88, Tz0 + S.my * MM);
+  mesa.position.set(T0 - S.mx * MM, MESA_Y, Tz0 + S.my * MM);
+  if (model) { const dx = T0 - S.mx * MM - TBL[0], dz = Tz0 + S.my * MM - TBL[1]; for (const m of parts.x) m.position.set(dx, 0, dz); for (const m of parts.y) m.position.z = dz; for (const m of parts.z) m.position.y = Hy0 + S.mz * MM + 0.13 - NOSE; }
   cab.position.set(SPX, Hy0 + S.mz * MM, SPZ);
   if (S.spindle && !S.crashed) S.ang += dt * 2 * Math.PI * 10;
   holder.rotation.y = shank.rotation.y = S.ang;
