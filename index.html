@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reglaje VR Mini Mill</title>
+<style>
+/* VOICE: taller de mecanizado, directo, sin adornos
+   IDEA: la propia máquina con su panel y una lupa sobre la punta del buscabordes
+   PICTURE: escena 3D a pantalla completa, greybox de realismo estilizado
+   COLOUR and TYPE: neutros de taller; verde ok, ámbar cerca, rojo choque, cian tocable; system-ui
+   LAYOUT: escena completa, barra superior fina, ayuda de teclas abajo a la izquierda */
+:root{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;height:100%;background:#1b1f23;color:#e8ecef;font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+canvas{display:block}
+#bar{position:fixed;top:0;left:0;right:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;background:rgba(18,22,26,.88);z-index:2}
+#bar b{margin-right:auto;font-size:16px}
+.h{min-height:40px;padding:0 14px;border-radius:8px;border:1px solid #3a4550;background:#26303a;color:#e8ecef;font:inherit;cursor:pointer}
+.h:focus-visible{outline:2px solid #2ec5e6;outline-offset:2px}
+#help{position:fixed;left:12px;bottom:12px;max-width:min(560px,calc(100vw - 24px));background:rgba(18,22,26,.88);padding:10px 14px;border-radius:8px;font-size:13px;z-index:2}
+#help summary{cursor:pointer;font-weight:600;font-size:14px}
+#help kbd{background:#2a333c;border-radius:4px;padding:0 5px;font:12px ui-monospace,monospace}
+#note{color:#9fb0bd;margin:6px 0 0}
+@media(max-width:600px){#help{font-size:12px}#bar b{width:100%}}
+</style>
+</head>
+<body>
+<div id="bar">
+  <b>Mendizabala · Reglaje Mini Mill (prototipo)</b>
+  <button class="h" id="v1">Vista general</button>
+  <button class="h" id="v2">Panel</button>
+  <button class="h" id="v3">Pieza</button>
+  <button class="h" id="cp" hidden>Copiar resumen</button>
+</div>
+<details id="help" open>
+  <summary>Cómo se juega</summary>
+  <p style="margin:6px 0">Coge el cero G54 en la esquina <b>izquierda-delantera</b> de la pieza (X−, Y−) y en Z en la cara de arriba. El buscabordes mide Ø10 (radio 5 mm). Pulsa los botones del panel 3D o usa el teclado:</p>
+  <div><kbd>X</kbd><kbd>Y</kbd><kbd>Z</kbd> eje · <kbd>I</kbd> incremento · <kbd>←</kbd><kbd>→</kbd> volante · <kbd>A</kbd>/<kbd>D</kbd> mantener = jog rápido · <kbd>S</kbd> husillo · <kbd>P</kbd> PART ZERO SET · números, <kbd>.</kbd> <kbd>-</kbd> y <kbd>Enter</kbd> suma al offset · <kbd>F</kbd> sustituye · <kbd>V</kbd> validar · <kbd>R</kbd> reset · <kbd>N</kbd> pieza nueva · <kbd>H</kbd> ayuda</div>
+  <p id="note">En las gafas: gatillo = pulsar botones del panel, joystick izquierda/derecha = volante. Si el botón VR no aparece aquí, ábrelo en el navegador de las gafas desde su propia dirección.</p>
+</details>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
+{
+const MM = 0.001, R = 5, Hy0 = 1.23, SPX = 0, SPZ = -0.95, T0 = SPX - 0.203, Tz0 = SPZ + 0.152;
+const LIM = { X: [-406, 0], Y: [-305, 0], Z: [-254, 0] };
+const INCS = [0.001, 0.01, 0.1, 1];
+const COL = { bg: '#151a1f', box: '#1f262d', line: '#33404b', ink: '#e8ecef', quiet: '#8fa0ad', cyan: '#2ec5e6', green: '#2fbf71', amber: '#f2a20c', red: '#e5484d' };
+const S = { mx: 0, my: 0, mz: 0, axis: 'X', inc: 0.01, spindle: false, crashed: false, g54: { X: 0, Y: 0, Z: 0 }, input: '',
+  msg: 'Enciende el husillo y acerca el buscabordes a la pieza', tone: 'info', help: true, t0: performance.now(), crashes: 0,
+  result: null, part: null, contact: 'none', pen: -Infinity, touched: { X: false, Y: false, Z: false }, cjog: 0, safe: [0, 0, 0], ang: 0 };
+let obst = [], dirty = true;
+const rnd = (a, b) => a + Math.random() * (b - a), r3 = v => Math.round(v * 1000) / 1000;
+const f3 = v => (v < 0 ? '-' : ' ') + Math.abs(v).toFixed(3);
+const fc = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(3).replace('.', ',');
+
+/* ---------- escena ---------- */
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local-floor');
+document.body.appendChild(renderer.domElement);
+document.body.appendChild(VRButton.createButton(renderer));
+const scene = new THREE.Scene();
+const BG = new THREE.Color('#23292f');
+scene.background = BG.clone();
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.01, 30);
+camera.position.set(0.15, 1.6, 0.45);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0.1, 1.15, -0.85); controls.update();
+scene.add(new THREE.HemisphereLight('#dfe8ef', '#3a3f44', 1.6));
+const sun = new THREE.DirectionalLight('#ffffff', 1.6); sun.position.set(1.5, 3, 1.5); scene.add(sun);
+const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.65, metalness: 0.1 });
+const metal = new THREE.MeshStandardMaterial({ color: '#aab4bd', roughness: 0.35, metalness: 0.7 });
+const box = (w, h, d, mat, x, y, z, parent) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); (parent || scene).add(m); return m; };
+const cyl = (r, h, mat, parent, y) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24), mat); m.position.y = y; parent.add(m); return m; };
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), M('#3b4148')); floor.rotation.x = -Math.PI / 2; scene.add(floor);
+const grid = new THREE.GridHelper(8, 16, '#4a525a', '#434a51'); grid.position.y = 0.001; scene.add(grid);
+const white = M('#d9dde1'), dark = M('#2b3138'), blue = M('#5d6b78');
+box(1.4, 0.86, 0.95, white, 0, 0.43, -1.05);                 // bancada
+box(0.5, 1.35, 0.35, white, 0, 0.86 + 0.675, -1.475);        // columna
+box(1.42, 0.04, 0.97, dark, 0, 0.80, -1.05);                 // faja oscura
+const mesa = new THREE.Group(); scene.add(mesa);
+box(0.914, 0.04, 0.305, M('#6f7a84'), 0, 0, 0, mesa);
+for (const dz of [-0.09, 0, 0.09]) box(0.914, 0.002, 0.016, dark, 0, 0.0205, dz, mesa);
+const cab = new THREE.Group(); scene.add(cab);
+box(0.3, 0.36, 0.4, white, 0, 0.13 + 0.18, -0.15, cab);      // cabezal
+cyl(0.045, 0.04, dark, cab, 0.13 + 0.0);                     // nariz husillo
+const holder = cyl(0.02, 0.06, dark, cab, 0.1);
+const shank = cyl(0.005, 0.06, metal, cab, 0.04);
+const tipMat = new THREE.MeshStandardMaterial({ color: '#b8c2cc', roughness: 0.3, metalness: 0.6, emissive: '#000000' });
+const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.01, 24), tipMat); tip.position.y = 0.005; cab.add(tip);
+
+const lx = X => (X + 203) * MM, lz = Y => -(Y + 152) * MM, ly = Z => Hy0 + Z * MM - 0.88;
+const viseGroup = new THREE.Group(); mesa.add(viseGroup);
+const POM = M('#f1efe8');
+function slab(x0, x1, y0, y1, z0, z1, mat) { const m = new THREE.Mesh(new THREE.BoxGeometry((x1 - x0) * MM, (z1 - z0) * MM, (y1 - y0) * MM), mat); m.position.set(lx((x0 + x1) / 2), ly((z0 + z1) / 2), lz((y0 + y1) / 2)); viseGroup.add(m); return m; }
+
+function newPart() {
+  viseGroup.clear();
+  const x0 = r3(rnd(-275, -245)), y0 = r3(rnd(-205, -195)), top = r3(rnd(-213, -207));
+  S.part = { x0, x1: x0 + 100, y0, y1: y0 + 100, top };
+  const vx0 = -283, vx1 = -123;
+  slab(vx0, vx1, y0 - 22, y0 + 122, -330, -270, blue);
+  slab(vx0, vx1, y0 - 22, y0, -270, -230, metal);
+  slab(vx0, vx1, y0 + 100, y0 + 122, -270, -230, metal);
+  slab(x0, x0 + 100, y0, y0 + 100, -270, top, POM);
+  obst = [
+    { n: 'pieza', x0, x1: x0 + 100, y0, y1: y0 + 100, top },
+    { n: 'mordaza delantera', x0: vx0, x1: vx1, y0: y0 - 22, y1: y0, top: -230 },
+    { n: 'mordaza trasera', x0: vx0, x1: vx1, y0: y0 + 100, y1: y0 + 122, top: -230 },
+    { n: 'base de la mordaza', x0: vx0, x1: vx1, y0: y0 - 22, y1: y0 + 122, top: -270 }];
+  Object.assign(S, { mx: 0, my: 0, mz: 0, crashed: false, g54: { X: 0, Y: 0, Z: 0 }, input: '', crashes: 0, result: null,
+    t0: performance.now(), touched: { X: false, Y: false, Z: false }, safe: [0, 0, 0], cjog: 0 });
+  setMsg('Pieza nueva. Enciende el husillo y acerca el buscabordes', 'info');
+  cpBtn.hidden = true; afterMove(true);
+}
+
+/* ---------- etiquetas ---------- */
+function label(text, w, h, px, bg, fg) {
+  const c = document.createElement('canvas'); c.width = Math.round(w * px); c.height = Math.round(h * px);
+  const x = c.getContext('2d'); x.fillStyle = bg; x.fillRect(0, 0, c.width, c.height);
+  x.fillStyle = fg; x.font = `600 ${Math.round(c.height * 0.5)}px system-ui`; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(text, c.width / 2, c.height / 2);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t }));
+}
+const sticker = label('MENDIZABALA', 0.36, 0.07, 1000, '#1f5f8b', '#ffffff'); sticker.position.set(0, 0.62, -0.574); scene.add(sticker);
+
+/* ---------- lupa ---------- */
+const rt = new THREE.WebGLRenderTarget(512, 512); rt.texture.colorSpace = THREE.SRGBColorSpace;
+const lupaCam = new THREE.PerspectiveCamera(18, 1, 0.005, 3);
+const lupa = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.34), new THREE.MeshBasicMaterial({ map: rt.texture }));
+lupa.position.set(-0.74, 1.42, -0.68); lupa.rotation.y = 0.55; scene.add(lupa);
+const lupaFrame = box(0.36, 0.40, 0.01, dark, -0.743, 1.437, -0.686); lupaFrame.rotation.y = 0.55;
+const lupaLbl = label('LUPA · punta del buscabordes', 0.34, 0.035, 1500, '#2b3138', '#e8ecef');
+lupaLbl.position.set(-0.74, 1.612, -0.678); lupaLbl.rotation.y = 0.55; scene.add(lupaLbl);
+
+/* ---------- panel ---------- */
+const PW = 1024, PH = 1000;
+const pc = document.createElement('canvas'); pc.width = PW; pc.height = PH;
+const g = pc.getContext('2d');
+const ptex = new THREE.CanvasTexture(pc); ptex.colorSpace = THREE.SRGBColorSpace; ptex.anisotropy = 4;
+const panel = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6 * PH / PW), new THREE.MeshBasicMaterial({ map: ptex }));
+panel.position.set(0.78, 1.3, -0.72); panel.rotation.y = -0.6; scene.add(panel);
+const pn = new THREE.Vector3(Math.sin(-0.6), 0, Math.cos(-0.6));
+const pback = box(0.63, 0.62, 0.03, dark, 0.78 - pn.x * 0.02, 1.3, -0.72 - pn.z * 0.02); pback.rotation.y = -0.6;
+const wheel = new THREE.Group();
+const wdisc = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.025, 40), dark); wdisc.rotation.x = Math.PI / 2; wheel.add(wdisc);
+const wmark = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.03, 0.03), M('#2ec5e6')); wmark.position.y = 0.04; wheel.add(wmark);
+const wpiv = new THREE.Group(); wpiv.add(wheel); wpiv.position.set(0.66, 0.92, -0.58); wpiv.rotation.y = -0.6; scene.add(wpiv);
+const wlbl = label('VOLANTE', 0.12, 0.025, 1500, '#2b3138', '#e8ecef'); wlbl.position.set(0, 0.075, 0); wpiv.add(wlbl);
+
+const BTN = [];
+const b = (id, x, y, w, h, label, act, o = {}) => BTN.push({ id, x, y, w, h, label, act, ...o });
+['X', 'Y', 'Z'].forEach((a, i) => b('ax' + a, 20 + i * 100, 600, 90, 76, a, () => { S.axis = a; setMsg('Eje ' + a + ' seleccionado', 'info'); }, { on: () => S.axis === a }));
+INCS.forEach((v, i) => b('inc' + i, 340 + i * 100, 600, i === 3 ? 80 : 90, 76, String(v).replace('.', ','), () => { S.inc = v; }, { on: () => S.inc === v }));
+b('jm', 20, 690, 165, 76, 'JOG −', () => {}, { hold: -1 });
+b('jp', 195, 690, 165, 76, 'JOG +', () => {}, { hold: 1 });
+b('vm', 380, 690, 165, 76, '◀ VOL', () => handle(-1));
+b('vp', 555, 690, 165, 76, 'VOL ▶', () => handle(1));
+b('sp', 20, 780, 220, 76, 'HUSILLO', () => toggleSpindle(), { on: () => S.spindle });
+b('pz', 250, 780, 470, 76, 'PART ZERO SET', () => partZero(), { tone: 'cyan' });
+b('val', 20, 870, 170, 90, 'VALIDAR', () => validate(), { tone: 'green' });
+b('new', 200, 870, 170, 90, 'NUEVA', () => newPart());
+b('rst', 380, 870, 160, 90, 'RESET', () => reset(), { tone: 'red' });
+b('hlp', 550, 870, 170, 90, 'AYUDA', () => { S.help = !S.help; }, { on: () => S.help });
+['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', '.'].forEach((k, i) => b('k' + i, 740 + (i % 3) * 92, 600 + Math.floor(i / 3) * 74, 80, 64, k, () => key(k)));
+b('kc', 740, 896, 80, 74, 'CAN', () => { S.input = ''; });
+b('kf', 832, 896, 80, 74, 'F1', () => applyInput(false));
+b('ke', 924, 896, 80, 74, 'ENTER', () => applyInput(true));
+
+if (!g.roundRect) g.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); };
+const rr = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
+const toneCol = { info: COL.quiet, ok: COL.green, warn: COL.amber, err: COL.red };
+let hover = null;
+function frameBox(x, y, w, h, t) {
+  rr(x, y, w, h, 10); g.fillStyle = COL.box; g.fill(); g.strokeStyle = COL.line; g.lineWidth = 2; g.stroke();
+  g.fillStyle = COL.quiet; g.font = '600 20px system-ui'; g.textAlign = 'left'; g.fillText(t, x + 16, y + 26);
+}
+function steps() {
+  const p = S.part, ok = (a, t) => Math.abs(S.g54[a] - t) <= 0.05;
+  return [['Enciende el husillo', S.spindle || S.touched.X], ['Toca el borde izquierdo (X−)', S.touched.X], ['Cero X y compensa el radio', ok('X', p.x0)],
+    ['Toca el borde delantero (Y−)', S.touched.Y], ['Cero Y y compensa el radio', ok('Y', p.y0)], ['Z: baja hasta pillar el papel', S.touched.Z],
+    ['Cero Z en la cara de arriba', ok('Z', p.top)], ['Pulsa VALIDAR', !!S.result]];
+}
+function draw() {
+  g.textBaseline = 'middle';
+  g.fillStyle = COL.bg; g.fillRect(0, 0, PW, PH);
+  g.fillStyle = '#0f1316'; g.fillRect(0, 0, PW, 56);
+  g.fillStyle = COL.ink; g.font = '600 26px system-ui'; g.textAlign = 'left'; g.fillText('MENDIZABALA · Reglaje Mini Mill', 20, 29);
+  g.textAlign = 'right'; g.fillStyle = S.help ? COL.cyan : COL.amber; g.font = '600 20px system-ui'; g.fillText(S.help ? 'Modo guiado' : 'Modo examen', PW - 20, 29);
+  frameBox(20, 70, 490, 236, 'POSICIÓN (mm)');
+  g.font = '600 18px system-ui'; g.fillStyle = COL.quiet; g.textAlign = 'right'; g.fillText('MÁQUINA', 300, 120); g.fillText('TRABAJO G54', 490, 120);
+  ['X', 'Y', 'Z'].forEach((a, i) => {
+    const y = 162 + i * 50, m = S['m' + a.toLowerCase()];
+    if (a === S.axis) { rr(30, y - 22, 470, 44, 8); g.fillStyle = 'rgba(46,197,230,.18)'; g.fill(); }
+    g.textAlign = 'left'; g.fillStyle = a === S.axis ? COL.cyan : COL.ink; g.font = '700 32px system-ui'; g.fillText(a, 44, y);
+    g.textAlign = 'right'; g.font = '600 32px ui-monospace,Menlo,monospace'; g.fillStyle = COL.ink; g.fillText(f3(m), 300, y); g.fillText(f3(r3(m - S.g54[a])), 490, y);
+  });
+  frameBox(520, 70, 484, 236, 'OFFSET G54 (mm)');
+  ['X', 'Y', 'Z'].forEach((a, i) => {
+    const y = 126 + i * 44;
+    g.textAlign = 'left'; g.font = '700 28px system-ui'; g.fillStyle = a === S.axis ? COL.cyan : COL.ink; g.fillText(a, 544, y);
+    g.textAlign = 'right'; g.font = '600 28px ui-monospace,Menlo,monospace'; g.fillStyle = COL.ink; g.fillText(f3(S.g54[a]), 980, y);
+  });
+  rr(536, 250, 452, 44, 8); g.fillStyle = '#12171b'; g.fill();
+  g.textAlign = 'left'; g.font = '600 24px ui-monospace,Menlo,monospace'; g.fillStyle = COL.ink; g.fillText('> ' + (S.input || '_'), 552, 272);
+  g.textAlign = 'right'; g.font = '16px system-ui'; g.fillStyle = COL.quiet; g.fillText('ENTER suma · F1 sustituye', 978, 272);
+  const sc = toneCol[S.tone]; rr(20, 316, 984, 52, 10); g.fillStyle = sc; g.globalAlpha = 0.2; g.fill(); g.globalAlpha = 1; g.strokeStyle = sc; g.lineWidth = 2; g.stroke();
+  g.textAlign = 'left'; g.fillStyle = COL.ink; g.font = '600 24px system-ui'; g.fillText(S.msg, 36, 343, 950);
+  frameBox(20, 378, 984, 208, S.result ? 'RESULTADO' : S.help ? 'PASOS' : 'MODO EXAMEN');
+  g.textAlign = 'left';
+  if (S.result) {
+    S.result.lines.forEach((l, i) => { g.font = (i === 0 ? '700 24px' : '20px') + ' system-ui'; g.fillStyle = l.c || COL.ink; g.fillText(l.t, 40, 426 + i * 32, 940); });
+  } else if (S.help) {
+    steps().forEach(([t, d], i) => {
+      const x = 40 + Math.floor(i / 4) * 490, y = 426 + (i % 4) * 36;
+      g.font = '700 22px system-ui'; g.fillStyle = d ? COL.green : COL.quiet; g.fillText(d ? '✓' : '○', x, y);
+      g.font = '21px system-ui'; g.fillStyle = d ? COL.ink : COL.quiet; g.fillText(t, x + 30, y, 440);
+    });
+    const near = nearest();
+    g.font = '600 20px system-ui'; g.fillStyle = COL.cyan;
+    g.fillText(near ? `Distancia a ${near.n}: ${near.d.toFixed(3).replace('.', ',')} mm` : 'Lejos de la pieza: usa JOG para acercarte rápido', 40, 568, 940);
+  } else {
+    g.font = '21px system-ui'; g.fillStyle = COL.ink;
+    ['Sin pistas: el cero va en la esquina izquierda-delantera, Z en la cara de arriba.', 'Buscabordes Ø10. Papel para Z: 0,05 mm (tolerancia 0,05 mm).', 'Cuando lo tengas, pulsa VALIDAR.']
+      .forEach((t, i) => g.fillText(t, 40, 430 + i * 40, 940));
+  }
+  for (const k of BTN) {
+    const on = k.on && k.on(), tc = k.tone ? COL[k.tone] : null, pressed = held === k;
+    rr(k.x, k.y, k.w, k.h, 10);
+    g.fillStyle = pressed ? 'rgba(46,197,230,.45)' : on ? 'rgba(46,197,230,.25)' : COL.box; g.fill();
+    g.lineWidth = hover === k ? 4 : 2; g.strokeStyle = hover === k || on ? COL.cyan : tc || COL.line; g.stroke();
+    g.fillStyle = COL.ink; g.textAlign = 'center'; g.font = `600 ${k.label.length > 6 ? 24 : 26}px system-ui`; g.fillText(k.label, k.x + k.w / 2, k.y + k.h / 2 + 1, k.w - 10);
+  }
+  ptex.needsUpdate = true;
+}
+
+/* ---------- lógica de máquina ---------- */
+function distRect(x, y, o) {
+  const dx = Math.max(o.x0 - x, 0, x - o.x1), dy = Math.max(o.y0 - y, 0, y - o.y1);
+  return dx === 0 && dy === 0 ? -Math.min(x - o.x0, o.x1 - x, y - o.y0, o.y1 - y) : Math.hypot(dx, dy);
+}
+function nearest() {
+  let best = null;
+  for (const o of obst) { if (S.mz >= o.top) continue; const d = distRect(S.mx, S.my, o) - R; if (d < 20 && (!best || d < best.d)) best = { n: o.n, d: Math.max(d, 0) }; }
+  const pt = obst[0];
+  if (!best && distRect(S.mx, S.my, pt) < R && S.mz - pt.top < 20) best = { n: 'cara de arriba', d: Math.max(S.mz - pt.top, 0) };
+  return best;
+}
+function probe() {
+  let pen = -Infinity, hit = null, paper = false;
+  for (const o of obst) {
+    const d = distRect(S.mx, S.my, o);
+    if (S.mz < o.top) { const p = R - d; if (p > pen) { pen = p; hit = o; } }
+    else if (o === obst[0] && d < R && S.mz - o.top <= 0.05) paper = true;
+  }
+  return { pen, hit, paper };
+}
+function afterMove(silent) {
+  const { pen, hit, paper } = probe(), prev = S.contact;
+  S.pen = pen;
+  if (pen > 1) {
+    S.crashed = true; S.crashes++; S.cjog = 0; S.contact = 'crash';
+    const why = hit && distRect(S.mx, S.my, hit) < 0 ? `has bajado en Z encima de la ${hit.n}` : `te has pasado más de 1 mm contra la ${hit.n}`;
+    setMsg('CHOQUE: ' + why + '. Pulsa RESET', 'err'); sfx('crash'); buzz(1, 400); flash = 1;
+  } else if (pen >= 0) {
+    S.contact = S.spindle ? 'touch' : 'touchoff';
+    if (hit === obst[0]) { if (S.mx < hit.x0 && S.my >= hit.y0 - R) S.touched.X = true; if (S.my < hit.y0 && S.mx >= hit.x0 - R) S.touched.Y = true; }
+    if (prev !== S.contact && !silent) {
+      if (S.spindle) { setMsg(`El buscabordes ha saltado contra la ${hit.n}`, 'ok'); sfx('kick'); buzz(0.6, 120); }
+      else setMsg('Estás tocando, pero sin girar el buscabordes no salta', 'warn');
+    }
+  } else if (paper) {
+    S.contact = 'paper'; S.touched.Z = true;
+    if (prev !== 'paper' && !silent) { setMsg('El papel se queda pillado: estás en la cara de arriba', 'ok'); sfx('kick'); buzz(0.4, 80); }
+  } else if (pen > -0.5) {
+    S.contact = 'near';
+    if (prev !== 'near' && !silent) { setMsg(S.spindle ? 'El buscabordes se está centrando: baja el incremento' : 'Muy cerca del borde', 'warn'); buzz(0.15, 40); }
+  } else { S.contact = 'none'; }
+  if (S.contact !== 'crash') S.safe = [S.mx, S.my, S.mz];
+  dirty = true;
+}
+function jog(a, d) {
+  if (S.crashed) { setMsg('Máquina parada por choque. Pulsa RESET', 'err'); return false; }
+  const k = 'm' + a.toLowerCase(), v = r3(Math.min(LIM[a][1], Math.max(LIM[a][0], S[k] + d)));
+  if (v === S[k]) { if (d) setMsg(`Final de carrera en ${a}`, 'warn'); return false; }
+  S[k] = v; afterMove(); return true;
+}
+function handle(dir) { if (jog(S.axis, dir * S.inc)) { wheel.rotation.z -= dir * Math.PI / 50; sfx('click'); buzz(0.05, 10); } }
+function toggleSpindle() { if (S.crashed) return; S.spindle = !S.spindle; setMsg(S.spindle ? 'Husillo a 600 rpm: el buscabordes gira descentrado' : 'Husillo parado', 'info'); hum(S.spindle); afterMove(true); }
+function partZero() {
+  if (S.crashed) return;
+  const a = S.axis; S.g54[a] = S['m' + a.toLowerCase()];
+  setMsg(`G54 ${a} = ${f3(S.g54[a]).trim()} (posición de máquina actual)`, 'info'); sfx('set');
+}
+function key(k) {
+  if (k === '-' && S.input) return; if (k === '.' && S.input.includes('.')) return;
+  if (S.input.length < 9) S.input += k;
+}
+function applyInput(add) {
+  const v = parseFloat(S.input);
+  if (!isFinite(v)) { setMsg('Escribe un valor antes de ENTER o F1', 'warn'); return; }
+  const a = S.axis; S.g54[a] = r3(add ? S.g54[a] + v : v); S.input = '';
+  setMsg(`G54 ${a} ${add ? 'suma ' + fc(v) : 'sustituido'}: ${f3(S.g54[a]).trim()}`, 'info'); sfx('set');
+}
+function reset() {
+  if (!S.crashed) { setMsg('Sin alarmas', 'info'); return; }
+  [S.mx, S.my, S.mz] = S.safe; S.crashed = false; S.contact = 'none'; afterMove(true);
+  setMsg('Alarma borrada. Retírate antes de volver a acercarte', 'warn');
+}
+function hint(a, e) {
+  if (Math.abs(e) <= 0.05) return '';
+  if (Math.abs(e + 5) < 0.1) return 'te falta sumar el radio: escribe 5 y ENTER';
+  if (Math.abs(e - 5) < 0.1) return 'has restado el radio en vez de sumarlo';
+  if (Math.abs(e + 10) < 0.15) return 'has restado el radio dos veces';
+  if (a !== 'Z' && Math.abs(e - 105) < 0.2) return 'has tocado el lado contrario: el cero es X−/Y−';
+  if (S.g54[a] === 0) return 'no has fijado este cero';
+  return 'toca de nuevo con incremento 0,01 o 0,001';
+}
+function validate() {
+  if (S.crashed) return;
+  const p = S.part, err = { X: r3(S.g54.X - p.x0), Y: r3(S.g54.Y - p.y0), Z: r3(S.g54.Z - p.top) };
+  const pass = ['X', 'Y', 'Z'].every(a => Math.abs(err[a]) <= 0.05);
+  const secs = Math.round((performance.now() - S.t0) / 1000), tm = `${Math.floor(secs / 60)} min ${secs % 60} s`;
+  const lines = [{ t: pass ? `Superado · ${tm} · ${S.crashes} choques` : `Revisa el reglaje · ${tm} · ${S.crashes} choques`, c: pass ? COL.green : COL.amber }];
+  for (const a of ['X', 'Y', 'Z']) { const ok = Math.abs(err[a]) <= 0.05, h = hint(a, err[a]); lines.push({ t: `${ok ? '✓' : '✗'} ${a}: error ${fc(err[a])} mm${h ? ' · ' + h : ''}`, c: ok ? COL.ink : COL.red }); }
+  lines.push({ t: 'Pulsa NUEVA para otra pieza, o corrige y vuelve a validar', c: COL.quiet });
+  S.result = { pass, lines, text: [`Reglaje Mini Mill · ${new Date().toLocaleString('es-ES')}`, ...lines.map(l => l.t)].join('\n') };
+  setMsg(pass ? 'Cero correcto en los tres ejes' : 'Hay algún cero fuera de tolerancia (0,05 mm)', pass ? 'ok' : 'warn');
+  sfx(pass ? 'set' : 'kick'); cpBtn.hidden = false;
+}
+function setMsg(t, tone) { S.msg = t; S.tone = tone; dirty = true; }
+
+/* ---------- sonido y vibración ---------- */
+let ac = null, humNode = null;
+function audio() { try { ac = ac || new AudioContext(); if (ac.state === 'suspended') ac.resume(); } catch (e) { ac = null; } return ac; }
+function tone(f, d, type, vol) { const a = audio(); if (!a) return; const o = a.createOscillator(), gn = a.createGain(); o.type = type; o.frequency.value = f; gn.gain.setValueAtTime(vol, a.currentTime); gn.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + d); o.connect(gn).connect(a.destination); o.start(); o.stop(a.currentTime + d); }
+function sfx(k) { if (k === 'click') tone(1800, 0.02, 'square', 0.03); if (k === 'kick') tone(880, 0.12, 'sine', 0.15); if (k === 'crash') tone(110, 0.5, 'sawtooth', 0.25); if (k === 'set') { tone(660, 0.08, 'sine', 0.12); setTimeout(() => tone(990, 0.1, 'sine', 0.12), 90); } }
+function hum(on) { const a = audio(); if (!a) return; if (on && !humNode) { const o = a.createOscillator(), gn = a.createGain(); o.type = 'triangle'; o.frequency.value = 80; gn.gain.value = 0.02; o.connect(gn).connect(a.destination); o.start(); humNode = { o, gn }; } else if (!on && humNode) { humNode.o.stop(); humNode = null; } }
+function buzz(v, ms) {
+  const s = renderer.xr.getSession(); if (!s) return;
+  for (const src of s.inputSources) { const gp = src.gamepad; try { if (gp && gp.hapticActuators && gp.hapticActuators[0]) gp.hapticActuators[0].pulse(v, ms); else if (gp && gp.vibrationActuator) gp.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: v, weakMagnitude: v }); } catch (e) {} }
+}
+
+/* ---------- entrada ---------- */
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(), tmpM = new THREE.Matrix4();
+let held = null;
+function btnAt(hitp) { if (!hitp || !hitp.uv) return null; const x = hitp.uv.x * PW, y = (1 - hitp.uv.y) * PH; return BTN.find(k => x >= k.x && x <= k.x + k.w && y >= k.y && y <= k.y + k.h) || null; }
+function press(k) { if (!k) return; audio(); held = k; if (k.hold) { if (S.crashed) setMsg('Máquina parada por choque. Pulsa RESET', 'err'); else S.cjog = k.hold; } else { if (k.id !== 'vm' && k.id !== 'vp') sfx('click'); k.act(); } dirty = true; }
+function release() { if (held && held.hold) S.cjog = 0; held = null; dirty = true; }
+function mouseHit(e) { ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObject(panel)[0]; }
+renderer.domElement.addEventListener('pointerdown', e => { const k = btnAt(mouseHit(e)); if (k) { controls.enabled = false; press(k); } });
+addEventListener('pointerup', () => { release(); controls.enabled = true; });
+renderer.domElement.addEventListener('pointermove', e => { const k = btnAt(mouseHit(e)); if (k !== hover) { hover = k; dirty = true; } renderer.domElement.style.cursor = k ? 'pointer' : ''; });
+const keysDown = {};
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('button,summary')) { if (e.key === 'Enter' || e.key === ' ') return; }
+  const k = e.key; audio();
+  if (/^[xyz]$/i.test(k) && !e.ctrlKey && !e.metaKey) { S.axis = k.toUpperCase(); setMsg('Eje ' + S.axis + ' seleccionado', 'info'); }
+  else if (k === 'i' || k === 'I') { S.inc = INCS[(INCS.indexOf(S.inc) + 1) % 4]; }
+  else if (k === 'ArrowRight' || k === 'ArrowLeft') { e.preventDefault(); const dir = k === 'ArrowRight' ? 1 : -1; for (let n = e.shiftKey ? 10 : 1; n--;) handle(dir); }
+  else if ((k === 'a' || k === 'd') && !keysDown[k]) { keysDown[k] = 1; if (!S.crashed) S.cjog = k === 'a' ? -1 : 1; else setMsg('Máquina parada por choque. Pulsa RESET', 'err'); }
+  else if (k === 's' || k === 'S') toggleSpindle();
+  else if (k === 'p' || k === 'P') partZero();
+  else if (/^[0-9.\-]$/.test(k)) key(k);
+  else if (k === 'Enter') applyInput(true);
+  else if (k === 'f' || k === 'F') applyInput(false);
+  else if (k === 'Backspace' || k === 'Escape') S.input = S.input.slice(0, -1);
+  else if (k === 'v' || k === 'V') validate();
+  else if (k === 'r' || k === 'R') reset();
+  else if (k === 'n' || k === 'N') newPart();
+  else if (k === 'h' || k === 'H') S.help = !S.help;
+  else return;
+  dirty = true;
+});
+addEventListener('keyup', e => { if (e.key === 'a' || e.key === 'd') { keysDown[e.key] = 0; S.cjog = 0; } });
+
+const ctrls = [0, 1].map(i => {
+  const c = renderer.xr.getController(i);
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]), new THREE.LineBasicMaterial({ color: '#2ec5e6' }));
+  line.scale.z = 2; c.add(line);
+  c.add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.09), dark));
+  c.userData.line = line;
+  c.addEventListener('selectstart', () => press(btnAt(ctrlHit(c))));
+  c.addEventListener('selectend', release);
+  scene.add(c); return c;
+});
+function ctrlHit(c) { tmpM.identity().extractRotation(c.matrixWorld); ray.ray.origin.setFromMatrixPosition(c.matrixWorld); ray.ray.direction.set(0, 0, -1).applyMatrix4(tmpM); return ray.intersectObject(panel)[0]; }
+let lastStick = 0;
+
+/* ---------- vistas de escritorio ---------- */
+const views = { v1: [[0.15, 1.6, 0.45], [0.1, 1.15, -0.85]], v2: [[0.35, 1.38, -0.15], [0.78, 1.3, -0.72]], v3: [[-0.2, 1.25, -0.6], [0, 1.0, -0.95]] };
+for (const id in views) document.getElementById(id).onclick = () => { camera.position.set(...views[id][0]); controls.target.set(...views[id][1]); controls.update(); document.getElementById('help').open = false; };
+const cpBtn = document.getElementById('cp');
+cpBtn.onclick = async () => { try { await navigator.clipboard.writeText(S.result.text); cpBtn.textContent = 'Copiado'; } catch (e) { cpBtn.textContent = 'No se pudo copiar'; } setTimeout(() => cpBtn.textContent = 'Copiar resumen', 1500); };
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+/* ---------- bucle ---------- */
+let last = performance.now(), lastDraw = 0, flash = 0;
+const tipW = new THREE.Vector3();
+renderer.setAnimationLoop(t => {
+  const dt = Math.min((t - last) / 1000, 0.05); last = t;
+  if (S.cjog && !S.crashed) { const step = 50 * dt, n = Math.ceil(step / 0.5); for (let i = 0; i < n && S.cjog; i++) if (!jog(S.axis, S.cjog * step / n)) { S.cjog = 0; break; } }
+  const sess = renderer.xr.getSession();
+  if (sess) {
+    for (const src of sess.inputSources) { const ax = src.gamepad && src.gamepad.axes; const x = ax ? (ax.length > 2 ? ax[2] : ax[0]) : 0; if (Math.abs(x) > 0.6 && t - lastStick > 110) { lastStick = t; handle(Math.sign(x)); } }
+    let h = null; for (const c of ctrls) { const k = btnAt(ctrlHit(c)); if (k) h = k; }
+    if (h !== hover) { hover = h; dirty = true; }
+  }
+  mesa.position.set(T0 - S.mx * MM, 0.88, Tz0 + S.my * MM);
+  cab.position.set(SPX, Hy0 + S.mz * MM, SPZ);
+  if (S.spindle && !S.crashed) S.ang += dt * 2 * Math.PI * 10;
+  holder.rotation.y = shank.rotation.y = S.ang;
+  let off = 0;
+  if (S.spindle && !S.crashed) off = S.contact === 'touch' ? 1.5 : S.contact === 'near' ? 0.5 * (-S.pen / 0.5) : 0.5;
+  tip.position.set(off * MM * Math.cos(S.ang), 0.005, off * MM * Math.sin(S.ang));
+  const c = S.contact === 'crash' ? COL.red : S.contact === 'touch' || S.contact === 'paper' ? COL.green : S.contact === 'near' ? COL.amber : '#b8c2cc';
+  tipMat.color.set(c); tipMat.emissive.set(c === '#b8c2cc' ? '#000000' : c); tipMat.emissiveIntensity = 0.35;
+  if (flash > 0) { flash = Math.max(0, flash - dt * 2); scene.background.copy(BG).lerp(new THREE.Color(COL.red), flash * 0.6); }
+  if (dirty && t - lastDraw > 66) { draw(); dirty = false; lastDraw = t; }
+  tip.getWorldPosition(tipW);
+  lupaCam.position.set(tipW.x - 0.06, tipW.y + 0.035, tipW.z + 0.14); lupaCam.lookAt(tipW.x, tipW.y - 0.004, tipW.z);
+  const xr = renderer.xr.enabled; renderer.xr.enabled = false; lupa.visible = false;
+  renderer.setRenderTarget(rt); renderer.render(scene, lupaCam); renderer.setRenderTarget(null);
+  renderer.xr.enabled = xr; lupa.visible = true;
+  renderer.render(scene, camera);
+});
+newPart();
+draw();
+}
+</script>
+</body>
+</html>
