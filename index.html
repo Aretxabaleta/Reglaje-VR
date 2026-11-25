@@ -39,7 +39,8 @@ canvas{display:block}
 <details id="help" open>
   <summary>Cómo se juega</summary>
   <p style="margin:6px 0"><b>1.</b> Antes de nada, en la mesa auxiliar: apoya el bulón encima del taco de Z y comprueba que marca 0. <b>2.</b> POWER UP con la puerta cerrada. <b>3.</b> En OFFSET → Herrm pon H10 del palpador a 0 (0 y F1): es la herramienta patrón. Con el palpador toca la mesa con el reloj a 0 y haz PART ZERO SET en <b>G59 Z</b>. <b>4.</b> Pon el taco en la mesa de la máquina y activa G59 en MDI (<code>G59;</code> INSERT, CYCLE START). <b>5.</b> Resto de herramientas (el palpador no se mide): <code>T1M06;</code>, sobre el taco hasta 0, TOOL OFFSET MEASURE en OFFSET → Herrm y <b>−50 ENTER</b>. <b>6.</b> Con el palpador coge G54 X−, Y− y Z en la pieza y activa G54 en MDI. VALIDAR.</p>
-  <div>Teclado: <kbd>X</kbd><kbd>Y</kbd><kbd>Z</kbd> eje · <kbd>I</kbd> incremento · <kbd>←</kbd><kbd>→</kbd> volante · <kbd>A</kbd>/<kbd>D</kbd> mantener = jog · <kbd>↑</kbd><kbd>↓</kbd><kbd>[</kbd><kbd>]</kbd> cursor · <kbd>P</kbd> PART ZERO SET · <kbd>M</kbd> TOOL OFFSET MEASURE · <kbd>Enter</kbd> agregar · <kbd>F</kbd> F1 · <kbd>R</kbd> RESET · <kbd>Shift</kbd>+<kbd>Enter</kbd> CYCLE START. En la pantalla MDI el teclado escribe y <kbd>Enter</kbd> = INSERT. Arrastra el volante con el ratón para girarlo. Pulsa sobre el taco, el bulón o la puerta para cogerlos o moverlos.</div>
+  <p style="margin:6px 0"><b>Programas:</b> LIST PROGRAM, elige con el cursor y SELECT PROGRAM: cambia el bruto y las herramientas del programa. Haz el reglaje (si el cero está en el centro: toca X−, POSITION, <code>X</code> ORIGIN, toca X+ y ve a la mitad; o PART ZERO SET en el canto y suma el decalaje con ENTER). Luego puerta cerrada, MEMORY y CYCLE START: la máquina mecaniza con tus G54 y H. FEED HOLD para, RESET cancela, BLOQUE A BLOQUE línea a línea, FEEDRATE ±10 % y RAPID 5–100 %.</p>
+  <div>Teclado: <kbd>L</kbd> lista de programas · <kbd>O</kbd> ORIGIN · <kbd>X</kbd><kbd>Y</kbd><kbd>Z</kbd> eje · <kbd>I</kbd> incremento · <kbd>←</kbd><kbd>→</kbd> volante · <kbd>A</kbd>/<kbd>D</kbd> mantener = jog · <kbd>↑</kbd><kbd>↓</kbd><kbd>[</kbd><kbd>]</kbd> cursor · <kbd>P</kbd> PART ZERO SET · <kbd>M</kbd> TOOL OFFSET MEASURE · <kbd>Enter</kbd> agregar · <kbd>F</kbd> F1 · <kbd>R</kbd> RESET · <kbd>Shift</kbd>+<kbd>Enter</kbd> CYCLE START. En la pantalla MDI el teclado escribe y <kbd>Enter</kbd> = INSERT. Arrastra el volante con el ratón para girarlo. Pulsa sobre el taco, el bulón o la puerta para cogerlos o moverlos.</div>
   <p class="note">En las gafas: gatillo = pulsar o coger; mantén el gatillo sobre el volante y gira la muñeca; joystick izquierda/derecha = volante.</p>
   <p class="note">Simulador educativo de CIFP Mendizabala LHII, sin ánimo de lucro y sin relación con Haas Automation, Inc. Modelo 3D de la máquina: «Haas Mini Mill», de la biblioteca de GrabCAD (<a href="https://grabcad.com/library/haas-mini-mill-1">grabcad.com/library/haas-mini-mill-1</a>), usado con crédito a su autor y con los logotipos retirados. Foto del teclado: taller de Mendizabala.</p>
 </details>
@@ -62,8 +63,13 @@ const INCS = [0.001, 0.01, 0.1, 1];
 const JOGV = { 0.001: 1, 0.01: 4, 0.1: 15, 1: 40 };
 const ROWS = ['G52', 'G54', 'G55', 'G56', 'G57', 'G58', 'G59'], COLS = ['X', 'Y', 'Z'];
 const OFS0 = { G52: [0, 0, 0], G54: [-220.894, -154.995, -247.167], G55: [-195.91, -91.542, -62.731], G56: [-295.635, -104.1, -30.29], G57: [-194.565, -165.891, -30.29], G58: [0, 0, 0], G59: [0, -163.3, -117.173] };
-const ORDER = [1, 2, 3, 10];
-const TDEF = { 1: { n: 'Planeadora Ø50', type: 'face', r: 25 }, 2: { n: 'Fresa Ø10', type: 'end', r: 5 }, 3: { n: 'Broca Ø8,5', type: 'drill', r: 4.25 }, 10: { n: 'Palpador 3D (patrón)', type: 'probe', r: BALL, L: 118.318 } };
+let ORDER = [1, 2, 3, 10];
+const TDEF0 = { 1: { n: 'Planeadora Ø50', type: 'face', r: 25 }, 2: { n: 'Fresa Ø10', type: 'end', r: 5 }, 3: { n: 'Broca Ø8,5', type: 'drill', r: 4.25 } };
+const TDEF = { ...JSON.parse(JSON.stringify(TDEF0)), 10: { n: 'Palpador 3D (patrón)', type: 'probe', r: BALL, L: 118.318 } };
+function setTools(T) { for (const k in TDEF) if (+k !== 10) delete TDEF[k]; for (const k in T) TDEF[k] = { ...T[k] }; ORDER = [...Object.keys(T).map(Number).sort((a, b) => a - b), 10]; }
+const STOCK0 = { x0: 0, y0: 0, sx: 100, sy: 100, sz: 60, zTop: 0 };
+let PROGS = [], PROG = null;
+fetch('programas.json').then(r => r.json()).then(j => { PROGS = j; dirty = true; }).catch(() => {});
 const COL = { ink: '#e8ecef', quiet: '#8fa0ad', cyan: '#2ec5e6', green: '#2fbf71', amber: '#f2a20c', red: '#e5484d' };
 const rnd = (a, b) => a + Math.random() * (b - a), r3 = v => Math.round(v * 1000) / 1000;
 const f3 = v => (Object.is(r3(v), -0) ? 0 : r3(v)).toFixed(3);
@@ -170,15 +176,15 @@ function makeTool(n) {
     const dial = new THREE.Mesh(new THREE.CircleGeometry(0.021, 48), new THREE.MeshBasicMaterial({ map: D1.t })); dial.position.set(0, 0.066, 0.0202); g.add(dial);
     cyl(0.011, 0.008, steel, g, 0.090); cyl(0.019, 0.012, steel, g, 0.100); cyl(0.015, 0.006, dark, g, 0.1155);
   } else if (d.type === 'face') {
-    cyl(0.025, 0.04, dark, g, 0.02, 32);
-    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2, k = box(0.008, 0.008, 0.004, M('#c9a64a', 0.4, 0.6), Math.cos(a) * 0.022, 0.004, Math.sin(a) * 0.022, g); k.rotation.y = -a; }
+    const R = d.r * MM; cyl(R, 0.04, dark, g, 0.02, 32);
+    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2, k = box(0.008, 0.008, 0.004, M('#c9a64a', 0.4, 0.6), Math.cos(a) * (R - 0.003), 0.004, Math.sin(a) * (R - 0.003), g); k.rotation.y = -a; }
     cyl(0.016, Lm - 0.07, steel, g, 0.04 + (Lm - 0.07) / 2);
     cyl(0.03, 0.012, steel, g, Lm - 0.024); cyl(0.02, 0.012, dark, g, Lm - 0.006);
   } else if (d.type === 'end') {
-    cyl(0.005, 0.03, carb, g, 0.015, 16); holder(g, Lm, 0.03);
+    cyl(d.r * MM, 0.03, carb, g, 0.015, 16); holder(g, Lm, 0.03);
   } else {
-    const tc = new THREE.Mesh(new THREE.ConeGeometry(0.00425, 0.0025, 16), carb); tc.rotation.x = Math.PI; tc.position.y = 0.00125; g.add(tc);
-    cyl(0.00425, 0.07, carb, g, 0.0375, 16); holder(g, Lm, 0.0725);
+    const R = d.r * MM, tc = new THREE.Mesh(new THREE.ConeGeometry(R, R * 0.6, 16), carb); tc.rotation.x = Math.PI; tc.position.y = R * 0.3; g.add(tc);
+    cyl(R, 0.07, carb, g, R * 0.6 + 0.035, 16); holder(g, Lm, R * 0.6 + 0.07);
   }
   return g;
 }
@@ -191,7 +197,7 @@ function buildTools() {
   ORDER.forEach((n, i) => {
     const sp = makeTool(n), pk = makeTool(n);
     cab.add(sp);
-    const a = -0.9 + i * 0.45; pk.position.set(CAR.x + Math.cos(a) * 0.17, CAR.y - L(n) * MM, CAR.z + Math.sin(a) * 0.17); pocketGroup.add(pk);
+    const a = -0.9 + i * Math.min(0.45, 3.2 / Math.max(1, ORDER.length - 1)); pk.position.set(CAR.x + Math.cos(a) * 0.17, CAR.y - L(n) * MM, CAR.z + Math.sin(a) * 0.17); pocketGroup.add(pk);
     TOOLS[n] = { spindle: sp, pocket: pk };
   });
   showTool();
@@ -227,36 +233,40 @@ const mkBenchTaco = marker(0.03, 'benchTaco'), mkBenchBulon = marker(0.02, 'benc
 
 function newPart() {
   viseGroup.clear();
-  const x0 = r3(rnd(-270, -245)), y0 = r3(rnd(-205, -195)), top = r3(rnd(-212, -206)), J = r3(top - rnd(17, 23)), base = -290, pb = J - 25;
-  const jy0 = y0 - 12.5, jy1 = y0 + 112.5;
-  S.part = { x0, x1: x0 + 100, y0, y1: y0 + 100, top };
-  slab(x0 - 75, x0 + 265, jy0 - 10, jy1 + 10, TABLE_Z, base, viseM);
+  const st = S.stock = PROG ? PROG.stock : STOCK0, sx = st.sx, sy = st.sy;
+  const clr = PROG ? Math.max(20, Math.min(st.sz - 8, -PROG.minZ + 4)) : rnd(17, 23);
+  const x0 = r3(rnd(-270, -245)), y0 = r3(rnd(-205, -195)), top = r3(rnd(-212, -206)), J = r3(top - clr), base = -290, pb = top - st.sz;
+  const jy0 = y0 + sy / 2 - 62.5, jy1 = y0 + sy / 2 + 62.5, xe = x0 + sx;
+  S.part = { x0, x1: xe, y0, y1: y0 + sy, top };
+  slab(x0 - 75, xe + 165, jy0 - 10, jy1 + 10, TABLE_Z, base, viseM);
   slab(x0 - 45, x0, jy0, jy1, base, J, jawM);
-  slab(x0 + 100, x0 + 150, jy0, jy1, base, J, jawM);
-  slab(x0 + 150, x0 + 235, jy0 + 15, jy1 - 15, base, J - 18, viseM);
-  slab(x0 + 235, x0 + 265, y0 + 38, y0 + 62, base + 8, base + 32, steel);
-  for (const yy of [y0 + 8, y0 + 86]) slab(x0 - 30, x0 + 130, yy, yy + 6, base, pb, steel);
-  slab(x0, x0 + 100, y0, y0 + 100, pb, top, POM);
+  slab(xe, xe + 50, jy0, jy1, base, J, jawM);
+  slab(xe + 50, xe + 135, jy0 + 15, jy1 - 15, base, J - 18, viseM);
+  slab(xe + 135, xe + 165, y0 + sy / 2 - 12, y0 + sy / 2 + 12, base + 8, base + 32, steel);
+  for (const yy of [y0 + 8, y0 + sy - 14]) slab(x0 - 30, xe + 30, yy, yy + 6, base, pb, steel);
+  buildStock();
   obst = [
-    { n: 'pieza', x0, x1: x0 + 100, y0, y1: y0 + 100, top },
+    { n: 'pieza', x0, x1: xe, y0, y1: y0 + sy, top },
     { n: 'mordaza fija', x0: x0 - 45, x1: x0, y0: jy0, y1: jy1, top: J },
-    { n: 'mordaza móvil', x0: x0 + 100, x1: x0 + 150, y0: jy0, y1: jy1, top: J },
-    { n: 'carro de la mordaza', x0: x0 + 150, x1: x0 + 235, y0: jy0 + 15, y1: jy1 - 15, top: J - 18 },
-    { n: 'base de la mordaza', x0: x0 - 75, x1: x0 + 265, y0: jy0 - 10, y1: jy1 + 10, top: base },
+    { n: 'mordaza móvil', x0: xe, x1: xe + 50, y0: jy0, y1: jy1, top: J },
+    { n: 'carro de la mordaza', x0: xe + 50, x1: xe + 135, y0: jy0 + 15, y1: jy1 - 15, top: J - 18 },
+    { n: 'base de la mordaza', x0: x0 - 75, x1: xe + 165, y0: jy0 - 10, y1: jy1 + 10, top: base },
     { n: 'mesa', x0: -660, x1: 254, y0: -305, y1: 0.5, top: TABLE_Z }];
-  TDEF[1].L = r3(rnd(92, 98)); TDEF[2].L = r3(rnd(100, 106)); TDEF[3].L = r3(rnd(125, 132));
+  for (const n of ORDER) if (n !== 10) { const t = TDEF[n].type; TDEF[n].L = r3(t === 'face' ? rnd(92, 98) : t === 'end' ? rnd(100, 112) : rnd(120, 135)); }
   S.ofs = {}; for (const r of ROWS) S.ofs[r] = OFS0[r].slice();
-  S.H = { 1: 0, 2: 0, 3: 0, 10: 118.318 }; S.Hinfo = {};
+  S.H = { 10: 118.318 }; for (const n of ORDER) if (n !== 10) S.H[n] = 0; S.Hinfo = {};
+  S.run = null; S.ranOk = false; S.opz = { X: 0, Y: 0, Z: 0 };
   S.bezel = 0;
   Object.assign(S, { tool: 10, wo: 'G54', woSet: {}, everTool: {}, spindle: false, input: '', crashes: 0, result: null, t0: performance.now(), mdi: [],
     touched: { X: false, Y: false, Z: false }, setRead: {}, cjog: 0, jogHold: null, cur: { r: 2, c: 0 }, screen: 'ofs', tab: 'Trab',
     tacoAt: 'bench', bulonAt: 'bench', hold: null, calibrated: false, contact: null, read: BALL, tacoRead: null, busy: null });
   if (S.homed) { S.mg = 0; S.alarm = ''; }
   buildTools(); placeObjects();
-  setMsg(S.homed ? 'Pieza nueva amarrada. Empieza comprobando el taco con el bulón.' : 'Antes de nada: apoya el bulón sobre el taco de Z (mesa auxiliar) y comprueba que marca 0. Luego POWER UP.', S.homed ? 'info' : 'warn');
+  const pm = PROG ? `${progName(PROG)} · bruto ${es0(st.sx)}×${es0(st.sy)}×${es0(st.sz)}${st.x0 || st.y0 ? ', cero en el centro' : ''}. ` : '';
+  setMsg(pm + (S.homed ? 'Pieza nueva amarrada. Empieza comprobando el taco con el bulón.' : 'Antes de nada: apoya el bulón sobre el taco de Z (mesa auxiliar) y comprueba que marca 0. Luego POWER UP.'), S.homed ? 'info' : 'warn');
   cpBtn.hidden = true; afterMove(true);
 }
-function initMachine() { Object.assign(S, { mx: -180, my: -120, mg: -60, axis: 'X', inc: 0.01, homed: false, alarm: '102 SERVOS OFF', estop: false, door: 0, doorT: 0, help: true, msg: '', tone: 'info', wheel: 0 }); }
+function initMachine() { Object.assign(S, { mode: 'mdi', listSel: 0, pi: 0, fov: 1, rov: 1, single: false, mx: -180, my: -120, mg: -60, axis: 'X', inc: 0.01, homed: false, alarm: '102 SERVOS OFF', estop: false, door: 0, doorT: 0, help: true, msg: '', tone: 'info', wheel: 0 }); }
 function tacoWorld() { return new THREE.Vector3(T0 - S.mx * MM + lx(TACO_X), Hy0 + TABLE_Z * MM, Tz0 + S.my * MM + lz(TACO_Y)); }
 function placeObjects() {
   if (S.hold !== 'taco') { if (S.tacoAt === 'bench') taco.position.set(BENCH.x - 0.14, BENCH_TOP, BENCH.z - 0.02); else taco.position.copy(tacoWorld()); taco.rotation.set(0, 0, 0); }
@@ -378,7 +388,7 @@ const K = (id, ox, oy, ow, oh, act, o = {}) => B(P, id, KX + (ox - ow / 2 - 630)
 B(P, 'estop', 50, 255, 160, 160, '', () => toggleEstop(), { round: true });
 B(P, 'wheel', 30, 465, 200, 200, '', () => {}, { wheel: true });
 B(P, 'cstart', 45, 1005, 70, 70, '', () => cycleStart(), { round: true });
-B(P, 'fhold', 150, 1005, 70, 70, '', () => info('FEED HOLD: no hay ningún movimiento de programa.'), { round: true });
+B(P, 'fhold', 150, 1005, 70, 70, '', () => feedHold(), { round: true });
 K('reset', 740, 300, 190, 60, () => reset());
 K('pwup', 900, 300, 88, 60, () => powerUp());
 K('recov', 1004, 300, 88, 60, () => info('RECOVER no hace falta en este ejercicio.'));
@@ -395,13 +405,13 @@ for (const [x, y] of [[686, 584], [686, 666], [686, 750], [1010, 584], [1010, 66
 K('fwd', 686, 1048, 90, 58, () => spindleOn('FWD'));
 K('stop', 792, 1048, 90, 58, () => spindleStop());
 K('rev', 898, 1048, 90, 58, () => spindleOn('REV'));
-K('prog', 1134, 340, 92, 60, () => { S.screen = 'mdi'; });
+K('prog', 1134, 340, 92, 60, () => { S.screen = S.mode === 'mem' ? 'prog' : 'mdi'; });
 K('pos', 1240, 340, 92, 60, () => { S.screen = 'pos'; });
 K('ofsk', 1346, 340, 92, 60, () => { if (S.screen === 'ofs') S.tab = S.tab === 'Trab' ? 'Herrm' : 'Trab'; S.screen = 'ofs'; });
 K('alarms', 1134, 428, 92, 60, () => info(S.alarm ? 'Alarma activa: ' + S.alarm : 'No hay alarmas.'));
 K('cu', 1286, 540, 64, 60, () => moveCur(-1, 0)); K('cl', 1190, 626, 64, 60, () => moveCur(0, -1));
 K('cr', 1380, 626, 64, 60, () => moveCur(0, 1)); K('cd', 1286, 710, 64, 60, () => moveCur(1, 0));
-K('mdi', 1556, 474, 76, 60, () => { S.screen = 'mdi'; });
+K('mdi', 1556, 474, 76, 60, () => { S.mode = 'mdi'; S.screen = 'mdi'; }, { on: () => S.mode === 'mdi' });
 K('hj', 1556, 556, 76, 60, () => info('Modo volante (HANDLE JOG) activo.'));
 K('zr', 1556, 636, 76, 60, () => info('ZERO RETURN: pulsa ALL para llevar todos los ejes a cero máquina.'));
 K('ins', 1680, 314, 88, 60, () => mdiInsert());
@@ -410,12 +420,20 @@ K('atcf', 1892, 474, 88, 60, () => atcStep(1)); K('atcr', 2000, 474, 88, 60, () 
 INCS.forEach((v, i) => K('inc' + i, 1680 + i * 106, 556, 88, 60, () => { S.inc = v; }, { on: () => S.inc === v }));
 K('all', 1680, 636, 88, 60, () => zeroReturn()); K('g28', 2000, 636, 88, 60, () => zeroReturn());
 K('erase', 2000, 712, 88, 60, () => { S.mdi = []; info('Programa MDI borrado.'); });
+K('mem', 1555, 392, 76, 60, () => { S.mode = 'mem'; S.screen = 'prog'; info(PROG ? `MEMORIA: ${progName(PROG)}. Puerta cerrada y CYCLE START para ejecutarlo.` : 'MEMORIA: no hay programa. LIST PROGRAM para elegir uno.'); }, { on: () => S.mode === 'mem' });
+K('list', 1542, 718, 76, 60, () => listProgram());
+K('selp', 1665, 722, 88, 60, () => selectProgram(S.listSel));
+K('origin', 1786, 637, 88, 60, () => origin());
+K('sblk', 1680, 392, 88, 60, () => { S.single = !S.single; info(S.single ? 'BLOQUE A BLOQUE activado: cada CYCLE START ejecuta una línea.' : 'BLOQUE A BLOQUE desactivado.'); }, { on: () => S.single });
+K('pgup', 1377, 543, 76, 60, () => moveCur(-8, 0)); K('pgdn', 1377, 716, 76, 60, () => moveCur(8, 0));
+[[-0.1, 692], [0, 796], [0.1, 900]].forEach(([d, x]) => K('fov' + x, x, 900, 90, 60, () => { S.fov = d ? Math.min(2, Math.max(0.1, Math.round((S.fov + d) * 10) / 10)) : 1; info(`Avance (FEEDRATE) ${Math.round(S.fov * 100)} %`); }));
+[[0.05, 692], [0.25, 796], [0.5, 900], [1, 1002]].forEach(([v, x]) => K('rov' + x, x, 1137, 90, 60, () => { S.rov = v; info(`Rápidos ${Math.round(v * 100)} %`); }, { on: () => S.rov === v }));
 const LET = [['A', 'B', 'C', 'D', 'E'], ['F', 'G', 'H', 'I', 'J', 'K'], ['L', 'M', 'N', 'O', 'P', 'Q'], ['R', 'S', 'T', 'U', 'V', 'W'], ['X', 'Y', 'Z', ';', '(', ')']];
 LET.forEach((row, ri) => row.forEach((ch, ci) => { const col = ri === 0 ? ci + 1 : ci; K('L' + ch, 1130 + col * 102, [818, 900, 976, 1056, 1132][ri], 88, 58, () => key(ch)); }));
 ['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', '.'].forEach((k, i) => K('k' + i, 1768 + (i % 3) * 103, [818, 900, 980, 1056][Math.floor(i / 3)], 88, 58, () => key(k)));
 K('can', 1752, 1136, 100, 58, () => { S.input = S.input.slice(0, -1); });
 K('spc', 1856, 1136, 100, 58, () => key(' '));
-K('ent', 1960, 1136, 100, 58, () => S.screen === 'mdi' ? mdiInsert() : applyInput(true));
+K('ent', 1960, 1136, 100, 58, () => S.screen === 'mdi' ? mdiInsert() : S.screen === 'list' ? selectProgram(S.listSel) : applyInput(true));
 
 /* =================== tablero de pasos + lupa =================== */
 const Q = plane(0.44, 0.44, 800, 800);
@@ -488,7 +506,7 @@ function drawScreen(g, X, Y, W, H) {
   g.fillStyle = '#e8edf2'; g.fillRect(X, Y, W, H);
   g.fillStyle = '#cfd6de'; g.fillRect(X, Y, W, 28);
   const now = new Date();
-  txt(g, S.screen === 'mdi' ? 'Editar: MDI' : S.screen === 'ofs' ? 'Config: desplazam' : 'Posiciones', X + 8, Y + 14, '16px system-ui', '#333');
+  txt(g, { mdi: 'Editar: MDI', ofs: 'Config: desplazam', list: 'Lista de programas', prog: 'Funcionamiento: MEM' }[S.screen] || 'Posiciones', X + 8, Y + 14, '16px system-ui', '#333');
   txt(g, `${hh(now.getHours())}:${hh(now.getMinutes())}:${hh(now.getSeconds())}`, X + W - 8, Y + 14, '16px ui-monospace,monospace', '#333', 'right');
   if (S.alarm) { g.fillStyle = '#d23a3a'; g.fillRect(X + 190, Y + 2, 380, 24); txt(g, S.alarm, X + 380, Y + 14, '700 14px system-ui', '#fff', 'center', 370); }
   else if (S.door > 0.5) { g.fillStyle = '#f0a030'; g.fillRect(X + 190, Y + 2, 380, 24); txt(g, 'PUERTA ABIERTA', X + 380, Y + 14, '700 14px system-ui', '#fff', 'center'); }
@@ -515,7 +533,8 @@ function drawScreen(g, X, Y, W, H) {
     g.fillStyle = '#2d58b5'; g.fillRect(X + 8, top + 84, W - 16, 22);
     const cx = [X + 60, X + 210, X + 360, X + 560];
     ['CORR HERRAM', 'Longitud GEOMTRIA(H)', 'RADIO GEOMTRIA(D)', 'Herramienta'].forEach((h, i) => txt(g, h, cx[i], top + 95, '600 13px system-ui', '#fff', 'center'));
-    ORDER.forEach((n, i) => {
+    const ti = ORDER.indexOf(S.tool), w0 = Math.max(0, Math.min(ti - 2, ORDER.length - 5));
+    ORDER.slice(w0, w0 + 5).forEach((n, i) => {
       const y = top + 108 + i * 26; g.fillStyle = n === S.tool ? '#f0a030' : i % 2 ? '#dfe5ec' : '#f3f5f8'; g.fillRect(X + 8, y, W - 16, 25);
       [n === 10 ? '10 Huso' : String(n), fmtOfs(S.H[n]), f3(TDEF[n].r), TDEF[n].n].forEach((v, j) => txt(g, v, cx[j], y + 13, '15px ui-monospace,monospace', '#111', 'center'));
     });
@@ -532,17 +551,34 @@ function drawScreen(g, X, Y, W, H) {
     hdr(g, X + 520, top, W - 524, 'HERRAM ACTIVA');
     g.fillStyle = '#f3f5f8'; g.fillRect(X + 520, top + 26, W - 524, 240);
     [`Herrm: ${S.tool}`, `CORRE: ${S.tool}`, T.n, `H: ${fmtOfs(S.H[S.tool])}`, `D: ${f3(T.r)}`, 'CYCLE START ejecuta'].forEach((l, i) => txt(g, l, X + 530, top + 46 + i * 26, '14px system-ui', '#222', 'left', W - 540));
+  } else if (S.screen === 'list') {
+    hdr(g, X + 4, top, W - 8, 'Lista de programas · cursor ↑↓ y SELECT PROGRAM');
+    const all = [{ id: '—', label: 'Solo reglaje (sin programa)', stock: STOCK0 }, ...PROGS], w0 = Math.max(0, Math.min(S.listSel - 4, all.length - 9));
+    if (!PROGS.length) txt(g, 'Cargando programas…', X + 20, top + 230, '14px system-ui', '#888');
+    all.slice(w0, w0 + 9).forEach((p, i) => { const k = w0 + i, y = top + 30 + i * 25, sel = k === S.listSel, act = k === S.pi;
+      g.fillStyle = sel ? '#f0a030' : i % 2 ? '#dfe5ec' : '#f3f5f8'; g.fillRect(X + 8, y, W - 16, 24);
+      txt(g, k ? progO(p) : 'O00000', X + 16, y + 12, '600 15px ui-monospace,monospace', '#111');
+      txt(g, p.label + (act ? '  · ACTIVO' : ''), X + 110, y + 12, (act ? '600 ' : '') + '14px system-ui', act ? '#2a7a3a' : '#222', 'left', 330);
+      txt(g, `${es0(p.stock.sx)}×${es0(p.stock.sy)}×${es0(p.stock.sz)}${p.stock.x0 || p.stock.y0 ? ' · cero centro' : ' · cero esquina'}`, X + W - 16, y + 12, '13px system-ui', '#444', 'right', 250); });
+  } else if (S.screen === 'prog') {
+    const R = S.run, lines = PROG ? PROG.lines : [], ln = R ? R.ln : 0;
+    hdr(g, X + 4, top, W - 8, PROG ? `${progName(PROG)}  ·  ${R ? (R.hold ? 'PARADO (FEED HOLD)' : 'EJECUTANDO') : S.ranOk ? 'TERMINADO' : 'LISTO'}` : 'Sin programa · LIST PROGRAM');
+    g.fillStyle = '#fff'; g.fillRect(X + 4, top + 26, W - 8, 210);
+    const a = Math.max(0, Math.min(ln - 3, lines.length - 8));
+    lines.slice(a, a + 8).forEach((l, i) => { const y = top + 40 + i * 25, on = R && a + i === ln; if (on) { g.fillStyle = '#f5ea3a'; g.fillRect(X + 6, y - 12, W - 12, 24); } txt(g, l, X + 14, y, '15px ui-monospace,monospace', /^\s*\(/.test(l) ? '#3a6a3a' : '#111', 'left', W - 30); });
+    txt(g, `Avance ${Math.round(S.fov * 100)} % · Rápidos ${Math.round(S.rov * 100)} % · ${S.single ? 'Bloque a bloque' : 'Continuo'} · S ${S.spindle ? S.rpm || 0 : 0}`, X + 20, top + 252, '600 14px system-ui', '#2d58b5', 'left', 680);
   } else {
-    hdr(g, X + 4, top, W - 8, `Posiciones  ·  PROGRAMA ${S.wo} G43 H${hh(S.tool)}`);
-    COLS.forEach((c, i) => { const y = top + 70 + i * 62; txt(g, c, X + 40, y, '700 40px system-ui', '#222'); txt(g, f3(work(c)), X + 420, y, '600 40px ui-monospace,monospace', '#111', 'right'); txt(g, 'Máq ' + f3(mpos(c)), X + 690, y, '22px ui-monospace,monospace', '#555', 'right'); });
-    txt(g, `Trab ${S.wo} (grande) · Máquina (derecha)`, X + 20, top + 262, '14px system-ui', '#2d58b5');
+    hdr(g, X + 4, top, W - 8, `Posiciones  ·  ${S.wo} G43 H${hh(S.tool)}  ·  X/Y/Z y ORIGIN = cero de operador`);
+    txt(g, 'Trab ' + S.wo, X + 330, top + 40, '600 14px system-ui', '#2d58b5', 'right'); txt(g, 'Operador', X + 520, top + 40, '600 14px system-ui', '#2d58b5', 'right'); txt(g, 'Máquina', X + 700, top + 40, '600 14px system-ui', '#2d58b5', 'right');
+    COLS.forEach((c, i) => { const y = top + 82 + i * 58; txt(g, c, X + 30, y, '700 36px system-ui', '#222'); txt(g, f3(work(c)), X + 330, y, '600 34px ui-monospace,monospace', '#111', 'right'); txt(g, f3(oper(c)), X + 520, y, '600 30px ui-monospace,monospace', '#1d4f9a', 'right'); txt(g, f3(mpos(c)), X + 700, y, '22px ui-monospace,monospace', '#555', 'right'); });
+    txt(g, 'Centrar: toca X−, X ORIGIN, toca X+, ve a la mitad de la cota de operador', X + 20, top + 262, '14px system-ui', '#2d58b5', 'left', 680);
   }
   hdr(g, X + 4, mid, 250, 'Husillo prin');
   g.fillStyle = '#f3f5f8'; g.fillRect(X + 4, mid + 26, 250, 152);
   g.fillStyle = S.spindle ? '#2fbf71' : '#d23a3a';
   g.beginPath(); for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; g.lineTo(X + 50 + Math.cos(a) * 28, mid + 70 + Math.sin(a) * 28); } g.fill();
   txt(g, S.spindle ? 'GIRA' : 'STOP', X + 50, mid + 71, '800 13px system-ui', '#fff', 'center');
-  txt(g, 'Veloc husillo:', X + 95, mid + 52, '14px system-ui', '#333'); txt(g, (S.spindle ? '500' : '0') + ' RPM', X + 245, mid + 52, '14px ui-monospace,monospace', '#111', 'right');
+  txt(g, 'Veloc husillo:', X + 95, mid + 52, '14px system-ui', '#333'); txt(g, (S.spindle ? String(S.rpm || 500) : '0') + ' RPM', X + 245, mid + 52, '14px ui-monospace,monospace', '#111', 'right');
   txt(g, `Herram: T${S.tool}`, X + 95, mid + 78, '14px system-ui', '#333'); txt(g, `Corr: H${hh(S.tool)}`, X + 95, mid + 100, '14px system-ui', '#333');
   txt(g, S.homed ? 'Referenciada' : 'SIN REFERENCIAR', X + 20, mid + 140, '600 14px system-ui', S.homed ? '#2a7a3a' : '#c0392b');
   hdr(g, X + 262, mid, W - 266, 'Avanc manu');
@@ -565,10 +601,16 @@ function tabs(g, x, y) { ['Herrm', 'Trab', 'Tool Info'].forEach((t, i) => { g.fi
 const fmtOfs = v => (v === 0 ? '0.' : f3(v));
 const mpos = c => c === 'Z' ? S.mg : S['m' + c.toLowerCase()];
 const wof = () => S.ofs[S.wo];
+const oper = c => mpos(c) - (S.opz ? S.opz[c] : 0);
+const es0 = v => String(v).replace('.', ',');
+const progO = p => { const m = p.haas && p.haas.match(/O0*(\d+)/); return m ? 'O' + m[1].padStart(5, '0') : p.id; };
+const progName = p => `${progO(p)} ${p.label}`;
 const work = c => c === 'Z' ? S.mg - wof()[2] - S.H[S.tool] : mpos(c) - wof()[COLS.indexOf(c)];
 
 /* =================== tablero =================== */
-const expG = c => ({ X: S.part.x0, Y: S.part.y0, Z: S.part.top + L(10) })[c];
+const expG = c => ({ X: S.part.x0 - S.stock.x0, Y: S.part.y0 - S.stock.y0, Z: S.part.top - S.stock.zTop + L(10) })[c];
+const centred = () => !!(S.stock.x0 || S.stock.y0);
+const TL = () => ORDER.filter(n => n !== 10);
 const expG59 = () => TABLE_Z + L(10);
 const expH = n => r3(L(n) - L(10));
 const okG = c => Math.abs(g54()[COLS.indexOf(c)] - expG(c)) <= TOL;
@@ -582,10 +624,13 @@ function steps() {
     ['OFFSET → Trab, cursor en G59 Z y PART ZERO SET', ok59()],
     ['Pon el taco en la mesa de la máquina', S.tacoAt === 'table' || okH(3)],
     ['Cierra la puerta. MDI: G59; INSERT y CYCLE START', S.woSet.G59 || okH(1)],
-    ['T1M06; · T1 sobre el taco a 0 · Herrm · TOOL OFFSET MEASURE · −50 ENTER', okH(1)], ['T2: mídela igual', okH(2)], ['T3: mídela igual', okH(3)],
-    ['Vuelve al palpador: T10M06;', (S.tool === 10 && okH(3)) || okG('X')],
-    ['G54 X−: reloj a 0 y PART ZERO SET', okG('X')], ['G54 Y−: reloj a 0 y PART ZERO SET', okG('Y')], ['G54 Z: reloj a 0 y PART ZERO SET', okG('Z')],
-    ['MDI: G54; para activarlo', S.wo === 'G54' && okG('Z') && S.woSet.G54], ['Pulsa VALIDAR', !!S.result]];
+    ...TL().map((n, i) => [i ? `T${n} (${TDEF[n].n}): mídela igual` : `T${n}M06; · T${n} sobre el taco a 0 · Herrm · TOOL OFFSET MEASURE · −50 ENTER`, okH(n)]),
+    ['Vuelve al palpador: T10M06;', (S.tool === 10 && TL().every(okH)) || okG('X')],
+    ...['X', 'Y'].map(c => { const o = c === 'X' ? S.stock.x0 : S.stock.y0, w = c === 'X' ? S.stock.sx : S.stock.sy;
+      return [!o ? `G54 ${c}−: reloj a 0 y PART ZERO SET` : Math.abs(2 * o + w) < 0.01 ? `G54 ${c} al centro: ${c}− · ${c} ORIGIN · ${c}+ · ve a la mitad (o canto y ${fc(-o)} ENTER)` : `G54 ${c} a ${es0(-o)} mm del canto ${c}−: PART ZERO SET en el canto y ${fc(-o)} ENTER`, okG(c)]; }),
+    ['G54 Z: reloj a 0 y PART ZERO SET', okG('Z')],
+    ['MDI: G54; para activarlo', S.wo === 'G54' && okG('Z') && S.woSet.G54], ['Pulsa VALIDAR', !!S.result],
+    ...(PROG ? [['Puerta cerrada · MEMORY · CYCLE START: mecaniza la pieza', S.ranOk]] : [])];
 }
 function drawBoard() {
   const g = Q.g, W = 800;
@@ -605,7 +650,7 @@ function drawBoard() {
     txt(g, `T${S.tool} ${cur().n} · volante ${S.axis} · ${es(S.inc)} mm/clic · puerta ${S.door > 0.5 ? 'abierta' : 'cerrada'}`, 30, 600, '19px system-ui', COL.quiet, 'left', 740);
     if (S.hold) txt(g, S.hold === 'taco' ? 'Llevas el taco: apunta a un círculo azul para dejarlo' : 'Llevas el bulón: apunta al círculo azul sobre el taco', 30, 646, '600 20px system-ui', COL.amber, 'left', 740);
   } else {
-    ['Sin pistas: lee los relojes en la lupa o acercándote.', 'G54 en la esquina X−, Y− y Z arriba de la pieza.', 'Calibra el taco antes de medir T1, T2 y T3.', `Tolerancia ${es(TOL)} mm. Al terminar, VALIDAR.`]
+    ['Sin pistas: lee los relojes en la lupa o acercándote.', centred() ? 'G54 en el centro de la pieza en X e Y, Z arriba.' : 'G54 en la esquina X−, Y− y Z arriba de la pieza.', `Calibra el taco antes de medir ${TL().map(n => 'T' + n).join(', ')}.`, `Tolerancia ${es(TOL)} mm. Al terminar, VALIDAR.`]
       .forEach((t, i) => txt(g, t, 30, 200 + i * 52, '23px system-ui', COL.ink, 'left', 740));
   }
   for (const k of Q.btns) drawKey(g, k);
@@ -655,7 +700,7 @@ function sense() {
     if (res.contact && res.contact.r < -OVER) res.crash = res.crash || `Has pasado el recorrido del palpador contra la ${res.contact.o.n}`;
   } else {
     const hl = T.type === 'face' ? 40 : T.type === 'end' ? 45 : 72;
-    for (const o of obst) {
+    for (const o of (S.run ? obst.slice(1) : obst)) {
       const d = distRect(S.mx, S.my, o);
       if (t < o.top - 0.02 && d < T.r) res.crash = res.crash || `La herramienta T${S.tool} ha chocado con la ${o.n}`;
       if (t + hl < o.top && d < 21) res.crash = res.crash || `El portaherramientas ha chocado con la ${o.n}`;
@@ -694,6 +739,7 @@ function afterMove(silent) {
   S.safe = [S.mx, S.my, S.mg]; dirty = true; placeObjects();
 }
 function crash(why) {
+  if (S.run) { S.run = null; if (S.spindle) { S.spindle = false; hum(false); } }
   S.alarm = 'ALARMA: choque · pulse RESET'; S.crashes++; S.cjog = 0; S.jogHold = null;
   setMsg('CHOQUE: ' + why + '. Pulsa RESET y retírate.', 'err'); sfx('crash'); buzz(1, 400); flash = 1; dirty = true;
 }
@@ -724,6 +770,7 @@ function startHome(msg) { S.busy = { kind: 'home', t0: performance.now(), from: 
 function toggleDoor() {
   if (S.busy) { info('Espera a que termine el movimiento'); return; }
   S.door = S.door > 0.5 ? 0 : 1;
+  if (S.door && S.run) S.run.hold = true;
   if (S.door && S.spindle) { S.spindle = false; hum(false); S.alarm = 'PUERTA ABIERTA CON HUSILLO'; setMsg('Has abierto la puerta con el husillo girando: se ha parado. Pulsa RESET.', 'err'); sfx('crash'); return; }
   info(S.door ? 'Puerta abierta. Con la puerta abierta no gira el husillo ni cambia herramientas.' : 'Puerta cerrada.');
 }
@@ -741,12 +788,13 @@ function toggleEstop() {
 }
 function reset() {
   if (S.estop) { setMsg('Primero suelta la parada de emergencia', 'err'); return; }
+  if (S.run) { S.run = null; if (S.spindle) { S.spindle = false; hum(false); } if (!S.alarm) { setMsg('Programa cancelado con RESET.', 'warn'); return; } }
   if (S.spindle && S.alarm) { setMsg('Para el husillo (STOP) antes de RESET', 'err'); return; }
   if (!S.homed) { setMsg('Pulsa POWER UP para referenciar la máquina', 'warn'); return; }
   if (!S.alarm) { info('Sin alarmas.'); return; }
   S.alarm = ''; [S.mx, S.my, S.mg] = S.safe; afterMove(true); setMsg('Alarma borrada. Aléjate antes de volver a acercarte.', 'warn');
 }
-function moveCur(dr, dc) { S.screen = 'ofs'; S.tab = 'Trab'; S.cur.r = Math.max(0, Math.min(ROWS.length - 1, S.cur.r + dr)); S.cur.c = Math.max(0, Math.min(2, S.cur.c + dc)); }
+function moveCur(dr, dc) { if (S.screen === 'list') { S.listSel = Math.max(0, Math.min(PROGS.length, S.listSel + dr)); return; } if (S.screen === 'prog') return; S.screen = 'ofs'; S.tab = 'Trab'; S.cur.r = Math.max(0, Math.min(ROWS.length - 1, S.cur.r + dr)); S.cur.c = Math.max(0, Math.min(2, S.cur.c + dc)); }
 function partZero() {
   if (blocked()) return;
   if (S.screen !== 'ofs' || S.tab !== 'Trab') { setMsg('Abre OFFSET → pestaña Trab y pon el cursor en la casilla', 'warn'); return; }
@@ -778,6 +826,7 @@ function applyInput(add) {
 }
 function mdiInsert() { if (S.screen !== 'mdi') { setMsg('Pulsa MDI para escribir un programa', 'warn'); return; } const t = S.input.trim(); if (!t) return; S.mdi.push(t.endsWith(';') ? t : t + ' ;'); S.input = ''; sfx('click'); }
 function cycleStart() {
+  if (S.mode === 'mem' && S.screen !== 'mdi') { memStart(); return; }
   if (S.screen !== 'mdi') { setMsg('CYCLE START ejecuta el programa MDI: pulsa MDI primero', 'warn'); return; }
   if (blocked()) return;
   const prog = S.mdi.join(' ').toUpperCase().replace(/\s+/g, '');
@@ -796,18 +845,22 @@ function nextTool() { if (S.screen !== 'ofs' || S.tab !== 'Herrm') { setMsg('NEX
 function atcStep(d) { const i = ORDER.indexOf(S.tool); changeTool(ORDER[(i + d + ORDER.length) % ORDER.length]); }
 function changeTool(n) {
   if (blocked()) return;
-  if (!TDEF[n]) { setMsg(`No hay herramienta T${n} en el carrusel (hay T1, T2, T3 y T10)`, 'warn'); return; }
+  if (!TDEF[n]) { setMsg(`No hay herramienta T${n} en el carrusel (hay ${ORDER.map(k => 'T' + k).join(', ')})`, 'warn'); return; }
   if (S.door > 0.5) { setMsg('Cierra la puerta para cambiar de herramienta', 'warn'); return; }
   if (n === S.tool) { info(`T${n} ya está en el husillo.`); return; }
   if (S.spindle) spindleStop();
-  S.busy = { kind: 'atc', t0: performance.now(), to: n, from: S.mg, swapped: false }; setMsg(`Cambiando a T${n} (${TDEF[n].n})…`, 'info');
+  startATC(n);
 }
+function startATC(n) { if (S.spindle) { S.spindle = false; hum(false); } S.busy = { kind: 'atc', t0: performance.now(), to: n, from: S.mg, swapped: false }; setMsg(`Cambiando a T${n} (${TDEF[n].n})…`, 'info'); }
 function hint(c, e, row = 'G54') {
   if (Math.abs(e) <= TOL) return '';
   const i = COLS.indexOf(c);
   if (r3(S.ofs[row][i]) === OFS0[row][i]) return 'sin fijar (valor anterior)';
   if (c !== 'Z') for (const k of [2, 4, 5]) if (Math.abs(Math.abs(e) - k) < 0.06) return 'con el palpador 3D no se compensa el radio';
-  if (c !== 'Z' && Math.abs(e - 100) < 3) return 'has palpado el lado contrario';
+  const half = c === 'X' ? S.stock.x0 : c === 'Y' ? S.stock.y0 : 0;
+  if (half && Math.abs(e - half) < 1) return `cero en el canto: falta ${fc(-half)} hasta el centro`;
+  if (half && Math.abs(e + half) < 1) return 'has palpado el lado contrario o te falta la mitad';
+  if (c !== 'Z' && Math.abs(Math.abs(e) - (c === 'X' ? S.stock.sx : S.stock.sy)) < 3) return 'has palpado el lado contrario';
   const sr = S.setRead[row + c];
   if (sr && sr.r !== undefined && Math.abs(sr.r) > TOL) return `reloj en ${es(sr.r)} al fijar`;
   if (sr && sr.n && sr.n !== (row === 'G59' ? 'mesa' : 'pieza')) return `palpaste la ${sr.n}`;
@@ -834,18 +887,18 @@ function validate() {
   if (S.busy) return;
   const G = g54(), err = {}; for (const c of COLS) err[c] = r3(G[COLS.indexOf(c)] - expG(c));
   const e59 = r3(S.ofs.G59[2] - expG59());
-  const eh = {}; for (const n of [10, 1, 2, 3]) eh[n] = r3(S.H[n] - expH(n));
-  const pass = Math.abs(e59) <= TOL && COLS.every(c => Math.abs(err[c]) <= TOL) && [10, 1, 2, 3].every(n => !hintH(n, eh[n])) && S.wo === 'G54' && S.calibrated;
+  const TN = [10, ...TL()], eh = {}; for (const n of TN) eh[n] = r3(S.H[n] - expH(n));
+  const pass = Math.abs(e59) <= TOL && COLS.every(c => Math.abs(err[c]) <= TOL) && TN.every(n => !hintH(n, eh[n])) && S.wo === 'G54' && S.calibrated;
   const secs = Math.round((performance.now() - S.t0) / 1000), tm = `${Math.floor(secs / 60)} min ${secs % 60} s`;
   const lines = [{ t: `${pass ? 'Superado' : 'Revisa el reglaje'} · ${tm} · ${S.crashes} errores graves`, c: pass ? COL.green : COL.amber }];
   { const ok = Math.abs(e59) <= TOL, h = hint('Z', e59, 'G59'); lines.push({ t: `${ok ? '✓' : '✗'} G59 Z (mesa): ${fc(e59)} mm${h ? ' · ' + h : ''}`, c: ok ? COL.ink : COL.red }); }
-  const hs = [10, 1, 2, 3].map(n => { const h = hintH(n, eh[n]); return { t: `${h ? '✗' : '✓'} H${hh(n)} ${fc(eh[n])}${h ? ' (' + h + ')' : ''}`, ok: !h }; });
-  for (const pr of [hs.slice(0, 2), hs.slice(2)]) lines.push({ t: pr.map(x => x.t).join(' · '), c: pr.every(x => x.ok) ? COL.ink : COL.red });
+  const hs = TN.map(n => { const h = hintH(n, eh[n]); return { t: `${h ? '✗' : '✓'} H${hh(n)} ${fc(eh[n])}${h ? ' (' + h + ')' : ''}`, ok: !h }; });
+  for (let k = 0; k < hs.length; k += 3) { const pr = hs.slice(k, k + 3); lines.push({ t: pr.map(x => x.t).join(' · '), c: pr.every(x => x.ok) ? COL.ink : COL.red }); }
   lines.push({ t: COLS.map(c => { const h = hint(c, err[c]); return `${Math.abs(err[c]) <= TOL ? '✓' : '✗'} G54 ${c} ${fc(err[c])}${h ? ' (' + h + ')' : ''}`; }).join(' · '), c: COLS.every(c => Math.abs(err[c]) <= TOL) ? COL.ink : COL.red });
   if (!S.calibrated) lines.push({ t: '✗ No comprobaste el taco con el bulón antes de usarlo', c: COL.red });
   if (S.wo !== 'G54') lines.push({ t: `✗ Corrector activo ${S.wo}: activa G54 en MDI`, c: COL.red });
   S.result = { pass, lines, text: [`Reglaje Mini Mill · ${new Date().toLocaleString('es-ES')}`, ...lines.map(l => l.t)].join('\n') };
-  setMsg(pass ? 'Reglaje correcto: G59, longitudes de herramienta y G54' : `Hay valores fuera de tolerancia (${es(TOL)} mm)`, pass ? 'ok' : 'warn');
+  setMsg(pass ? (PROG ? 'Reglaje correcto. Cierra la puerta, MEMORY y CYCLE START para mecanizar.' : 'Reglaje correcto: G59, longitudes de herramienta y G54') : `Hay valores fuera de tolerancia (${es(TOL)} mm)`, pass ? 'ok' : 'warn');
   sfx(pass ? 'set' : 'kick'); cpBtn.hidden = false;
 }
 function setMsg(t, tone) { S.msg = t; S.tone = tone; dirty = true; }
@@ -882,6 +935,342 @@ function turnBezel(dir) {
   if (S.bulonAt !== 'taco' || S.tacoAt !== 'bench') { setMsg('Para calibrar, pon el taco en la mesa auxiliar y el bulón encima', 'warn'); return; }
   S.bezel = r3(S.bezel + dir * 0.01); S.calibrated = Math.abs(S.bezel) < 0.0005; tacoDirty = true; sfx('click'); buzz(0.05, 10);
   if (S.calibrated) setMsg('Taco calibrado: reloj en 0 con el bulón. Quita el bulón.', 'ok'); else info(`Taco con bulón: ${es(S.bezel)} mm`);
+}
+
+/* ===== intérprete HAAS (subconjunto de los programas del taller) ===== */
+function toolsOf(src) {
+  const out = {}; let t = null;
+  for (const raw of src.split('\n')) {
+    const up = raw.toUpperCase(), mt = up.match(/T\s*(\d+)/), cm = raw.match(/\(([^)]*)\)/);
+    if (mt && !/^\s*\(/.test(raw)) t = +mt[1];
+    if (/M0?6(?!\d)/.test(up.replace(/\([^)]*\)/g, '')) && t != null && !out[t]) {
+      const d = cm ? cm[1] : '', u = d.toUpperCase(), num = (d.match(/(\d+(?:[.,]\d+)?)/) || [])[1];
+      const D = num ? parseFloat(num.replace(',', '.')) : 10;
+      const type = /PLATO|PLANEA/.test(u) ? 'face' : /BROCA|TALADR/.test(u) ? 'drill' : 'end';
+      out[t] = { n: (type === 'face' ? 'Plato' : type === 'drill' ? 'Broca' : 'Fresa') + ' Ø' + String(D).replace('.', ','), type, r: D / 2 };
+    }
+  }
+  return out;
+}
+function interp(src, TR) {
+  const RAW = src.split('\n');
+  const L = RAW.map(l => l.replace(/\([^)]*\)/g, '').toUpperCase().replace(/,\s*([CR])/g, ',$1').replace(/^%.*/, '').trim());
+  const lab = {}; L.forEach((l, i) => { const m = l.match(/^N(\d+)/); if (m && lab[+m[1]] == null) lab[+m[1]] = i; });
+  const items = [], warn = [];
+  const st = { p: { x: null, y: null, z: null }, abs: true, mot: 0, comp: 0, D: 0, f: 0, h: 0, wo: 'G54', cyc: null, ret: 98 };
+  const rad = d => (TR[d] ? TR[d].r : 0);
+  const cp = p => ({ x: p.x, y: p.y, z: p.z });
+  const push = (k, b, extra = {}) => { const it = { k, a: cp(st.p), b: cp(b), comp: st.comp, D: st.D, f: st.f, h: st.h, wo: st.wo, ln: cur, ...extra }; items.push(it); st.p = cp(b); return it; };
+  const op = (o) => items.push({ k: 'op', ln: cur, ...o });
+  const words = l => { const w = {}, g = [], m = [];
+    for (const t of l.matchAll(/(,[CR]|[A-Z])\s*([-+]?(?:\d+\.?\d*|\.\d+))/g)) { const k = t[1], v = parseFloat(t[2]); if (k === 'G') g.push(v); else if (k === 'M') m.push(v); else if (w[k] == null) w[k] = v; }
+    return { w, g, m }; };
+  const tgt = (w) => { const p = cp(st.p);
+    for (const a of ['X', 'Y', 'Z']) if (w[a] != null) { const k = a.toLowerCase(); p[k] = st.abs ? w[a] : (p[k] ?? 0) + w[a]; }
+    return p; };
+  let cur = 0, pc = 0, steps = 0, ended = false; const stack = [];
+  function arcItem(b, cw, w) {
+    const a = st.p; let cx, cy;
+    if (w.R != null && w.I == null && w.J == null) {
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), R = Math.abs(w.R); const hh = Math.sqrt(Math.max(0, R * R - d * d / 4));
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, nx = -dy / d, ny = dx / d; const s = (cw ? -1 : 1) * (w.R > 0 ? 1 : -1);
+      cx = mx + nx * hh * s; cy = my + ny * hh * s;
+    } else { cx = a.x + (w.I || 0); cy = a.y + (w.J || 0); }
+    push('arc', b, { c: { x: cx, y: cy }, cw });
+  }
+  function drill(x, y) {
+    const c = st.cyc; if (x != null) { const p = cp(st.p); p.x = x; if (y != null) p.y = y; push('rapid', p); } else if (y != null) { const p = cp(st.p); p.y = y; push('rapid', p); }
+    const R = c.r, Z = c.z; push('rapid', { ...st.p, z: R });
+    if (c.t === 83 && c.q > 0) { let d = R; while (d > Z + 1e-6) { const nd = Math.max(Z, d - c.q); if (d < R) push('rapid', { ...st.p, z: d + 0.5 }); push('line', { ...st.p, z: nd }, { f: c.f }); d = nd; if (d > Z + 1e-6) push('rapid', { ...st.p, z: R }); } }
+    else push('line', { ...st.p, z: Z }, { f: c.f });
+    push('rapid', { ...st.p, z: st.ret === 98 ? c.z0 : R });
+  }
+  function g13(w) {
+    const r = rad(w.D != null ? w.D : st.D), cx = st.p.x, cy = st.p.y, Ls = w.L || 1, f = w.F || st.f; if (w.F) st.f = w.F;
+    const radii = []; if (w.K != null) { const q = w.Q || (w.K - w.I); for (let rr = w.I; rr < w.K - 1e-6; rr += q) radii.push(rr); radii.push(w.K); } else radii.push(w.I);
+    for (let n = 1; n <= (st.abs ? 1 : Ls); n++) {
+      const z = st.abs ? w.Z : st.p.z + w.Z;
+      push('line', { x: cx, y: cy, z }, { f, comp: 0 });
+      for (const rr of radii) { const rc = rr - r; if (rc <= 0.05) continue; push('line', { x: cx + rc, y: cy, z }, { f, comp: 0 }); push('arc', { x: cx + rc, y: cy, z }, { c: { x: cx, y: cy }, cw: false, full: true, f, comp: 0 }); }
+      push('line', { x: cx, y: cy, z }, { f, comp: 0 });
+    }
+  }
+  function contourOf(P, x0, y0) {   // ejecuta el subprograma del contorno sin moverse
+    const sv = { p: st.p, abs: st.abs, mot: st.mot, comp: st.comp }, n0 = items.length;
+    st.p = { x: x0, y: y0, z: 0 }; st.abs = true; st.mot = 1; st.comp = 0;
+    let i = lab[P]; if (i == null) { warn.push('No encuentro N' + P); Object.assign(st, sv); return []; }
+    for (let g = 0; g < 500 && i < L.length; g++, i++) { const l = L[i]; const { w, g: G, m } = words(l); if (m.includes(99)) break;
+      for (const gg of G) { if (gg <= 3) st.mot = gg; if (gg === 90) st.abs = true; if (gg === 91) st.abs = false; }
+      if (w.X != null || w.Y != null) { const b = tgt(w); b.z = 0; if (st.mot === 2 || st.mot === 3) arcItem(b, st.mot === 2, w); else { const it = push('line', b); if (w[',C'] != null) it.corner = { t: 'C', v: w[',C'] }; if (w[',R'] != null) it.corner = { t: 'R', v: w[',R'] }; } } }
+    const sub = items.splice(n0); Object.assign(st, sv); corners(sub);
+    const pts = [{ x: x0, y: y0 }]; for (const it of sub) for (const q of dense(it)) pts.push(q); return pts;
+  }
+  function g150(w, side) {
+    const r = rad(w.D != null ? w.D : st.D), K = w.K || 0, f = w.F || st.f; if (w.F) st.f = w.F;
+    const x0 = w.X != null ? w.X : st.p.x, y0 = w.Y != null ? w.Y : st.p.y, poly = contourOf(w.P, x0, y0);
+    if (poly.length < 3) return;
+    const zR = w.R != null ? w.R : st.p.z, Z = w.Z, Q = w.Q || (zR - Z), byX = w.I != null && w.J == null, s = byX ? w.I : (w.J || r);
+    const inside = (x, y) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a.y > y) !== (b.y > y) && x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x) c = !c; } return c; };
+    const dist = (x, y) => { let d = 1e9; for (let i = 1; i < poly.length; i++) { const a = poly[i - 1], b = poly[i], vx = b.x - a.x, vy = b.y - a.y, l2 = vx * vx + vy * vy || 1, t = Math.max(0, Math.min(1, ((x - a.x) * vx + (y - a.y) * vy) / l2)); d = Math.min(d, Math.hypot(x - a.x - t * vx, y - a.y - t * vy)); } return d; };
+    const ok = (x, y) => inside(x, y) && dist(x, y) >= r + K - 1e-6;
+    let mnx = 1e9, mxx = -1e9, mny = 1e9, mxy = -1e9; for (const p of poly) { mnx = Math.min(mnx, p.x); mxx = Math.max(mxx, p.x); mny = Math.min(mny, p.y); mxy = Math.max(mxy, p.y); }
+    // filas de vaciado (en coordenadas "a lo largo" / "de paso")
+    const A = byX ? [mny, mxy] : [mnx, mxx], Bv = byX ? [mnx, mxx] : [mny, mxy], P = (a, b) => byX ? { x: b, y: a } : { x: a, y: b };
+    const rows = []; for (let b = Bv[0] + r + K; b <= Bv[1] - r - K + 1e-6; b += s) rows.push(b); if (rows.length && rows[rows.length - 1] < Bv[1] - r - K - 0.05) rows.push(Bv[1] - r - K);
+    const segs = []; rows.forEach((b, ri) => { let a0 = null; const out = []; for (let a = A[0]; a <= A[1] + 0.25; a += 0.25) { const q = P(a, b), o = ok(q.x, q.y); if (o && a0 == null) a0 = a; if ((!o || a > A[1]) && a0 != null) { out.push([a0, a - 0.25]); a0 = null; } } if (ri % 2) out.reverse().forEach(s2 => s2.reverse()); out.forEach(s2 => segs.push(s2.map(a => P(a, b)))); });
+    // pasada de acabado: contorno desplazado hacia dentro
+    let area = 0; for (let i = 1; i < poly.length; i++) area += poly[i - 1].x * poly[i].y - poly[i].x * poly[i - 1].y;
+    const fin = offsetXY(poly[poly.length - 1], poly.slice(1), area > 0 ? 1 : -1, r, true);
+    const levels = []; for (let z = zR - Q; z > Z + 1e-6; z -= Q) levels.push(z); levels.push(Z);
+    push('rapid', { x: x0, y: y0, z: st.p.z }, { comp: 0 }); push('rapid', { x: x0, y: y0, z: zR }, { comp: 0 });
+    for (const z of levels) {
+      let first = true;
+      for (const sg of segs) {
+        const a = sg[0], b = sg[1];
+        const mid = { x: (st.p.x + a.x) / 2, y: (st.p.y + a.y) / 2 };
+        if (first || !ok(mid.x, mid.y) || Math.hypot(st.p.x - a.x, st.p.y - a.y) > s * 1.6) { push('rapid', { ...st.p, z: zR }, { comp: 0 }); push('rapid', { x: a.x, y: a.y, z: zR }, { comp: 0 }); push('line', { x: a.x, y: a.y, z }, { f, comp: 0 }); first = false; }
+        else push('line', { x: a.x, y: a.y, z }, { f, comp: 0 });
+        push('line', { x: b.x, y: b.y, z }, { f, comp: 0 });
+      }
+      if (fin.length) { push('rapid', { ...st.p, z: zR }, { comp: 0 }); push('rapid', { x: fin[0].x, y: fin[0].y, z: zR }, { comp: 0 }); push('line', { x: fin[0].x, y: fin[0].y, z }, { f, comp: 0 }); for (const q of fin) push('line', { x: q.x, y: q.y, z }, { f, comp: 0 }); push('line', { x: fin[0].x, y: fin[0].y, z }, { f, comp: 0 }); }
+    }
+    push('rapid', { ...st.p, z: zR }, { comp: 0 }); push('rapid', { x: x0, y: y0, z: zR }, { comp: 0 });
+    void side;
+  }
+  while (!ended && pc < L.length) {
+    if (++steps > 100000) { warn.push('Programa demasiado largo'); break; }
+    cur = pc; const l = L[pc]; pc++;
+    if (!l || /^O\d/.test(l)) continue;
+    const { w, g, m } = words(l);
+    let g53 = false, g13x = false, g150x = false, side = 0, cycSet = null;
+    for (const G of g) {
+      if (G === 0 || G === 1 || G === 2 || G === 3) { st.mot = G; }
+      else if (G === 90) st.abs = true; else if (G === 91) st.abs = false;
+      else if (G === 40) st.comp = 0; else if (G === 41) { side = 1; } else if (G === 42) { side = -1; }
+      else if (G === 43) st.h = w.H != null ? w.H : 0; else if (G === 49) st.h = 0;
+      else if (G === 53) g53 = true; else if (G >= 54 && G <= 59) st.wo = 'G' + G;
+      else if (G === 80) st.cyc = null; else if (G === 98) st.ret = 98; else if (G === 99) st.ret = 99;
+      else if (G === 81 || G === 83) cycSet = G; else if (G === 13 || G === 12) g13x = true; else if (G === 150) g150x = true;
+    }
+    if (w.D != null) st.D = w.D; if (w.F != null) st.f = w.F;
+    if (w.T != null) st.t = w.T;
+    if (m.includes(6)) { op({ op: 'tool', n: st.t }); st.p = { x: null, y: null, z: null }; st.h = 0; }
+    if (g150x) { g150(w, side); }
+    else if (g13x) { g13(w); }
+    else if (g53) { if (w.Z != null) { op({ op: 'g53', z: w.Z }); st.p.z = null; } }
+    else if (cycSet) { st.cyc = { t: cycSet, z: w.Z, r: w.R, q: w.Q || 0, f: st.f, z0: st.p.z }; drill(w.X, w.Y); }
+    else if (st.cyc && (w.X != null || w.Y != null)) { if (w.X != null && !st.abs) w.X += st.p.x; if (w.Y != null && !st.abs) w.Y += st.p.y; drill(w.X, w.Y); }
+    else if (w.X != null || w.Y != null || w.Z != null) {
+      if (side) { st.comp = side; }
+      const b = tgt(w);
+      if (st.mot === 2 || st.mot === 3) arcItem(b, st.mot === 2, w);
+      else { const it = push(st.mot === 0 ? 'rapid' : 'line', b); if (w[',C'] != null) it.corner = { t: 'C', v: w[',C'] }; if (w[',R'] != null) it.corner = { t: 'R', v: w[',R'] }; }
+    } else if (side) st.comp = side;
+    for (const M of m) {
+      if (M === 3 || M === 4) op({ op: 'spin', on: true, s: w.S || 0 }); else if (M === 5) op({ op: 'spin', on: false });
+      else if (M === 8 || M === 9) op({ op: 'cool', on: M === 8 });
+      else if (M === 97) { const i = lab[w.P]; if (i == null) warn.push('M97 P' + w.P + ' sin etiqueta'); else { stack.push({ ret: pc, start: i, left: w.L || 1 }); pc = i; } }
+      else if (M === 99) { const s = stack[stack.length - 1]; if (!s) { ended = true; break; } if (s.left > 1) { s.left--; pc = s.start; } else { stack.pop(); pc = s.ret; } }
+      else if (M === 30 || M === 2) { ended = true; }
+    }
+  }
+  corners(items);
+  // radio de herramienta: agrupa los movimientos con G41/G42
+  for (let i = 0; i < items.length;) {
+    const it = items[i];
+    if (it.k === 'op' || !it.comp) { i++; continue; }
+    let j = i; while (j < items.length && items[j].k !== 'op' && items[j].comp) j++;
+    const grp = items.slice(i, j), pts = [], own = [];
+    grp.forEach((g, gi) => { g.pts = dense(g); for (const q of g.pts) { pts.push(q); own.push(gi); } });
+    const off = offsetXY(grp[0].a, pts, grp[0].comp, rad(grp[0].D), false);
+    let k = 0; grp.forEach(g => { g.pts = g.pts.map(() => off[k++]); g.done = true; });
+    i = j;
+  }
+  const ops = [];
+  for (const it of items) {
+    if (it.k === 'op') { ops.push(it); continue; }
+    ops.push({ k: 'move', rapid: it.k === 'rapid', pts: it.done ? it.pts : dense(it), f: it.f, h: it.h, wo: it.wo, ln: it.ln });
+  }
+  ops.push({ k: 'op', op: 'end', ln: L.length - 1 });
+  return { ops, warn, lines: RAW };
+}
+function corners(items) {
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i]; if (!it.corner || it.k !== 'line') continue;
+    let j = i + 1; while (j < items.length && items[j].k === 'op') j++;
+    const nx = items[j]; if (!nx || nx.k !== 'line') continue;
+    const P = it.b, u1 = unit(it.b.x - it.a.x, it.b.y - it.a.y), u2 = unit(nx.b.x - P.x, nx.b.y - P.y); if (!u1 || !u2) continue;
+    const dot = Math.max(-1, Math.min(1, u1.x * u2.x + u1.y * u2.y)), th = Math.acos(dot), cr = u1.x * u2.y - u1.y * u2.x; if (th < 1e-3) continue;
+    const v = it.corner.v, t = it.corner.t === 'C' ? v : v * Math.tan(th / 2);
+    const e = { x: P.x - u1.x * t, y: P.y - u1.y * t, z: P.z }, s = { x: P.x + u2.x * t, y: P.y + u2.y * t, z: P.z };
+    it.b = e; nx.a = { ...s };
+    const ins = it.corner.t === 'C' ? { ...it, k: 'line', a: e, b: s, corner: null } : { ...it, k: 'arc', a: e, b: s, corner: null, cw: cr < 0, c: { x: e.x + (cr > 0 ? -u1.y : u1.y) * v, y: e.y + (cr > 0 ? u1.x : -u1.x) * v } };
+    items.splice(i + 1, 0, ins); i++;
+  }
+}
+function unit(x, y) { const l = Math.hypot(x, y); return l < 1e-9 ? null : { x: x / l, y: y / l }; }
+function dense(it) {
+  if (it.k !== 'arc') return [{ ...it.b }];
+  const a = it.a, b = it.b, c = it.c, r = Math.hypot(a.x - c.x, a.y - c.y);
+  let a0 = Math.atan2(a.y - c.y, a.x - c.x), a1 = Math.atan2(b.y - c.y, b.x - c.x), d = a1 - a0;
+  if (it.cw) { if (d >= -1e-9) d -= Math.PI * 2; } else { if (d <= 1e-9) d += Math.PI * 2; }
+  if (!it.full && Math.abs(Math.abs(d) - Math.PI * 2) < 1e-6 && Math.hypot(a.x - b.x, a.y - b.y) > 1e-6) d = 0;
+  const n = Math.max(2, Math.ceil(Math.abs(d) * r / 0.6), Math.ceil(Math.abs(d) / 0.1)), out = [];
+  const za = a.z ?? b.z, zb = b.z ?? za;
+  for (let i = 1; i <= n; i++) { const t = i / n, an = a0 + d * t; out.push({ x: c.x + Math.cos(an) * r, y: c.y + Math.sin(an) * r, z: za == null ? null : za + (zb - za) * t }); }
+  out[out.length - 1] = { ...b }; return out;
+}
+// desplaza una cadena de puntos a la izquierda (side=1) o derecha (-1) del sentido de avance
+function offsetXY(start, pts, side, r, closed) {
+  const xy = [start, ...pts], n = xy.length, out = [];
+  const dirAt = (i, step) => { for (let k = i + step; k >= 0 && k < n; k += step) { const d = step > 0 ? unit(xy[k].x - xy[i].x, xy[k].y - xy[i].y) : unit(xy[i].x - xy[k].x, xy[i].y - xy[k].y); if (d) return d; } return null; };
+  for (let i = 1; i < n; i++) {
+    let din = dirAt(i, -1), dout = dirAt(i, 1);
+    if (closed && !dout) dout = dirAt(0, 1); if (closed && i === 1) { /* entrada del contorno cerrado */ }
+    if (!closed && i === 1) din = null; if (!closed && i === n - 1) dout = null;
+    let nx, ny, k = 1;
+    if (din && dout) { const n1 = { x: -din.y, y: din.x }, n2 = { x: -dout.y, y: dout.x }; nx = n1.x + n2.x; ny = n1.y + n2.y; const l = Math.hypot(nx, ny); if (l < 1e-6) { nx = n1.x; ny = n1.y; } else { nx /= l; ny /= l; k = 1 / Math.max(0.35, nx * n1.x + ny * n1.y); } }
+    else { const d = din || dout; if (!d) { out.push({ ...xy[i] }); continue; } nx = -d.y; ny = d.x; }
+    out.push({ x: xy[i].x + side * r * k * nx, y: xy[i].y + side * r * k * ny, z: xy[i].z });
+  }
+  return out;
+}
+
+/* ---- bruto con mapa de alturas: arranque de material ---- */
+let HM = null;
+function buildStock() {
+  if (HM) { HM.mesh.removeFromParent(); HM.geo.dispose(); }
+  const st = S.stock, res = Math.max(0.5, Math.max(st.sx, st.sy) / 180), nx = Math.ceil(st.sx / res), ny = Math.ceil(st.sy / res), rx = st.sx / nx, ry = st.sy / ny;
+  const W = nx + 3, H = ny + 3, pos = new Float32Array(W * H * 3), idx = [];
+  HM = { nx, ny, rx, ry, W, H, sz: st.sz, h: new Float32Array((nx + 1) * (ny + 1)), pos, d: null };
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) setV(i, j);
+  for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { const a = j * W + i, b = a + 1, c = a + W, d = c + 1; idx.push(a, b, c, b, d, c); }
+  const geo = HM.geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+  geo.attributes.position.setUsage(THREE.DynamicDrawUsage); geo.attributes.normal.setUsage(THREE.DynamicDrawUsage);
+  const m = HM.mesh = new THREE.Mesh(geo, POM); m.castShadow = m.receiveShadow = true; m.frustumCulled = false;
+  m.position.set(lx(S.part.x0), ly(S.part.top), lz(S.part.y0)); viseGroup.add(m);
+}
+function setV(i, j) {
+  const { nx, ny, rx, ry, W, H, h, pos } = HM, gi = Math.max(0, Math.min(nx, i - 1)), gj = Math.max(0, Math.min(ny, j - 1)), k = (j * W + i) * 3;
+  const edge = i === 0 || j === 0 || i === W - 1 || j === H - 1;
+  pos[k] = gi * rx * MM; pos[k + 1] = (edge ? -HM.sz : h[gj * (nx + 1) + gi]) * MM; pos[k + 2] = -gj * ry * MM;
+}
+function stamp(u, v, z, r) {   // baja el material bajo el círculo de la herramienta; devuelve mm³ aproximados
+  const { nx, ny, rx, ry, h } = HM; z = Math.max(z, -HM.sz);
+  const i0 = Math.max(0, Math.ceil((u - r) / rx)), i1 = Math.min(nx, Math.floor((u + r) / rx)), j0 = Math.max(0, Math.ceil((v - r) / ry)), j1 = Math.min(ny, Math.floor((v + r) / ry));
+  if (i0 > i1 || j0 > j1) return 0;
+  let rem = 0; const r2 = r * r;
+  for (let j = j0; j <= j1; j++) { const dv = j * ry - v; for (let i = i0; i <= i1; i++) { const du = i * rx - u; if (du * du + dv * dv > r2) continue; const k = j * (nx + 1) + i; if (h[k] > z + 1e-4) { rem += h[k] - z; h[k] = z; } } }
+  if (rem > 0) { const d = HM.d; if (!d) HM.d = { i0, i1, j0, j1 }; else { d.i0 = Math.min(d.i0, i0); d.i1 = Math.max(d.i1, i1); d.j0 = Math.min(d.j0, j0); d.j1 = Math.max(d.j1, j1); } }
+  return rem * rx * ry;
+}
+function maxUnder(u, v, r) { const { nx, ny, rx, ry, h } = HM; let m = -1e9; const i0 = Math.max(0, Math.ceil((u - r) / rx)), i1 = Math.min(nx, Math.floor((u + r) / rx)), j0 = Math.max(0, Math.ceil((v - r) / ry)), j1 = Math.min(ny, Math.floor((v + r) / ry)); for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const du = i * rx - u, dv = j * ry - v; if (du * du + dv * dv <= r * r) m = Math.max(m, h[j * (nx + 1) + i]); } return m; }
+function flushStock() {
+  const d = HM && HM.d; if (!d) return; HM.d = null;
+  const { nx, ny, rx, ry, W, h } = HM, nrm = HM.geo.attributes.normal.array, H1 = j => Math.max(0, Math.min(ny, j)), Hx = i => Math.max(0, Math.min(nx, i));
+  const i0 = d.i0, i1 = d.i1 + 2, j0 = d.j0, j1 = d.j1 + 2;
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+    setV(i, j); const gi = Hx(i - 1), gj = H1(j - 1); if (i === 0 || j === 0 || i === W - 1 || j === HM.H - 1) continue;
+    const hl = h[gj * (nx + 1) + Hx(gi - 1)], hr = h[gj * (nx + 1) + Hx(gi + 1)], hd = h[H1(gj - 1) * (nx + 1) + gi], hu = h[H1(gj + 1) * (nx + 1) + gi];
+    let a = -(hr - hl) / (2 * rx), b = 1, c = (hu - hd) / (2 * ry); const l = Math.hypot(a, b, c), k = (j * W + i) * 3; nrm[k] = a / l; nrm[k + 1] = b / l; nrm[k + 2] = c / l;
+  }
+  const P = HM.geo.attributes.position, N = HM.geo.attributes.normal, s0 = j0 * W * 3, cnt = (j1 - j0 + 1) * W * 3;
+  P.clearUpdateRanges(); N.clearUpdateRanges(); P.addUpdateRange(s0, cnt); N.addUpdateRange(s0, cnt); P.needsUpdate = N.needsUpdate = true;
+}
+
+/* ---- programas: lista, selección y ejecución ---- */
+const SIMK = 8, RAPID = 250;   // avance ×8 para no esperar minutos; rápidos 15 m/min
+function listProgram() { S.screen = 'list'; if (S.listSel > PROGS.length) S.listSel = 0; info(PROGS.length ? 'Elige un programa con el cursor y pulsa SELECT PROGRAM.' : 'Cargando la lista de programas…'); }
+function selectProgram(k) {
+  if (S.screen !== 'list') { listProgram(); return; }
+  if (S.run || S.busy) { setMsg('Espera a que termine o pulsa RESET antes de cambiar de programa', 'warn'); return; }
+  S.pi = k; PROG = k ? PROGS[k - 1] : null;
+  if (PROG && !PROG.ops) {
+    PROG.T = toolsOf(PROG.haas); const r = interp(PROG.haas, PROG.T); PROG.ops = r.ops; PROG.lines = r.lines; PROG.minZ = 0;
+    for (const o of r.ops) if (o.k === 'move' && !o.rapid) for (const q of o.pts) if (q.z != null) PROG.minZ = Math.min(PROG.minZ, q.z);
+  }
+  setTools(PROG ? PROG.T : TDEF0); newPart();
+  S.screen = PROG ? 'prog' : 'ofs'; S.mode = PROG ? 'mem' : 'mdi'; sfx('set');
+  if (PROG) setMsg(`${progName(PROG)} cargado: bruto ${es0(S.stock.sx)}×${es0(S.stock.sy)}×${es0(S.stock.sz)}${centred() ? ', cero en el centro arriba' : ''}. Haz el reglaje de ${TL().map(n => 'T' + n).join(', ')} y el G54; luego MEMORY y CYCLE START.`, 'info');
+  else info('Modo solo reglaje: pieza de 100×100 con el cero en la esquina.');
+}
+function origin() {
+  if (S.screen !== 'pos') { setMsg('ORIGIN pone a cero la cota de operador en POSITION: pulsa POSITION primero', 'warn'); return; }
+  const a = S.input.trim(); S.input = '';
+  if (/^[XYZ]$/.test(a)) { S.opz[a] = mpos(a); info(`Cota de operador ${a} a cero`); } else { for (const c of COLS) S.opz[c] = mpos(c); info('Cotas de operador X, Y, Z a cero'); }
+  sfx('set');
+}
+function feedHold() { if (!S.run) { info('FEED HOLD: no hay ningún programa en marcha.'); return; } S.run.hold = true; setMsg('FEED HOLD: ejes parados. CYCLE START para seguir, RESET para cancelar.', 'warn'); }
+function memStart() {
+  if (!PROG) { setMsg('No hay programa: LIST PROGRAM, elige uno con el cursor y SELECT PROGRAM', 'warn'); return; }
+  if (blocked()) return;
+  if (S.door > 0.5) { setMsg('Cierra la puerta para ejecutar el programa', 'warn'); return; }
+  if (S.hold) { setMsg('Deja primero el objeto que llevas en la mano', 'warn'); return; }
+  S.screen = 'prog';
+  if (S.run) { if (S.run.hold) { S.run.hold = false; info('Seguimos.'); } return; }
+  S.run = { ops: PROG.ops, i: 0, ln: 0, hold: false, m: null }; S.ranOk = false; buildStock(); afterMove(true);
+  setMsg(`Ejecutando ${progName(PROG)}${S.result && S.result.pass ? '' : ' (sin validar el reglaje: ¡ojo!)'}`, S.result && S.result.pass ? 'info' : 'warn');
+}
+function prepMove(o) {
+  const out = [], wo = S.ofs[o.wo] || S.ofs.G54, hv = o.h ? (S.H[o.h] || 0) : 0; let x = S.mx, y = S.my, z = S.mg;
+  for (const q of o.pts) {
+    if (q.x != null) x = q.x + wo[0]; if (q.y != null) y = q.y + wo[1]; if (q.z != null) z = q.z + wo[2] + hv;
+    if (x < LIM.X[0] || x > LIM.X[1] || y < LIM.Y[0] || y > LIM.Y[1] || z < LIM.Z[0] || z > LIM.Z[1]) return { err: `fuera de recorrido en la línea ${o.ln + 1} (revisa G54 y H)` };
+    out.push({ x, y, z });
+  }
+  return { pts: out, j: 0 };
+}
+function cutAt(rapid) {
+  const T = cur(), p = S.part, u = S.mx - p.x0, v = S.my - p.y0, z = tip() - p.top;
+  if (T.type === 'probe') { if (maxUnder(u, v, BALL) > z) return 'El palpador ha entrado en la pieza durante el programa'; return null; }
+  const rem = z < 1e-3 ? stamp(u, v, z, T.r) : 0;
+  if (rem > 0.01) {
+    S.cutVol += rem;
+    if (rapid) return 'Movimiento rápido (G00) dentro del material';
+    if (!S.spindle) return 'La herramienta corta con el husillo parado';
+  }
+  const hl = T.type === 'face' ? 40 : T.type === 'end' ? 45 : 72;
+  if (z + hl < 0 && maxUnder(u, v, 21) > z + hl) return 'El portaherramientas ha chocado con la pieza';
+  if (z < -HM.sz + 0.05 && u > -T.r && u < S.stock.sx + T.r && v > -T.r && v < S.stock.sy + T.r) return 'Has atravesado la pieza: la herramienta toca las paralelas';
+  const r = sense(); return r.crash;
+}
+function runTick(dt) {
+  const R = S.run; if (!R || R.hold || S.busy || S.alarm || S.estop) return;
+  let t = dt;
+  for (let guard = 0; guard < 400 && S.run === R && t > 0 && !S.busy && !S.alarm && !R.hold; guard++) {
+    const o = R.ops[R.i]; if (!o) { endRun(); return; } R.ln = o.ln;
+    if (o.k === 'op') {
+      R.i++;
+      if (o.op === 'tool') { if (!TDEF[o.n]) { crash(`T${o.n} no está en el carrusel`); return; } if (S.tool !== o.n) { startATC(o.n); return; } }
+      else if (o.op === 'spin') { if (o.on) { if (cur().type === 'probe') { crash('M03 con el palpador 3D en el husillo'); return; } S.rpm = o.s || S.rpm; if (!S.spindle) { S.spindle = true; hum(true); } } else if (S.spindle) { S.spindle = false; hum(false); } }
+      else if (o.op === 'g53') { R.ops = R.ops.slice(); R.ops.splice(R.i, 0, { k: 'move', rapid: true, mach: true, z: o.z, ln: o.ln }); }
+      else if (o.op === 'end') { endRun(); return; }
+      if (S.single && o.op !== 'cool') { R.hold = true; info('Bloque a bloque: CYCLE START para la siguiente línea'); }
+      continue;
+    }
+    if (!R.m) { R.m = o.mach ? { pts: [{ x: S.mx, y: S.my, z: o.z }], j: 0 } : prepMove(o); if (R.m.err) { const e = R.m.err; R.m = null; crash('Recorrido excedido: ' + e); return; } }
+    const sp = o.rapid ? RAPID * S.rov : Math.max(1, o.f) / 60 * S.fov * SIMK;
+    while (t > 0 && R.m.j < R.m.pts.length) {
+      const q = R.m.pts[R.m.j], dx = q.x - S.mx, dy = q.y - S.my, dz = q.z - S.mg, d = Math.hypot(dx, dy, dz);
+      const go = Math.min(d, sp * t), n = Math.max(1, Math.ceil(go / 0.4));
+      for (let s2 = 1; s2 <= n; s2++) {
+        const k = go / d * s2 / n; S.mx = r3(q.x - dx + dx * k); S.my = r3(q.y - dy + dy * k); S.mg = r3(q.z - dz + dz * k);
+        const why = cutAt(o.rapid); if (why) { afterMove(true); crash(why); return; }
+      }
+      t -= go / sp; if (go >= d - 1e-9) { S.mx = q.x; S.my = q.y; S.mg = q.z; R.m.j++; }
+    }
+    if (R.m.j >= R.m.pts.length) { R.m = null; R.i++; if (S.single) { R.hold = true; info('Bloque a bloque: CYCLE START para la siguiente línea'); } }
+  }
+  afterMove(true);
+}
+function endRun() {
+  S.run = null; if (S.spindle) { S.spindle = false; hum(false); } S.ranOk = true;
+  const bad = [];
+  for (const c of COLS) { const e = r3(g54()[COLS.indexOf(c)] - expG(c)); if (Math.abs(e) > TOL) bad.push(c === 'Z' ? `G54 Z ${fc(e)}: ha cortado ${es(Math.abs(e))} mm ${e > 0 ? 'menos' : 'más'} de profundidad` : `G54 ${c} ${fc(e)}: todo desplazado ${es(Math.abs(e))} mm en ${c}`); }
+  for (const n of TL()) { const e = r3(S.H[n] - expH(n)); if (Math.abs(e) > TOL) bad.push(`H${hh(n)} ${fc(e)}: T${n} ha cortado ${es(Math.abs(e))} mm ${e > 0 ? 'menos' : 'más'} profundo`); }
+  if (bad.length) setMsg(`${progName(PROG)} terminado sin choques, pero la pieza NO sale a cota: ${bad[0]}${bad.length > 1 ? ` (y ${bad.length - 1} más)` : ''}.`, 'warn');
+  else setMsg(`${progName(PROG)} terminado sin choques y a cota: ¡pieza mecanizada con tu reglaje!`, 'ok');
+  sfx(bad.length ? 'kick' : 'set'); S.ranOk = !bad.length; afterMove(true);
 }
 
 /* =================== sonido y vibración =================== */
@@ -926,6 +1315,12 @@ function servoLevel(v) {
   if (!servo) { const o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain(); o.type = 'triangle'; o2.type = 'square'; o2.frequency.value = 55; const g2 = a.createGain(); g2.gain.value = 0.15; g.gain.value = 0; o.connect(g); o2.connect(g2).connect(g); g.connect(a.destination); o.start(); o2.start(); servo = { o, g }; }
   const k = Math.min(1, v / 120), t = a.currentTime;
   servo.g.gain.setTargetAtTime(k > 0.005 ? 0.008 + 0.03 * k : 0, t, 0.05); servo.o.frequency.setTargetAtTime(180 + 900 * k, t, 0.05);
+}
+let cutN = null;
+function cutLevel(v) {   // ruido de corte según el material arrancado
+  const a = ac; if (!a || a.state !== 'running') return;
+  if (!cutN) { burst(0.01, 1000, 1, 0.0001); const s = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(); s.buffer = noiseBuf; s.loop = true; bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 1.4; g.gain.value = 0; s.connect(bp).connect(g).connect(a.destination); s.start(); cutN = { g, bp }; }
+  const k = Math.min(1, v / 800); cutN.g.gain.setTargetAtTime(k > 0.01 ? 0.02 + 0.09 * k : 0, a.currentTime, 0.04); cutN.bp.frequency.setTargetAtTime(1800 + 1600 * k, a.currentTime, 0.1);
 }
 function buzz(v, ms) { const s = renderer.xr.getSession(); if (!s) return; for (const src of s.inputSources) { const gp = src.gamepad; try { if (gp && gp.hapticActuators && gp.hapticActuators[0]) gp.hapticActuators[0].pulse(v, ms); else if (gp && gp.vibrationActuator) gp.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: v, weakMagnitude: v }); } catch (e) {} } }
 
@@ -980,6 +1375,9 @@ addEventListener('keydown', e => {
   else if (k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); moveCur(k === 'ArrowUp' ? -1 : 1, 0); }
   else if (k === '[' || k === ']') moveCur(0, k === '[' ? -1 : 1);
   else if ((k === 'a' || k === 'd') && !keysDown[k]) { keysDown[k] = 1; if (!blocked()) S.cjog = k === 'a' ? -1 : 1; }
+  else if (k === 'Enter' && S.screen === 'list') selectProgram(S.listSel);
+  else if (k === 'l' || k === 'L') listProgram();
+  else if (k === 'o' || k === 'O') origin();
   else if (k === 'p' || k === 'P') partZero();
   else if (k === 'm' || k === 'M') toolOffsetMeasure();
   else if (/^[0-9.\-]$/.test(k)) key(k);
@@ -1042,6 +1440,7 @@ renderer.setAnimationLoop(t => {
       afterMove(true);
     }
   }
+  S.cutVol = 0; runTick(dt); flushStock(); cutLevel(dt > 0 ? S.cutVol / dt : 0);
   if (S.jogHold && t - S.jogHold.t > 300) S.cjog = S.jogHold.d;
   if (S.cjog && !S.alarm && !S.estop && !S.busy) { const step = JOGV[S.inc] * dt, n = Math.max(1, Math.ceil(step / 0.05)); for (let i = 0; i < n && S.cjog; i++) if (!jog(S.axis, S.cjog * step / n)) { S.cjog = 0; S.jogHold = null; break; } }
   const sess = renderer.xr.getSession();
@@ -1063,6 +1462,7 @@ renderer.setAnimationLoop(t => {
   if (model) { const dx = T0 - S.mx * MM - TBL[0], dz = Tz0 + S.my * MM - TBL[1]; for (const m of parts.x) m.position.set(dx, 0, dz); for (const m of parts.y) m.position.z = dz; for (const m of parts.z) m.position.y = Hy0 + S.mg * MM - NOSE; for (const m of parts.door) m.position.x = -0.42 * S.doorT; }
   cab.position.set(SPX, Hy0 + tip() * MM, SPZ);
   const act = TOOLS[S.tool] && TOOLS[S.tool].spindle; if (act) act.rotation.y = S.spindle ? act.rotation.y + dt * 50 : 0;
+  if (S.run && t - lastDraw > 120) dirty = true;
   inLight.intensity += ((S.homed ? 4 : 0) - inLight.intensity) * Math.min(1, dt * 3);
   if (act && act.userData.stylus) { const c = S.contact; let dx = 0, dy = 0, dz = 0;
     if (c) { const defl = Math.max(0, BALL - c.r) * MM; if (c.kind === 'top') dy = defl; else { const o = c.o, px = Math.max(o.x0, Math.min(o.x1, S.mx)), py = Math.max(o.y0, Math.min(o.y1, S.my)); const vx = S.mx - px, vy = S.my - py, Ln = Math.hypot(vx, vy) || 1; dx = vx / Ln * defl; dz = -vy / Ln * defl; } }
