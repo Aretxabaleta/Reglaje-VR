@@ -6,8 +6,8 @@
 <title>Reglaje VR Mini Mill</title>
 <style>
 /* VOICE: taller de mecanizado, directo, sin adornos
-   IDEA: la propia máquina con su panel y una lupa sobre la punta del buscabordes
-   PICTURE: escena 3D a pantalla completa, greybox de realismo estilizado
+   IDEA: la propia máquina con su control en castellano y el palpador 3D con su reloj
+   PICTURE: escena 3D a pantalla completa con el modelo real de la máquina
    COLOUR and TYPE: neutros de taller; verde ok, ámbar cerca, rojo choque, cian tocable; system-ui
    LAYOUT: escena completa, barra superior fina, ayuda de teclas abajo a la izquierda */
 :root{color-scheme:dark}
@@ -18,10 +18,11 @@ canvas{display:block}
 #bar b{margin-right:auto;font-size:16px}
 .h{min-height:40px;padding:0 14px;border-radius:8px;border:1px solid #3a4550;background:#26303a;color:#e8ecef;font:inherit;cursor:pointer}
 .h:focus-visible{outline:2px solid #2ec5e6;outline-offset:2px}
-#help{position:fixed;left:12px;bottom:12px;max-width:min(560px,calc(100vw - 24px));background:rgba(18,22,26,.88);padding:10px 14px;border-radius:8px;font-size:13px;z-index:2}
+#help{position:fixed;left:12px;bottom:12px;max-width:min(600px,calc(100vw - 24px));max-height:60vh;overflow:auto;background:rgba(18,22,26,.9);padding:10px 14px;border-radius:8px;font-size:13px;z-index:2}
 #help summary{cursor:pointer;font-weight:600;font-size:14px}
 #help kbd{background:#2a333c;border-radius:4px;padding:0 5px;font:12px ui-monospace,monospace}
-#note{color:#9fb0bd;margin:6px 0 0}
+.note{color:#9fb0bd;margin:6px 0 0}
+#help a{color:#2ec5e6}
 @media(max-width:600px){#help{font-size:12px}#bar b{width:100%}}
 </style>
 </head>
@@ -29,16 +30,17 @@ canvas{display:block}
 <div id="bar">
   <b>Mendizabala · Reglaje Mini Mill (prototipo)</b>
   <button class="h" id="v1">Vista general</button>
-  <button class="h" id="v2">Panel</button>
+  <button class="h" id="v2">Control</button>
   <button class="h" id="v3">Pieza</button>
+  <button class="h" id="v4">Pasos y lupa</button>
   <button class="h" id="cp" hidden>Copiar resumen</button>
 </div>
 <details id="help" open>
   <summary>Cómo se juega</summary>
-  <p style="margin:6px 0">Coge el cero G54 en la esquina <b>izquierda-delantera</b> de la pieza (X−, Y−) y en Z en la cara de arriba. El buscabordes mide Ø10 (radio 5 mm). Pulsa los botones del panel 3D o usa el teclado:</p>
-  <div><kbd>X</kbd><kbd>Y</kbd><kbd>Z</kbd> eje · <kbd>I</kbd> incremento · <kbd>←</kbd><kbd>→</kbd> volante · <kbd>A</kbd>/<kbd>D</kbd> mantener = jog rápido · <kbd>S</kbd> husillo · <kbd>P</kbd> PART ZERO SET · números, <kbd>.</kbd> <kbd>-</kbd> y <kbd>Enter</kbd> suma al offset · <kbd>F</kbd> sustituye · <kbd>V</kbd> validar · <kbd>R</kbd> reset · <kbd>N</kbd> pieza nueva · <kbd>H</kbd> ayuda</div>
-  <p id="note" style="margin-top:8px">Simulador educativo de CIFP Mendizabala LHII, sin ánimo de lucro y sin relación con Haas Automation, Inc. Modelo 3D de la máquina: «Haas Mini Mill», de la biblioteca de GrabCAD (<a href="https://grabcad.com/library/haas-mini-mill-1" style="color:#2ec5e6">grabcad.com/library/haas-mini-mill-1</a>), usado con crédito a su autor y con los logotipos retirados.</p>
-  <p id="note">En las gafas: gatillo = pulsar botones del panel, joystick izquierda/derecha = volante. Si el botón VR no aparece aquí, ábrelo en el navegador de las gafas desde su propia dirección.</p>
+  <p style="margin:6px 0">Coge el cero G54 con el <b>palpador 3D</b> en la esquina <b>izquierda-delantera</b> de la pieza (X−, Y−) y Z en la cara de arriba. Acércate hasta que el reloj marque <b>0</b> y pulsa PART ZERO SET con el cursor en la casilla correcta de G54. Con el palpador 3D <b>no se compensa el radio</b> y el husillo <b>nunca</b> debe girar.</p>
+  <div>Teclado: <kbd>X</kbd><kbd>Y</kbd><kbd>Z</kbd> eje del volante · <kbd>I</kbd> incremento · <kbd>←</kbd><kbd>→</kbd> volante · <kbd>A</kbd>/<kbd>D</kbd> mantener = jog · <kbd>↑</kbd><kbd>↓</kbd><kbd>[</kbd><kbd>]</kbd> cursor de correctores · <kbd>P</kbd> PART ZERO SET · números, <kbd>.</kbd> <kbd>-</kbd> · <kbd>Enter</kbd> agregar · <kbd>F</kbd> F1 fijar · <kbd>R</kbd> RESET · <kbd>V</kbd> validar · <kbd>N</kbd> pieza nueva · <kbd>H</kbd> guiado/examen</div>
+  <p class="note">En las gafas: gatillo = pulsar teclas, joystick izquierda/derecha = volante.</p>
+  <p class="note">Simulador educativo de CIFP Mendizabala LHII, sin ánimo de lucro y sin relación con Haas Automation, Inc. Modelo 3D de la máquina: «Haas Mini Mill», de la biblioteca de GrabCAD (<a href="https://grabcad.com/library/haas-mini-mill-1">grabcad.com/library/haas-mini-mill-1</a>), usado con crédito a su autor y con los logotipos retirados.</p>
 </details>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
@@ -49,17 +51,26 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 {
-const MM = 0.001, R = 5, Hy0 = 1.295, MESA_Y = 0.945, SPX = 0, SPZ = -0.95, T0 = SPX - 0.203, Tz0 = SPZ + 0.152;
+/* ---------- constantes ---------- */
+const MM = 0.001, Hy0 = 1.295, MESA_Y = 0.945, SPX = 0, SPZ = -0.95, T0 = SPX - 0.203, Tz0 = SPZ + 0.152;
+const TL = 0.155;                 // nariz del husillo → punto nominal del palpador (m)
+const BALL = 2;                   // radio de la bola y precarrera del reloj (mm)
+const OVER = 1.5;                 // sobrecarrera admisible del palpador (mm)
+const TOL = 0.02;                 // tolerancia de validación (mm)
 const LIM = { X: [-406, 0], Y: [-305, 0], Z: [-254, 0] };
 const INCS = [0.001, 0.01, 0.1, 1];
-const COL = { bg: '#151a1f', box: '#1f262d', line: '#33404b', ink: '#e8ecef', quiet: '#8fa0ad', cyan: '#2ec5e6', green: '#2fbf71', amber: '#f2a20c', red: '#e5484d' };
-const S = { mx: 0, my: 0, mz: 0, axis: 'X', inc: 0.01, spindle: false, crashed: false, g54: { X: 0, Y: 0, Z: 0 }, input: '',
-  msg: 'Enciende el husillo y acerca el buscabordes a la pieza', tone: 'info', help: true, t0: performance.now(), crashes: 0,
-  result: null, part: null, contact: 'none', pen: -Infinity, touched: { X: false, Y: false, Z: false }, cjog: 0, safe: [0, 0, 0], ang: 0 };
-let obst = [], dirty = true;
+const JOGV = { 0.001: 1, 0.01: 4, 0.1: 15, 1: 40 };   // mm/s al mantener una tecla de jog
+const ROWS = ['G52', 'G54', 'G55', 'G56', 'G57', 'G58', 'G59'], COLS = ['X', 'Y', 'Z'];
+const OFS0 = { G52: [0, 0, 0], G54: [-220.894, -154.995, -247.167], G55: [-195.91, -91.542, -62.731], G56: [-295.635, -104.1, -30.29], G57: [-194.565, -165.891, -30.29], G58: [0, 0, 0], G59: [0, -163.3, -117.173] };
+const COL = { ink: '#e8ecef', quiet: '#8fa0ad', cyan: '#2ec5e6', green: '#2fbf71', amber: '#f2a20c', red: '#e5484d' };
+const S = { mx: 0, my: 0, mz: 0, axis: 'X', inc: 0.01, spindle: false, alarm: '', estop: false, ofs: {}, cur: { r: 2, c: 0 }, input: '',
+  msg: '', tone: 'info', help: true, t0: 0, crashes: 0, result: null, part: null, read: BALL, contact: null, touched: { X: false, Y: false, Z: false },
+  setRead: {}, cjog: 0, jogHold: null, safe: [0, 0, 0], screen: 'ofs', tab: 'Trab', wheel: 0 };
+let obst = [], dirty = true, dialDirty = true;
 const rnd = (a, b) => a + Math.random() * (b - a), r3 = v => Math.round(v * 1000) / 1000;
-const f3 = v => (v < 0 ? '-' : ' ') + Math.abs(v).toFixed(3);
+const f3 = v => (Object.is(r3(v), -0) ? 0 : r3(v)).toFixed(3);
 const fc = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(3).replace('.', ',');
+const g54 = () => S.ofs.G54;
 
 /* ---------- escena ---------- */
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -70,55 +81,91 @@ renderer.xr.setReferenceSpaceType('local-floor');
 document.body.appendChild(renderer.domElement);
 document.body.appendChild(VRButton.createButton(renderer));
 const scene = new THREE.Scene();
-const BG = new THREE.Color('#23292f');
+const BG = new THREE.Color('#2a3036');
 scene.background = BG.clone();
 const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.01, 30);
-camera.position.set(0.05, 1.65, 0.9);
+camera.position.set(0.05, 1.65, 0.95);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0.15, 1.2, -0.55); controls.update();
-scene.add(new THREE.HemisphereLight('#dfe8ef', '#3a3f44', 1.6));
-const sun = new THREE.DirectionalLight('#ffffff', 1.6); sun.position.set(1.5, 3, 1.5); scene.add(sun);
-const M = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.65, metalness: 0.1 });
-const metal = new THREE.MeshStandardMaterial({ color: '#aab4bd', roughness: 0.35, metalness: 0.7 });
+controls.target.set(0.05, 1.25, -0.5); controls.update();
+scene.add(new THREE.HemisphereLight('#e6eef5', '#3a3f44', 1.7));
+const sun = new THREE.DirectionalLight('#ffffff', 1.5); sun.position.set(1.2, 3, 2); scene.add(sun);
+const M = (c, r = 0.65, m = 0.1) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
+const steel = M('#b7bec4', 0.35, 0.75), dark = M('#2b3138'), black = M('#16181a', 0.5, 0.2);
 const box = (w, h, d, mat, x, y, z, parent) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); (parent || scene).add(m); return m; };
-const cyl = (r, h, mat, parent, y) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24), mat); m.position.y = y; parent.add(m); return m; };
+const cyl = (r, h, mat, parent, y, seg = 28) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat); m.position.y = y; parent.add(m); return m; };
 
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), M('#3b4148')); floor.rotation.x = -Math.PI / 2; scene.add(floor);
-const grid = new THREE.GridHelper(8, 16, '#4a525a', '#434a51'); grid.position.y = 0.001; scene.add(grid);
-const white = M('#d9dde1'), dark = M('#2b3138'), blue = M('#5d6b78');
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), M('#2f7fc1', 0.8, 0)); floor.rotation.x = -Math.PI / 2; scene.add(floor);
+const white = M('#d9dde1');
 const grey = [box(1.4, 0.92, 0.95, white, 0, 0.46, -1.05), box(0.5, 1.35, 0.35, white, 0, 0.92 + 0.675, -1.475)];
 const mesa = new THREE.Group(); scene.add(mesa);
 grey.push(box(0.914, 0.04, 0.305, M('#6f7a84'), 0, 0, 0, mesa));
-for (const dz of [-0.09, 0, 0.09]) grey.push(box(0.914, 0.002, 0.016, dark, 0, 0.0205, dz, mesa));
 const cab = new THREE.Group(); scene.add(cab);
-grey.push(box(0.3, 0.36, 0.4, white, 0, 0.13 + 0.18, -0.15, cab), cyl(0.045, 0.04, dark, cab, 0.13));
-const holder = cyl(0.02, 0.06, dark, cab, 0.1);
-const shank = cyl(0.005, 0.06, metal, cab, 0.04);
-const tipMat = new THREE.MeshStandardMaterial({ color: '#b8c2cc', roughness: 0.3, metalness: 0.6, emissive: '#000000' });
-const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.01, 24), tipMat); tip.position.y = 0.005; cab.add(tip);
+grey.push(box(0.3, 0.36, 0.4, white, 0, TL + 0.18, -0.15, cab));
 
+/* ---------- palpador 3D con reloj ---------- */
+const probe = new THREE.Group(); cab.add(probe);      // y=0: punto nominal (reloj a 0)
+cyl(0.016, 0.012, steel, probe, 0.149);                // cono / portapinzas
+cyl(0.021, 0.024, steel, probe, 0.131);                // tuerca
+cyl(0.012, 0.016, steel, probe, 0.111);                // mango
+const body = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.045, 40), black);
+body.rotation.x = Math.PI / 2; body.position.y = 0.072; probe.add(body);
+cyl(0.007, 0.012, black, probe, 0.044);
+const stylus = new THREE.Group(); probe.add(stylus);
+cyl(0.0009, 0.034, M('#d9467a', 0.4, 0.2), stylus, 0.019, 12);
+const ball = new THREE.Mesh(new THREE.SphereGeometry(BALL * MM, 20, 14), M('#c9ced3', 0.25, 0.8)); stylus.add(ball);   // centro en el nominal: en reposo la bola asoma 2 mm (precarrera)
+const dc = document.createElement('canvas'); dc.width = dc.height = 256;
+const dg = dc.getContext('2d');
+const dtex = new THREE.CanvasTexture(dc); dtex.colorSpace = THREE.SRGBColorSpace;
+const dial = new THREE.Mesh(new THREE.CircleGeometry(0.026, 48), new THREE.MeshBasicMaterial({ map: dtex }));
+dial.position.set(0, 0.072, 0.0228); probe.add(dial);
+function drawDial(r) {
+  const c = dg, R0 = 124; c.clearRect(0, 0, 256, 256); c.save(); c.translate(128, 128);
+  c.fillStyle = '#b9bec3'; c.beginPath(); c.arc(0, 0, R0, 0, 7); c.fill();
+  c.fillStyle = '#fbfbf8'; c.beginPath(); c.arc(0, 0, R0 - 9, 0, 7); c.fill();
+  c.strokeStyle = '#222'; c.fillStyle = '#222';
+  for (let i = 0; i < 100; i++) { const a = i / 100 * Math.PI * 2 - Math.PI / 2, l = i % 10 === 0 ? 14 : i % 5 === 0 ? 10 : 6; c.lineWidth = i % 10 === 0 ? 2 : 1; c.beginPath(); c.moveTo(Math.cos(a) * (R0 - 11), Math.sin(a) * (R0 - 11)); c.lineTo(Math.cos(a) * (R0 - 11 - l), Math.sin(a) * (R0 - 11 - l)); c.stroke(); }
+  c.font = '600 17px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 - Math.PI / 2; c.fillText(String(i * 10), Math.cos(a) * 84, Math.sin(a) * 84); }
+  c.font = '700 13px system-ui'; c.fillStyle = '#1f4f9a'; c.fillText('3D', 0, -46); c.fillStyle = '#444'; c.font = '10px system-ui'; c.fillText('0,01 mm', 0, -30);
+  const ia = v => Math.PI / 2 + v * 0.42;
+  c.lineWidth = 6; c.strokeStyle = '#d23a3a'; c.beginPath(); c.arc(0, 0, 46, ia(1.6), ia(2.4)); c.stroke();
+  c.fillStyle = '#222'; c.font = '600 12px system-ui';
+  for (const v of [2, 1, 0, -1, -2]) { const a = ia(v); c.fillText(String(v), Math.cos(a) * 34, Math.sin(a) * 34); }
+  const rc = Math.max(-2.4, Math.min(2.4, r));
+  const ra = ia(rc); c.strokeStyle = '#d23a3a'; c.lineWidth = 3; c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(ra) * 52, Math.sin(ra) * 52); c.stroke();
+  const frac = ((BALL - rc) % 1 + 1) % 1, na = -Math.PI / 2 + frac * Math.PI * 2;
+  c.strokeStyle = '#111'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(-Math.cos(na) * 14, -Math.sin(na) * 14); c.lineTo(Math.cos(na) * (R0 - 16), Math.sin(na) * (R0 - 16)); c.stroke();
+  c.fillStyle = '#d23a3a'; c.beginPath(); c.arc(0, 0, 6, 0, 7); c.fill();
+  c.restore(); dtex.needsUpdate = true;
+}
+
+/* ---------- mordaza y pieza (coordenadas de máquina, mm) ---------- */
 const lx = X => (X + 203) * MM, lz = Y => -(Y + 152) * MM, ly = Z => Hy0 + Z * MM - MESA_Y;
 const viseGroup = new THREE.Group(); mesa.add(viseGroup);
-const POM = M('#f1efe8');
+const POM = M('#f1efe8', 0.55), viseM = M('#8d8f8a', 0.4, 0.6), jawM = M('#9b9278', 0.35, 0.6);
 function slab(x0, x1, y0, y1, z0, z1, mat) { const m = new THREE.Mesh(new THREE.BoxGeometry((x1 - x0) * MM, (z1 - z0) * MM, (y1 - y0) * MM), mat); m.position.set(lx((x0 + x1) / 2), ly((z0 + z1) / 2), lz((y0 + y1) / 2)); viseGroup.add(m); return m; }
-
 function newPart() {
   viseGroup.clear();
-  const x0 = r3(rnd(-275, -245)), y0 = r3(rnd(-205, -195)), top = r3(rnd(-213, -207));
+  const x0 = r3(rnd(-270, -245)), y0 = r3(rnd(-205, -195)), top = r3(rnd(-212, -206)), J = r3(top - rnd(17, 23)), base = -290, pb = J - 25;
+  const jy0 = y0 - 12.5, jy1 = y0 + 112.5;
   S.part = { x0, x1: x0 + 100, y0, y1: y0 + 100, top };
-  const vx0 = -283, vx1 = -123;
-  slab(vx0, vx1, y0 - 22, y0 + 122, -330, -270, blue);
-  slab(vx0, vx1, y0 - 22, y0, -270, -230, metal);
-  slab(vx0, vx1, y0 + 100, y0 + 122, -270, -230, metal);
-  slab(x0, x0 + 100, y0, y0 + 100, -270, top, POM);
+  slab(x0 - 75, x0 + 265, jy0 - 10, jy1 + 10, -330, base, viseM);                 // cuerpo
+  slab(x0 - 45, x0, jy0, jy1, base, J, jawM);                                     // mordaza fija (X−)
+  slab(x0 + 100, x0 + 150, jy0, jy1, base, J, jawM);                              // mordaza móvil (X+)
+  slab(x0 + 150, x0 + 235, jy0 + 15, jy1 - 15, base, J - 18, viseM);              // carro móvil
+  slab(x0 + 235, x0 + 265, y0 + 38, y0 + 62, base + 8, base + 32, steel);         // husillo
+  for (const yy of [y0 + 8, y0 + 86]) slab(x0 - 30, x0 + 130, yy, yy + 6, base, pb, steel);   // paralelas
+  slab(x0, x0 + 100, y0, y0 + 100, pb, top, POM);
   obst = [
     { n: 'pieza', x0, x1: x0 + 100, y0, y1: y0 + 100, top },
-    { n: 'mordaza delantera', x0: vx0, x1: vx1, y0: y0 - 22, y1: y0, top: -230 },
-    { n: 'mordaza trasera', x0: vx0, x1: vx1, y0: y0 + 100, y1: y0 + 122, top: -230 },
-    { n: 'base de la mordaza', x0: vx0, x1: vx1, y0: y0 - 22, y1: y0 + 122, top: -270 }];
-  Object.assign(S, { mx: 0, my: 0, mz: 0, crashed: false, g54: { X: 0, Y: 0, Z: 0 }, input: '', crashes: 0, result: null,
-    t0: performance.now(), touched: { X: false, Y: false, Z: false }, safe: [0, 0, 0], cjog: 0 });
-  setMsg('Pieza nueva. Enciende el husillo y acerca el buscabordes', 'info');
+    { n: 'mordaza fija', x0: x0 - 45, x1: x0, y0: jy0, y1: jy1, top: J },
+    { n: 'mordaza móvil', x0: x0 + 100, x1: x0 + 150, y0: jy0, y1: jy1, top: J },
+    { n: 'carro de la mordaza', x0: x0 + 150, x1: x0 + 235, y0: jy0 + 15, y1: jy1 - 15, top: J - 18 },
+    { n: 'base de la mordaza', x0: x0 - 75, x1: x0 + 265, y0: jy0 - 10, y1: jy1 + 10, top: base }];
+  S.ofs = {}; for (const r of ROWS) S.ofs[r] = OFS0[r].slice();
+  Object.assign(S, { mx: 0, my: 0, mz: 0, alarm: '', estop: false, spindle: false, input: '', crashes: 0, result: null, t0: performance.now(),
+    touched: { X: false, Y: false, Z: false }, setRead: {}, safe: [0, 0, 0], cjog: 0, cur: { r: 2, c: 0 }, screen: 'ofs', tab: 'Trab' });
+  setMsg('Pieza nueva amarrada. Pon el cursor en G54 y acerca el palpador.', 'info');
   cpBtn.hidden = true; afterMove(true);
 }
 
@@ -132,132 +179,245 @@ new GLTFLoader().load('minimill.glb', gl => {
     const n = o.name || '';
     if (n.startsWith('mesa_x')) parts.x.push(o); else if (n.startsWith('carro_y')) parts.y.push(o); else if (n.startsWith('cabezal_z')) parts.z.push(o);
     if (n.startsWith('puerta')) o.position.x = -0.42;
-    if (n.endsWith('MMH-01-20')) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.18; o.material.depthWrite = false; }
-    if (n.endsWith('MMH-01-05_1')) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.25; o.material.depthWrite = false; }
+    if (n.endsWith('MMH-01-20') || n.endsWith('MMH-01-05_1')) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.18; o.material.depthWrite = false; }
+    if (/MMH-01-11/.test(n)) o.visible = false;      // el control lo pone el simulador
   });
   scene.add(model); for (const m of grey) m.visible = false;
 }, undefined, () => setMsg('No se pudo cargar el modelo 3D: se usa la versión simplificada', 'warn'));
 
-/* ---------- etiquetas ---------- */
+/* ---------- utilidades de lienzo ---------- */
+function plane(w, h, cw, ch) {
+  const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t }));
+  return { c, g: c.getContext('2d'), t, m, W: cw, H: ch, btns: [] };
+}
+function place(o, x, y, z, ry) { o.position.set(x, y, z); o.rotation.y = ry; scene.add(o); }
+function backing(w, h, x, y, z, ry) { const n = new THREE.Vector3(Math.sin(ry), 0, Math.cos(ry)); const k = box(w, h, 0.03, dark, x - n.x * 0.017, y, z - n.z * 0.017); k.rotation.y = ry; }
+function rrect(g, x, y, w, h, r) { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); }
 function label(text, w, h, px, bg, fg) {
-  const c = document.createElement('canvas'); c.width = Math.round(w * px); c.height = Math.round(h * px);
-  const x = c.getContext('2d'); x.fillStyle = bg; x.fillRect(0, 0, c.width, c.height);
-  x.fillStyle = fg; x.font = `600 ${Math.round(c.height * 0.5)}px system-ui`; x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.fillText(text, c.width / 2, c.height / 2);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-  return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t }));
+  const p = plane(w, h, Math.round(w * px), Math.round(h * px));
+  p.g.fillStyle = bg; p.g.fillRect(0, 0, p.W, p.H); p.g.fillStyle = fg; p.g.font = `700 ${Math.round(p.H * 0.55)}px system-ui`; p.g.textAlign = 'center'; p.g.textBaseline = 'middle';
+  p.g.fillText(text, p.W / 2, p.H / 2); p.t.needsUpdate = true; return p.m;
 }
-const sticker = label('MENDIZABALA', 0.36, 0.07, 1000, '#1f5f8b', '#ffffff'); sticker.position.set(-0.61, 1.594, 0.6455 + SPZ - 0.0145); sticker.scale.setScalar(0.42); scene.add(sticker);
+const sticker = label('MENDIZABALA', 0.36, 0.07, 1000, '#2747a8', '#ffffff'); sticker.scale.setScalar(0.42); place(sticker, -0.61, 1.594, 0.6455 + SPZ - 0.0145, 0);
 
-/* ---------- lupa ---------- */
+/* ---------- control (pendant) ---------- */
+const P = plane(0.56, 0.70, 1024, 1280);
+place(P.m, 0.66, 1.36, -0.08, -0.4); backing(0.58, 0.72, 0.66, 1.36, -0.08, -0.4);
+const B = (p, id, x, y, w, h, label, act, o = {}) => p.btns.push({ id, x, y, w, h, label, act, ...o });
+// columna izquierda
+B(P, 'estop', 50, 255, 160, 160, '', () => toggleEstop(), { round: true });
+B(P, 'whm', 30, 470, 100, 200, '', () => handle(-1), { ghost: true });
+B(P, 'whp', 130, 470, 100, 200, '', () => handle(1), { ghost: true });
+// bloque 1
+B(P, 'reset', 260, 622, 140, 56, 'RESET', () => reset(), { c: '#d9822b' });
+B(P, 'pwup', 408, 622, 66, 56, 'POWER\nUP', () => info('La máquina ya está referenciada.'), { c: '#3aa3c9' });
+B(P, 'recov', 482, 622, 66, 56, 'RECOVER', () => info('No hace falta en este ejercicio.'), { c: '#3aa3c9' });
+['F1', 'F2', 'F3', 'F4'].forEach((f, i) => B(P, f, 260 + i * 74, 688, 66, 52, f, () => fkey(f)));
+B(P, 'tom', 260, 750, 66, 62, 'TOOL\nOFFSET\nMEASURE', () => info('Medir herramientas: llegará en la fase 2.'));
+B(P, 'nxt', 334, 750, 66, 62, 'NEXT\nTOOL', () => info('El palpador (T10) ya está en el husillo.'));
+B(P, 'rel', 408, 750, 66, 62, 'TOOL\nRELEASE', () => info('No sueltes el palpador: lo necesitas.'));
+B(P, 'pzs', 482, 750, 66, 62, 'PART\nZERO\nSET', () => partZero());
+const JK = [[null, '+Z', '-Y'], ['+X', 'JOG\nLOCK', '-X'], ['+Y', '-Z', null]];
+JK.forEach((row, ri) => row.forEach((k, ci) => { if (!k) return; const x = 297 + ci * 74, y = 826 + ri * 66;
+  if (k.startsWith('JOG')) B(P, 'jl', x, y, 66, 58, k, () => info('JOG LOCK no se usa en este ejercicio.'), { c: '#e9ead9' });
+  else B(P, 'j' + k, x, y, 66, 58, k, () => {}, { jog: k, c: '#e9ead9' }); }));
+B(P, 'fwd', 260, 1042, 66, 56, 'FWD', () => spindleOn('FWD'));
+B(P, 'stop', 334, 1042, 66, 56, 'STOP', () => spindleStop());
+B(P, 'rev', 408, 1042, 66, 56, 'REV', () => spindleOn('REV'));
+// bloque 2
+B(P, 'pos', 566, 642, 92, 52, 'POSITION', () => { S.screen = 'pos'; });
+B(P, 'ofsk', 666, 642, 92, 52, 'OFFSET', () => { if (S.screen === 'ofs') S.tab = S.tab === 'Trab' ? 'Herrm' : 'Trab'; S.screen = 'ofs'; });
+B(P, 'hj', 566, 708, 92, 52, 'HANDLE\nJOG', () => info('Modo volante (HANDLE JOG) activo.'));
+INCS.forEach((v, i) => B(P, 'inc' + i, 566 + (i % 2) * 100, 772 + Math.floor(i / 2) * 64, 92, 56, ['.0001\n.1', '.001\n1.', '.01\n10.', '.1\n100.'][i], () => { S.inc = v; }, { on: () => S.inc === v }));
+B(P, 'cu', 631, 912, 62, 54, '▲', () => moveCur(-1, 0), { c: '#e9ead9' });
+B(P, 'cl', 566, 972, 62, 54, '◀', () => moveCur(0, -1), { c: '#e9ead9' });
+B(P, 'cd', 631, 972, 62, 54, '▼', () => moveCur(1, 0), { c: '#e9ead9' });
+B(P, 'cr', 696, 972, 62, 54, '▶', () => moveCur(0, 1), { c: '#e9ead9' });
+// bloque 3: teclado numérico
+['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', '.'].forEach((k, i) => B(P, 'k' + i, 778 + (i % 3) * 78, 642 + Math.floor(i / 3) * 66, 70, 58, k, () => key(k)));
+B(P, 'can', 778, 912, 109, 56, 'CANCEL', () => { S.input = S.input.slice(0, -1); });
+B(P, 'ent', 895, 912, 109, 56, 'ENTER', () => applyInput(true));
+
+/* ---------- tablero de pasos + lupa ---------- */
+const Q = plane(0.44, 0.44, 800, 800);
+place(Q.m, -0.62, 1.15, -0.04, 0.45); backing(0.46, 0.46, -0.62, 1.15, -0.04, 0.45);
+B(Q, 'val', 30, 690, 230, 80, 'VALIDAR', () => validate(), { c: '#2fbf71', dk: true });
+B(Q, 'new', 285, 690, 230, 80, 'PIEZA NUEVA', () => newPart(), { dk: true });
+B(Q, 'mode', 540, 690, 230, 80, 'GUIADO / EXAMEN', () => { S.help = !S.help; }, { dk: true });
 const rt = new THREE.WebGLRenderTarget(512, 512); rt.texture.colorSpace = THREE.SRGBColorSpace;
-const lupaCam = new THREE.PerspectiveCamera(18, 1, 0.005, 3);
-const lupa = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.34), new THREE.MeshBasicMaterial({ map: rt.texture }));
-lupa.position.set(-0.56, 1.42, -0.1); lupa.rotation.y = 0.45; scene.add(lupa);
+const lupaCam = new THREE.PerspectiveCamera(34, 1, 0.005, 3);
+const lupa = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshBasicMaterial({ map: rt.texture }));
+place(lupa, -0.6, 1.57, -0.06, 0.45); backing(0.32, 0.34, -0.6, 1.585, -0.06, 0.45);
+const lupaLbl = label('LUPA · palpador y reloj', 0.3, 0.03, 1500, '#2b3138', '#e8ecef');
 const ln = new THREE.Vector3(Math.sin(0.45), 0, Math.cos(0.45));
-const lupaFrame = box(0.36, 0.40, 0.01, dark, -0.56 - ln.x * 0.008, 1.437, -0.1 - ln.z * 0.008); lupaFrame.rotation.y = 0.45;
-const lupaLbl = label('LUPA · punta del buscabordes', 0.34, 0.035, 1500, '#2b3138', '#e8ecef');
-lupaLbl.position.set(-0.56 + ln.x * 0.001, 1.612, -0.1 + ln.z * 0.001); lupaLbl.rotation.y = 0.45; scene.add(lupaLbl);
+place(lupaLbl, -0.6 + ln.x * 0.001, 1.735, -0.06 + ln.z * 0.001, 0.45);
+const PANELS = [P, Q];
 
-/* ---------- panel ---------- */
-const PW = 1024, PH = 1000;
-const pc = document.createElement('canvas'); pc.width = PW; pc.height = PH;
-const g = pc.getContext('2d');
-const ptex = new THREE.CanvasTexture(pc); ptex.colorSpace = THREE.SRGBColorSpace; ptex.anisotropy = 4;
-const panel = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 0.52 * PH / PW), new THREE.MeshBasicMaterial({ map: ptex }));
-panel.position.set(0.62, 1.42, -0.1); panel.rotation.y = -0.4; scene.add(panel);
-const pn = new THREE.Vector3(Math.sin(-0.4), 0, Math.cos(-0.4));
-const pback = box(0.55, 0.54, 0.03, dark, 0.62 - pn.x * 0.02, 1.42, -0.1 - pn.z * 0.02); pback.rotation.y = -0.4;
-const wheel = new THREE.Group();
-const wdisc = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.025, 40), dark); wdisc.rotation.x = Math.PI / 2; wheel.add(wdisc);
-const wmark = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.03, 0.03), M('#2ec5e6')); wmark.position.y = 0.04; wheel.add(wmark);
-const wpiv = new THREE.Group(); wpiv.add(wheel); wpiv.position.set(0.5, 1.06, 0.0); wpiv.rotation.y = -0.4; scene.add(wpiv);
-const wlbl = label('VOLANTE', 0.12, 0.025, 1500, '#2b3138', '#e8ecef'); wlbl.position.set(0, 0.075, 0); wpiv.add(wlbl);
-
-const BTN = [];
-const b = (id, x, y, w, h, label, act, o = {}) => BTN.push({ id, x, y, w, h, label, act, ...o });
-['X', 'Y', 'Z'].forEach((a, i) => b('ax' + a, 20 + i * 100, 600, 90, 76, a, () => { S.axis = a; setMsg('Eje ' + a + ' seleccionado', 'info'); }, { on: () => S.axis === a }));
-INCS.forEach((v, i) => b('inc' + i, 340 + i * 100, 600, i === 3 ? 80 : 90, 76, String(v).replace('.', ','), () => { S.inc = v; }, { on: () => S.inc === v }));
-b('jm', 20, 690, 165, 76, 'JOG −', () => {}, { hold: -1 });
-b('jp', 195, 690, 165, 76, 'JOG +', () => {}, { hold: 1 });
-b('vm', 380, 690, 165, 76, '◀ VOL', () => handle(-1));
-b('vp', 555, 690, 165, 76, 'VOL ▶', () => handle(1));
-b('sp', 20, 780, 220, 76, 'HUSILLO', () => toggleSpindle(), { on: () => S.spindle });
-b('pz', 250, 780, 470, 76, 'PART ZERO SET', () => partZero(), { tone: 'cyan' });
-b('val', 20, 870, 170, 90, 'VALIDAR', () => validate(), { tone: 'green' });
-b('new', 200, 870, 170, 90, 'NUEVA', () => newPart());
-b('rst', 380, 870, 160, 90, 'RESET', () => reset(), { tone: 'red' });
-b('hlp', 550, 870, 170, 90, 'AYUDA', () => { S.help = !S.help; }, { on: () => S.help });
-['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', '.'].forEach((k, i) => b('k' + i, 740 + (i % 3) * 92, 600 + Math.floor(i / 3) * 74, 80, 64, k, () => key(k)));
-b('kc', 740, 896, 80, 74, 'CAN', () => { S.input = ''; });
-b('kf', 832, 896, 80, 74, 'F1', () => applyInput(false));
-b('ke', 924, 896, 80, 74, 'ENTER', () => applyInput(true));
-
-if (!g.roundRect) g.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); };
-const rr = (x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
-const toneCol = { info: COL.quiet, ok: COL.green, warn: COL.amber, err: COL.red };
-let hover = null;
-function frameBox(x, y, w, h, t) {
-  rr(x, y, w, h, 10); g.fillStyle = COL.box; g.fill(); g.strokeStyle = COL.line; g.lineWidth = 2; g.stroke();
-  g.fillStyle = COL.quiet; g.font = '600 20px system-ui'; g.textAlign = 'left'; g.fillText(t, x + 16, y + 26);
+/* ---------- dibujo del control ---------- */
+let hover = null, held = null;
+function key3d(g, k) {
+  const on = k.on && k.on(), pr = held === k, hv = hover === k;
+  if (k.ghost) return;
+  if (k.round) return;
+  rrect(g, k.x, k.y, k.w, k.h, 10);
+  g.fillStyle = pr ? '#8fd3e6' : on ? '#ffd24a' : (k.c || '#a9adb1'); g.fill();
+  g.lineWidth = hv ? 5 : 2; g.strokeStyle = hv ? COL.cyan : 'rgba(0,0,0,.35)'; g.stroke();
+  const lines = k.label.split('\n'), fs = lines.length > 2 ? 12 : lines.length > 1 ? 15 : k.label.length > 5 ? 16 : 22;
+  g.fillStyle = k.dk ? '#fff' : '#1c1f22'; g.font = `700 ${k.dk ? 26 : fs}px system-ui`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  lines.forEach((l, i) => g.fillText(l, k.x + k.w / 2, k.y + k.h / 2 + (i - (lines.length - 1) / 2) * (fs + 2), k.w - 6));
 }
-function steps() {
-  const p = S.part, ok = (a, t) => Math.abs(S.g54[a] - t) <= 0.05;
-  return [['Enciende el husillo', S.spindle || S.touched.X], ['Toca el borde izquierdo (X−)', S.touched.X], ['Cero X y compensa el radio', ok('X', p.x0)],
-    ['Toca el borde delantero (Y−)', S.touched.Y], ['Cero Y y compensa el radio', ok('Y', p.y0)], ['Z: baja hasta pillar el papel', S.touched.Z],
-    ['Cero Z en la cara de arriba', ok('Z', p.top)], ['Pulsa VALIDAR', !!S.result]];
+function panelText(g, t, x, y, size, col, align = 'left', w) { g.font = size; g.fillStyle = col; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(t, x, y, w); }
+function hdr(g, x, y, w, t) { const gr = g.createLinearGradient(0, y, 0, y + 26); gr.addColorStop(0, '#4f6fa8'); gr.addColorStop(1, '#2d4a80'); g.fillStyle = gr; g.fillRect(x, y, w, 26); panelText(g, t, x + w / 2, y + 13, '600 16px system-ui', '#fff', 'center'); }
+function drawPendant() {
+  const g = P.g;
+  g.fillStyle = '#d4d7da'; g.fillRect(0, 0, 1024, 1280);
+  g.fillStyle = '#2747a8'; g.fillRect(800, 10, 204, 40); panelText(g, 'MENDIZABALA', 902, 30, '800 20px system-ui', '#fff', 'center');
+  // columna izquierda
+  panelText(g, 'POWER ON', 85, 110, '700 15px system-ui', '#222', 'center'); panelText(g, 'POWER OFF', 180, 110, '700 15px system-ui', '#222', 'center');
+  for (const [x, c] of [[85, '#3c9a4c'], [180, '#c94a3a']]) { g.fillStyle = '#c9ccd0'; g.beginPath(); g.arc(x, 160, 30, 0, 7); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(x, 160, 22, 0, 7); g.fill(); }
+  panelText(g, 'EMERGENCY STOP', 130, 228, '700 15px system-ui', '#222', 'center');
+  g.fillStyle = '#f2c230'; g.beginPath(); g.arc(130, 335, 78, 0, 7); g.fill();
+  g.fillStyle = S.estop ? '#8a1f15' : '#d63a26'; g.beginPath(); g.arc(130, 335, 58, 0, 7); g.fill();
+  if (hover && hover.id === 'estop') { g.strokeStyle = COL.cyan; g.lineWidth = 5; g.beginPath(); g.arc(130, 335, 80, 0, 7); g.stroke(); }
+  panelText(g, 'HANDLE JOG', 130, 455, '700 16px system-ui', '#222', 'center');
+  panelText(g, '−', 40, 470, '800 30px system-ui', '#2a63c8', 'center'); panelText(g, '+', 222, 470, '800 30px system-ui', '#2a63c8', 'center');
+  g.fillStyle = '#e9ecef'; g.beginPath(); g.arc(130, 570, 90, 0, 7); g.fill(); g.strokeStyle = '#9aa1a8'; g.lineWidth = 2; g.stroke();
+  g.strokeStyle = '#5a6168'; for (let i = 0; i < 100; i++) { const a = i / 100 * Math.PI * 2 + S.wheel; g.lineWidth = i % 10 ? 1 : 2; g.beginPath(); g.moveTo(130 + Math.cos(a) * 82, 570 + Math.sin(a) * 82); g.lineTo(130 + Math.cos(a) * (i % 10 ? 76 : 70), 570 + Math.sin(a) * (i % 10 ? 76 : 70)); g.stroke(); }
+  g.fillStyle = '#b5bbc1'; g.beginPath(); g.arc(130, 570, 55, 0, 7); g.fill();
+  g.fillStyle = '#3a3f44'; g.beginPath(); g.arc(130 + Math.cos(S.wheel - 1) * 38, 570 + Math.sin(S.wheel - 1) * 38, 10, 0, 7); g.fill();
+  for (const id of ['whm', 'whp']) if (hover && hover.id === id) { g.strokeStyle = COL.cyan; g.lineWidth = 5; g.beginPath(); g.arc(130, 570, 94, id === 'whm' ? Math.PI / 2 : -Math.PI / 2, id === 'whm' ? Math.PI * 1.5 : Math.PI / 2); g.stroke(); }
+  panelText(g, 'CYCLE START', 80, 1030, '700 14px system-ui', '#222', 'center'); panelText(g, 'FEED HOLD', 185, 1030, '700 14px system-ui', '#222', 'center');
+  for (const [x, c] of [[80, '#3c9a4c'], [185, '#c94a3a']]) { g.fillStyle = '#c9ccd0'; g.beginPath(); g.arc(x, 1085, 30, 0, 7); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(x, 1085, 22, 0, 7); g.fill(); }
+  // etiquetas de bloques
+  panelText(g, 'SPINDLE', 520, 1070, '700 15px system-ui', '#222', 'center');
+  panelText(g, 'DISPLAY', 662, 626, '700 14px system-ui', '#222', 'center');
+  panelText(g, 'CURSOR', 727, 930, '700 13px system-ui', '#222', 'center');
+  // pantalla
+  g.fillStyle = '#111'; rrect(g, 260, 60, 744, 548, 8); g.fill();
+  drawScreen(g, 272, 72, 720, 524);
+  for (const k of P.btns) key3d(g, k);
+  P.t.needsUpdate = true;
 }
-function draw() {
-  g.textBaseline = 'middle';
-  g.fillStyle = COL.bg; g.fillRect(0, 0, PW, PH);
-  g.fillStyle = '#0f1316'; g.fillRect(0, 0, PW, 56);
-  g.fillStyle = COL.ink; g.font = '600 26px system-ui'; g.textAlign = 'left'; g.fillText('MENDIZABALA · Reglaje Mini Mill', 20, 29);
-  g.textAlign = 'right'; g.fillStyle = S.help ? COL.cyan : COL.amber; g.font = '600 20px system-ui'; g.fillText(S.help ? 'Modo guiado' : 'Modo examen', PW - 20, 29);
-  frameBox(20, 70, 490, 236, 'POSICIÓN (mm)');
-  g.font = '600 18px system-ui'; g.fillStyle = COL.quiet; g.textAlign = 'right'; g.fillText('MÁQUINA', 300, 120); g.fillText('TRABAJO G54', 490, 120);
-  ['X', 'Y', 'Z'].forEach((a, i) => {
-    const y = 162 + i * 50, m = S['m' + a.toLowerCase()];
-    if (a === S.axis) { rr(30, y - 22, 470, 44, 8); g.fillStyle = 'rgba(46,197,230,.18)'; g.fill(); }
-    g.textAlign = 'left'; g.fillStyle = a === S.axis ? COL.cyan : COL.ink; g.font = '700 32px system-ui'; g.fillText(a, 44, y);
-    g.textAlign = 'right'; g.font = '600 32px ui-monospace,Menlo,monospace'; g.fillStyle = COL.ink; g.fillText(f3(m), 300, y); g.fillText(f3(r3(m - S.g54[a])), 490, y);
-  });
-  frameBox(520, 70, 484, 236, 'OFFSET G54 (mm)');
-  ['X', 'Y', 'Z'].forEach((a, i) => {
-    const y = 126 + i * 44;
-    g.textAlign = 'left'; g.font = '700 28px system-ui'; g.fillStyle = a === S.axis ? COL.cyan : COL.ink; g.fillText(a, 544, y);
-    g.textAlign = 'right'; g.font = '600 28px ui-monospace,Menlo,monospace'; g.fillStyle = COL.ink; g.fillText(f3(S.g54[a]), 980, y);
-  });
-  rr(536, 250, 452, 44, 8); g.fillStyle = '#12171b'; g.fill();
-  g.textAlign = 'left'; g.font = '600 24px ui-monospace,Menlo,monospace'; g.fillStyle = COL.ink; g.fillText('> ' + (S.input || '_'), 552, 272);
-  g.textAlign = 'right'; g.font = '16px system-ui'; g.fillStyle = COL.quiet; g.fillText('ENTER suma · F1 sustituye', 978, 272);
-  const sc = toneCol[S.tone]; rr(20, 316, 984, 52, 10); g.fillStyle = sc; g.globalAlpha = 0.2; g.fill(); g.globalAlpha = 1; g.strokeStyle = sc; g.lineWidth = 2; g.stroke();
-  g.textAlign = 'left'; g.fillStyle = COL.ink; g.font = '600 24px system-ui'; g.fillText(S.msg, 36, 343, 950);
-  frameBox(20, 378, 984, 208, S.result ? 'RESULTADO' : S.help ? 'PASOS' : 'MODO EXAMEN');
-  g.textAlign = 'left';
-  if (S.result) {
-    S.result.lines.forEach((l, i) => { g.font = (i === 0 ? '700 24px' : '20px') + ' system-ui'; g.fillStyle = l.c || COL.ink; g.fillText(l.t, 40, 426 + i * 32, 940); });
-  } else if (S.help) {
-    steps().forEach(([t, d], i) => {
-      const x = 40 + Math.floor(i / 4) * 490, y = 426 + (i % 4) * 36;
-      g.font = '700 22px system-ui'; g.fillStyle = d ? COL.green : COL.quiet; g.fillText(d ? '✓' : '○', x, y);
-      g.font = '21px system-ui'; g.fillStyle = d ? COL.ink : COL.quiet; g.fillText(t, x + 30, y, 440);
+function drawScreen(g, X, Y, W, H) {
+  g.save(); g.beginPath(); g.rect(X, Y, W, H); g.clip();
+  g.fillStyle = '#e8edf2'; g.fillRect(X, Y, W, H);
+  // barra superior
+  g.fillStyle = '#cfd6de'; g.fillRect(X, Y, W, 28);
+  const now = new Date(), hh = n => String(n).padStart(2, '0');
+  panelText(g, S.screen === 'ofs' ? 'Config: desplazam' : 'Posiciones', X + 8, Y + 14, '16px system-ui', '#333');
+  panelText(g, `${hh(now.getHours())}:${hh(now.getMinutes())}:${hh(now.getSeconds())}`, X + W - 8, Y + 14, '16px ui-monospace,monospace', '#333', 'right');
+  if (S.alarm) { g.fillStyle = '#d23a3a'; g.fillRect(X + 190, Y + 2, 380, 24); panelText(g, S.alarm, X + 380, Y + 14, '700 14px system-ui', '#fff', 'center', 370); }
+  const top = Y + 34, mid = Y + 304;
+  if (S.screen === 'ofs' && S.tab === 'Trab') {
+    hdr(g, X + 4, top, W - 8, 'Correctores');
+    tabs(g, X + 4, top + 28);
+    const cx = [X + 10, X + 130, X + 250, X + 370, X + 490], cw = 118;
+    g.fillStyle = '#2d58b5'; g.fillRect(X + 8, top + 58, W - 16, 22);
+    ['G CODIGO', 'X EJE', 'Y EJE', 'Z EJE', 'Nota'].forEach((h, i) => panelText(g, h, cx[i] + cw / 2, top + 69, '600 13px system-ui', '#fff', 'center'));
+    ROWS.forEach((r, ri) => {
+      const y = top + 82 + ri * 24;
+      g.fillStyle = ri % 2 ? '#dfe5ec' : '#f3f5f8'; g.fillRect(X + 8, y, W - 16, 23);
+      panelText(g, r, cx[0] + cw / 2, y + 12, '15px ui-monospace,monospace', '#222', 'center');
+      COLS.forEach((c, ci) => {
+        const sel = S.cur.r === ri && S.cur.c === ci;
+        if (sel) { g.fillStyle = '#f0a030'; g.fillRect(cx[ci + 1] + 2, y + 1, cw - 4, 21); }
+        panelText(g, fmtOfs(S.ofs[r][ci]), cx[ci + 1] + cw - 10, y + 12, '15px ui-monospace,monospace', '#111', 'right');
+      });
+      panelText(g, r === 'G54' ? 'pieza del ejercicio' : '—', cx[4] + 8, y + 12, '13px system-ui', '#555');
     });
-    const near = nearest();
-    g.font = '600 20px system-ui'; g.fillStyle = COL.cyan;
-    g.fillText(near ? `Distancia a ${near.n}: ${near.d.toFixed(3).replace('.', ',')} mm` : 'Lejos de la pieza: usa JOG para acercarte rápido', 40, 568, 940);
+    panelText(g, 'F1  Fijar valor', X + 20, top + 262, '600 15px system-ui', '#2d58b5');
+    panelText(g, 'ENTER  Agreg valor', X + 230, top + 262, '600 15px system-ui', '#2d58b5');
+    panelText(g, 'PART ZERO SET  Fija la posición actual', X + 440, top + 262, '600 14px system-ui', '#2d58b5', 'left', 270);
+  } else if (S.screen === 'ofs') {
+    hdr(g, X + 4, top, W - 8, 'Correctores'); tabs(g, X + 4, top + 28);
+    panelText(g, 'HERRAM ACTIVA: 10', X + 20, top + 70, '600 16px system-ui', '#2d58b5');
+    g.fillStyle = '#2d58b5'; g.fillRect(X + 8, top + 86, W - 16, 22);
+    ['CORR HERRAM', 'Longitud GEOMTRIA(H)', 'RADIO GEOMTRIA(D)', 'Tipo'].forEach((h, i) => panelText(g, h, X + 90 + i * 175, top + 97, '600 13px system-ui', '#fff', 'center'));
+    [['10 Huso', '118.318', '2.000', '3D-Taster'], ['11', '0.', '0.', '—'], ['12', '0.', '0.', '—']].forEach((r, i) => {
+      const y = top + 110 + i * 24; g.fillStyle = i === 0 ? '#f0a030' : i % 2 ? '#dfe5ec' : '#f3f5f8'; g.fillRect(X + 8, y, W - 16, 23);
+      r.forEach((v, j) => panelText(g, v, X + 90 + j * 175, y + 12, '15px ui-monospace,monospace', '#111', 'center'));
+    });
+    panelText(g, 'OFFSET vuelve a la pestaña Trab', X + 20, top + 262, '600 15px system-ui', '#2d58b5');
   } else {
-    g.font = '21px system-ui'; g.fillStyle = COL.ink;
-    ['Sin pistas: el cero va en la esquina izquierda-delantera, Z en la cara de arriba.', 'Buscabordes Ø10. Papel para Z: 0,05 mm (tolerancia 0,05 mm).', 'Cuando lo tengas, pulsa VALIDAR.']
-      .forEach((t, i) => g.fillText(t, 40, 430 + i * 40, 940));
+    hdr(g, X + 4, top, W - 8, 'Posiciones  ·  PROGRAMA G54 G43 H10');
+    COLS.forEach((c, i) => {
+      const y = top + 70 + i * 62, m = mpos(c);
+      panelText(g, c, X + 40, y, '700 40px system-ui', '#222');
+      panelText(g, f3(m - g54()[i]), X + 420, y, '600 40px ui-monospace,monospace', '#111', 'right');
+      panelText(g, 'Máq ' + f3(m), X + 690, y, '22px ui-monospace,monospace', '#555', 'right');
+    });
+    panelText(g, 'Trab G54 (grande) · Máquina (derecha) · OFFSET vuelve a correctores', X + 20, top + 262, '14px system-ui', '#2d58b5');
   }
-  for (const k of BTN) {
-    const on = k.on && k.on(), tc = k.tone ? COL[k.tone] : null, pressed = held === k;
-    rr(k.x, k.y, k.w, k.h, 10);
-    g.fillStyle = pressed ? 'rgba(46,197,230,.45)' : on ? 'rgba(46,197,230,.25)' : COL.box; g.fill();
-    g.lineWidth = hover === k ? 4 : 2; g.strokeStyle = hover === k || on ? COL.cyan : tc || COL.line; g.stroke();
-    g.fillStyle = COL.ink; g.textAlign = 'center'; g.font = `600 ${k.label.length > 6 ? 24 : 26}px system-ui`; g.fillText(k.label, k.x + k.w / 2, k.y + k.h / 2 + 1, k.w - 10);
+  // Husillo prin
+  hdr(g, X + 4, mid, 250, 'Husillo prin');
+  g.fillStyle = '#f3f5f8'; g.fillRect(X + 4, mid + 26, 250, 152);
+  g.fillStyle = S.spindle ? '#2fbf71' : '#d23a3a';
+  g.beginPath(); for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; g.lineTo(X + 50 + Math.cos(a) * 28, mid + 70 + Math.sin(a) * 28); } g.fill();
+  panelText(g, S.spindle ? 'GIRA' : 'STOP', X + 50, mid + 71, '800 13px system-ui', '#fff', 'center');
+  panelText(g, 'Veloc husillo:', X + 95, mid + 52, '14px system-ui', '#333'); panelText(g, (S.spindle ? '500' : '0') + ' RPM', X + 245, mid + 52, '14px ui-monospace,monospace', '#111', 'right');
+  panelText(g, 'Herram: T10 3D-Taster', X + 95, mid + 78, '14px system-ui', '#333');
+  panelText(g, 'Corr: H10', X + 95, mid + 100, '14px system-ui', '#333');
+  panelText(g, 'Rápido: 50%', X + 20, mid + 140, '14px system-ui', '#333');
+  // Avanc manu
+  hdr(g, X + 262, mid, W - 266, 'Avanc manu');
+  g.fillStyle = '#f3f5f8'; g.fillRect(X + 262, mid + 26, W - 266, 152);
+  panelText(g, 'POSICIÓN: (MM)', X + 300, mid + 40, '13px system-ui', '#333');
+  panelText(g, 'VEL DESP: ' + S.inc.toFixed(3), X + W - 12, mid + 40, '600 13px ui-monospace,monospace', '#333', 'right');
+  panelText(g, 'Trab G54', X + 440, mid + 58, '600 14px system-ui', '#333', 'right'); panelText(g, 'Máquina', X + 640, mid + 58, '600 14px system-ui', '#333', 'right');
+  COLS.forEach((c, i) => {
+    const y = mid + 84 + i * 30, m = mpos(c), sel = S.axis === c;
+    if (sel) { g.fillStyle = '#f5ea3a'; g.fillRect(X + 300, y - 13, W - 310, 26); }
+    panelText(g, c, X + 285, y, '700 17px system-ui', '#222', 'center');
+    panelText(g, f3(m - g54()[i]), X + 440, y, '17px ui-monospace,monospace', '#111', 'right');
+    panelText(g, f3(m), X + 640, y, '17px ui-monospace,monospace', '#111', 'right');
+  });
+  // input
+  g.fillStyle = '#9fc4ea'; g.fillRect(X + 4, Y + H - 34, W - 8, 30);
+  panelText(g, 'Input: ' + S.input + (Math.floor(performance.now() / 500) % 2 ? '|' : ''), X + 14, Y + H - 19, '16px ui-monospace,monospace', '#123');
+  g.restore();
+}
+function tabs(g, x, y) { [['Herrm', 0], ['Trab', 1], ['Tool Info', 2]].forEach(([t, i]) => { const on = (S.tab === t); g.fillStyle = on ? '#f0a030' : '#2d58b5'; g.fillRect(x + 4 + i * 112, y, 108, 24); panelText(g, t, x + 58 + i * 112, y + 12, '600 14px system-ui', '#fff', 'center'); }); }
+const fmtOfs = v => (v === 0 ? '0.' : f3(v));
+const mpos = c => S['m' + c.toLowerCase()];
+
+function steps() {
+  const p = S.part, ok = (c, t) => Math.abs(g54()[c] - t) <= TOL;
+  return [['Cursor en G54 (OFFSET → Trab)', S.cur.r === 1], ['Husillo parado (el palpador no gira)', !S.spindle],
+    ['Toca X− hasta que el reloj marque 0', S.touched.X], ['PART ZERO SET en G54 X', ok('X', p.x0)],
+    ['Toca Y− hasta que el reloj marque 0', S.touched.Y], ['PART ZERO SET en G54 Y', ok('Y', p.y0)],
+    ['Encima de la pieza, baja Z hasta 0', S.touched.Z], ['PART ZERO SET en G54 Z', ok('Z', p.top)]];
+}
+function drawBoard() {
+  const g = Q.g, W = 800;
+  g.fillStyle = '#151a1f'; g.fillRect(0, 0, W, 800);
+  g.fillStyle = '#0f1316'; g.fillRect(0, 0, W, 60);
+  panelText(g, 'Reglaje con palpador 3D', 24, 31, '700 28px system-ui', COL.ink);
+  panelText(g, S.help ? 'Modo guiado' : 'Modo examen', W - 24, 31, '700 22px system-ui', S.help ? COL.cyan : COL.amber, 'right');
+  const tc = { info: COL.quiet, ok: COL.green, warn: COL.amber, err: COL.red }[S.tone];
+  rrect(g, 20, 76, W - 40, 70, 10); g.fillStyle = tc; g.globalAlpha = 0.18; g.fill(); g.globalAlpha = 1; g.strokeStyle = tc; g.lineWidth = 2; g.stroke();
+  wrap(g, S.msg, 36, 100, W - 72, 26, '600 22px system-ui', COL.ink, 2);
+  if (S.result) {
+    S.result.lines.forEach((l, i) => wrap(g, l.t, 30, 190 + i * 74, W - 60, 28, (i ? '22px' : '700 26px') + ' system-ui', l.c || COL.ink, 2));
+  } else if (S.help) {
+    steps().forEach(([t, d], i) => { const y = 180 + i * 44; panelText(g, d ? '✓' : '○', 34, y, '700 26px system-ui', d ? COL.green : COL.quiet); panelText(g, t, 72, y, '23px system-ui', d ? COL.ink : COL.quiet, 'left', 700); });
+    const c = S.contact;
+    panelText(g, c ? `Reloj: ${S.read.toFixed(3).replace('.', ',')} mm  (${c.o.n})` : sinContacto(), 34, 548, '700 26px system-ui', c ? (Math.abs(S.read) <= TOL ? COL.green : COL.cyan) : COL.quiet, 'left', 740);
+    panelText(g, `Volante: eje ${S.axis} · ${S.inc.toFixed(3).replace('.', ',')} mm por clic`, 34, 600, '22px system-ui', COL.quiet);
+  } else {
+    ['Sin pistas: lee el reloj del palpador en la lupa.', 'Cero en la esquina izquierda-delantera (X−, Y−).', 'Z en la cara superior de la pieza.', `Tolerancia ${TOL.toFixed(2).replace('.', ',')} mm. Al terminar, VALIDAR.`]
+      .forEach((t, i) => panelText(g, t, 34, 200 + i * 52, '24px system-ui', COL.ink, 'left', 740));
   }
-  ptex.needsUpdate = true;
+  for (const k of Q.btns) key3d(g, k);
+  Q.t.needsUpdate = true;
+}
+function sinContacto() { const n = nearest(); return n ? `Sin contacto · a ${n.d.toFixed(1).replace('.', ',')} mm de la ${n.n}` : 'Sin contacto · lejos de la pieza'; }
+function wrap(g, text, x, y, w, lh, font, col, max) {
+  g.font = font; g.fillStyle = col; g.textAlign = 'left'; g.textBaseline = 'middle';
+  const words = String(text).split(' '); let line = '', n = 0;
+  for (const wd of words) { const t = line ? line + ' ' + wd : wd; if (g.measureText(t).width > w && line) { g.fillText(line, x, y + n * lh); n++; line = wd; if (n >= max) return; } else line = t; }
+  if (line && n < max) g.fillText(line, x, y + n * lh);
 }
 
 /* ---------- lógica de máquina ---------- */
@@ -267,94 +427,119 @@ function distRect(x, y, o) {
 }
 function nearest() {
   let best = null;
-  for (const o of obst) { if (S.mz >= o.top) continue; const d = distRect(S.mx, S.my, o) - R; if (d < 20 && (!best || d < best.d)) best = { n: o.n, d: Math.max(d, 0) }; }
-  const pt = obst[0];
-  if (!best && distRect(S.mx, S.my, pt) < R && S.mz - pt.top < 20) best = { n: 'cara de arriba', d: Math.max(S.mz - pt.top, 0) };
+  for (const o of obst) { const d = distRect(S.mx, S.my, o); let dd = null;
+    if (S.mz < o.top) dd = d - BALL; else if (d < BALL) dd = S.mz - o.top - BALL;
+    if (dd !== null && dd < 30 && (!best || dd < best.d)) best = { n: dd !== null && S.mz >= o.top ? o.n + ' (arriba)' : o.n, d: Math.max(dd, 0) }; }
   return best;
 }
-function probe() {
-  let pen = -Infinity, hit = null, paper = false;
+function sense() {
+  let best = null, body = null;
   for (const o of obst) {
     const d = distRect(S.mx, S.my, o);
-    if (S.mz < o.top) { const p = R - d; if (p > pen) { pen = p; hit = o; } }
-    else if (o === obst[0] && d < R && S.mz - o.top <= 0.05) paper = true;
+    if (S.mz + 42 < o.top && d < 30) body = o;
+    let r = null, kind = null;
+    if (S.mz < o.top) { if (d < BALL) { r = d; kind = 'side'; } }
+    else if (d < BALL) { const rz = S.mz - o.top; if (rz < BALL) { r = rz; kind = 'top'; } }
+    if (r !== null && (!best || r < best.r)) best = { r, o, kind };
   }
-  return { pen, hit, paper };
+  return { best, body };
 }
 function afterMove(silent) {
-  const { pen, hit, paper } = probe(), prev = S.contact;
-  S.pen = pen;
-  if (pen > 1) {
-    S.crashed = true; S.crashes++; S.cjog = 0; S.contact = 'crash';
-    const why = hit && distRect(S.mx, S.my, hit) < 0 ? `has bajado en Z encima de la ${hit.n}` : `te has pasado más de 1 mm contra la ${hit.n}`;
-    setMsg('CHOQUE: ' + why + '. Pulsa RESET', 'err'); sfx('crash'); buzz(1, 400); flash = 1;
-  } else if (pen >= 0) {
-    S.contact = S.spindle ? 'touch' : 'touchoff';
-    if (hit === obst[0]) { if (S.mx < hit.x0 && S.my >= hit.y0 - R) S.touched.X = true; if (S.my < hit.y0 && S.mx >= hit.x0 - R) S.touched.Y = true; }
-    if (prev !== S.contact && !silent) {
-      if (S.spindle) { setMsg(`El buscabordes ha saltado contra la ${hit.n}`, 'ok'); sfx('kick'); buzz(0.6, 120); }
-      else setMsg('Estás tocando, pero sin girar el buscabordes no salta', 'warn');
-    }
-  } else if (paper) {
-    S.contact = 'paper'; S.touched.Z = true;
-    if (prev !== 'paper' && !silent) { setMsg('El papel se queda pillado: estás en la cara de arriba', 'ok'); sfx('kick'); buzz(0.4, 80); }
-  } else if (pen > -0.5) {
-    S.contact = 'near';
-    if (prev !== 'near' && !silent) { setMsg(S.spindle ? 'El buscabordes se está centrando: baja el incremento' : 'Muy cerca del borde', 'warn'); buzz(0.15, 40); }
-  } else { S.contact = 'none'; }
-  if (S.contact !== 'crash') S.safe = [S.mx, S.my, S.mz];
+  const { best, body } = sense(), prev = S.contact;
+  S.contact = best; S.read = best ? best.r : BALL; dialDirty = true;
+  if (body || (best && best.r < -OVER)) {
+    crash(body ? `El cuerpo del palpador ha chocado con la ${body.n}` : `Has pasado el recorrido del palpador contra la ${best.o.n} (más de ${OVER.toFixed(1).replace('.', ',')} mm tras el 0)`);
+    return;
+  }
+  if (best && best.o === obst[0] && Math.abs(best.r) <= 0.05) {
+    const p = S.part;
+    if (best.kind === 'side' && S.mx < p.x0 && S.my > p.y0 && S.my < p.y1) S.touched.X = true;
+    if (best.kind === 'side' && S.my < p.y0 && S.mx > p.x0 && S.mx < p.x1) S.touched.Y = true;
+    if (best.kind === 'top') S.touched.Z = true;
+  }
+  if (!silent) {
+    if (best && !prev) { setMsg(`Contacto con la ${best.o.n}: el reloj empieza a moverse`, 'ok'); sfx('kick'); buzz(0.5, 90); }
+    else if (!best && prev) setMsg('Sin contacto', 'info');
+    else if (best && Math.abs(best.r) <= 0.005 && !(prev && Math.abs(prev.r) <= 0.005)) { setMsg('Reloj en 0: el eje está justo sobre la superficie', 'ok'); buzz(0.25, 40); }
+    else if (best && best.r < -0.3 && !(prev && prev.r < -0.3)) setMsg('Te has pasado del 0: vuelve atrás despacio', 'warn');
+  }
+  S.safe = [S.mx, S.my, S.mz];
   dirty = true;
 }
+function crash(why) {
+  S.alarm = 'ALARMA: choque · pulse RESET'; S.crashes++; S.cjog = 0; S.jogHold = null;
+  setMsg('CHOQUE: ' + why + '. Pulsa RESET y retírate.', 'err'); sfx('crash'); buzz(1, 400); flash = 1; dirty = true;
+}
+function blocked() { if (S.estop) { setMsg('Parada de emergencia pulsada: suéltala y pulsa RESET', 'err'); return true; } if (S.alarm) { setMsg('Hay una alarma: pulsa RESET', 'err'); return true; } return false; }
 function jog(a, d) {
-  if (S.crashed) { setMsg('Máquina parada por choque. Pulsa RESET', 'err'); return false; }
+  if (blocked()) return false;
   const k = 'm' + a.toLowerCase(), v = r3(Math.min(LIM[a][1], Math.max(LIM[a][0], S[k] + d)));
   if (v === S[k]) { if (d) setMsg(`Final de carrera en ${a}`, 'warn'); return false; }
-  S[k] = v; afterMove(); return true;
+  S[k] = v; S.result = null; afterMove(); return true;
 }
-function handle(dir) { if (jog(S.axis, dir * S.inc)) { wheel.rotation.z -= dir * Math.PI / 50; sfx('click'); buzz(0.05, 10); } }
-function toggleSpindle() { if (S.crashed) return; S.spindle = !S.spindle; setMsg(S.spindle ? 'Husillo a 600 rpm: el buscabordes gira descentrado' : 'Husillo parado', 'info'); hum(S.spindle); afterMove(true); }
-function partZero() {
-  if (S.crashed) return;
-  const a = S.axis; S.g54[a] = S['m' + a.toLowerCase()];
-  setMsg(`G54 ${a} = ${f3(S.g54[a]).trim()} (posición de máquina actual)`, 'info'); sfx('set');
+function handle(dir) { if (jog(S.axis, dir * S.inc)) { S.wheel += dir * Math.PI / 50; sfx('click'); buzz(0.05, 10); } }
+function spindleOn(dir) {
+  if (blocked()) return;
+  S.spindle = true; S.alarm = 'ERROR: palpador 3D girando'; S.crashes++; hum(true); sfx('crash'); buzz(1, 300); flash = 0.7;
+  setMsg(`Has pulsado ${dir} con el palpador 3D: nunca debe girar, se estropea. Pulsa STOP y RESET.`, 'err');
 }
-function key(k) {
-  if (k === '-' && S.input) return; if (k === '.' && S.input.includes('.')) return;
-  if (S.input.length < 9) S.input += k;
-}
-function applyInput(add) {
-  const v = parseFloat(S.input);
-  if (!isFinite(v)) { setMsg('Escribe un valor antes de ENTER o F1', 'warn'); return; }
-  const a = S.axis; S.g54[a] = r3(add ? S.g54[a] + v : v); S.input = '';
-  setMsg(`G54 ${a} ${add ? 'suma ' + fc(v) : 'sustituido'}: ${f3(S.g54[a]).trim()}`, 'info'); sfx('set');
+function spindleStop() { if (S.spindle) { S.spindle = false; hum(false); setMsg('Husillo parado. Pulsa RESET para borrar la alarma.', 'warn'); } else info('El husillo ya está parado.'); }
+function toggleEstop() {
+  S.estop = !S.estop; S.cjog = 0; S.jogHold = null;
+  if (S.estop) { S.spindle = false; hum(false); setMsg('PARADA DE EMERGENCIA pulsada. Gírala (púlsala otra vez) y luego RESET.', 'err'); sfx('crash'); }
+  else setMsg('Seta liberada. Pulsa RESET.', 'warn');
 }
 function reset() {
-  if (!S.crashed) { setMsg('Sin alarmas', 'info'); return; }
-  [S.mx, S.my, S.mz] = S.safe; S.crashed = false; S.contact = 'none'; afterMove(true);
-  setMsg('Alarma borrada. Retírate antes de volver a acercarte', 'warn');
+  if (S.estop) { setMsg('Primero suelta la parada de emergencia', 'err'); return; }
+  if (S.spindle) { setMsg('Para el husillo (STOP) antes de RESET', 'err'); return; }
+  if (!S.alarm) { info('Sin alarmas.'); return; }
+  S.alarm = ''; [S.mx, S.my, S.mz] = S.safe; afterMove(true);
+  setMsg('Alarma borrada. Aléjate antes de volver a acercarte.', 'warn');
 }
-function hint(a, e) {
-  if (Math.abs(e) <= 0.05) return '';
-  if (Math.abs(e + 5) < 0.1) return 'te falta sumar el radio: escribe 5 y ENTER';
-  if (Math.abs(e - 5) < 0.1) return 'has restado el radio en vez de sumarlo';
-  if (Math.abs(e + 10) < 0.15) return 'has restado el radio dos veces';
-  if (a !== 'Z' && Math.abs(e - 105) < 0.2) return 'has tocado el lado contrario: el cero es X−/Y−';
-  if (S.g54[a] === 0) return 'no has fijado este cero';
-  return 'toca de nuevo con incremento 0,01 o 0,001';
+function moveCur(dr, dc) { S.screen = 'ofs'; S.tab = 'Trab'; S.cur.r = Math.max(0, Math.min(ROWS.length - 1, S.cur.r + dr)); S.cur.c = Math.max(0, Math.min(2, S.cur.c + dc)); }
+function cell() { return { row: ROWS[S.cur.r], c: S.cur.c, col: COLS[S.cur.c] }; }
+function partZero() {
+  if (blocked()) return;
+  if (S.screen !== 'ofs' || S.tab !== 'Trab') { setMsg('Abre OFFSET → pestaña Trab y pon el cursor en la casilla', 'warn'); return; }
+  const { row, c, col } = cell();
+  S.ofs[row][c] = r3(mpos(col));
+  if (row === 'G54') S.setRead[col] = S.contact ? S.read : null;
+  setMsg(`${row} ${col} = ${f3(S.ofs[row][c])} (posición de máquina actual)`, row === 'G54' ? 'info' : 'warn'); sfx('set');
+}
+function key(k) { if (k === '-' && S.input) return; if (k === '.' && S.input.includes('.')) return; if (S.input.length < 10) S.input += k; }
+function fkey(f) { if (f === 'F1') applyInput(false); else if (f === 'F4') { S.screen = 'ofs'; S.tab = S.tab === 'Trab' ? 'Herrm' : 'Trab'; } else info(`${f} no se usa en este ejercicio.`); }
+function applyInput(add) {
+  const v = parseFloat(S.input);
+  if (!isFinite(v)) { setMsg('Escribe un valor (Input) antes de ENTER o F1', 'warn'); return; }
+  if (S.screen !== 'ofs' || S.tab !== 'Trab') { setMsg('Abre OFFSET → Trab para cambiar correctores', 'warn'); return; }
+  const { row, c, col } = cell(); S.ofs[row][c] = r3(add ? S.ofs[row][c] + v : v); S.input = '';
+  if (row === 'G54') S.setRead[col] = 'manual';
+  setMsg(`${row} ${col} ${add ? 'suma ' + fc(v) : 'fijado'} → ${f3(S.ofs[row][c])}`, 'info'); sfx('set');
+}
+function hint(c, e) {
+  if (Math.abs(e) <= TOL) return '';
+  if (r3(g54()[COLS.indexOf(c)]) === OFS0.G54[COLS.indexOf(c)]) return 'sigue el valor del compañero anterior: no lo has fijado';
+  for (const k of [2, 4, 5]) if (Math.abs(Math.abs(e) - k) < 0.06) return 'con el palpador 3D no se compensa el radio: el 0 del reloj ya es el eje sobre el borde';
+  if (c !== 'Z' && Math.abs(e - 100) < 3) return 'has palpado el lado contrario: el cero es X−/Y−';
+  const sr = S.setRead[c];
+  if (typeof sr === 'number' && Math.abs(sr) > TOL) return `pulsaste PART ZERO SET con el reloj en ${sr.toFixed(3).replace('.', ',')} mm: déjalo en 0`;
+  if (sr === null) return 'pulsaste PART ZERO SET sin estar tocando la pieza';
+  return 'vuelve a palpar con 0,01 y termina con 0,001';
 }
 function validate() {
-  if (S.crashed) return;
-  const p = S.part, err = { X: r3(S.g54.X - p.x0), Y: r3(S.g54.Y - p.y0), Z: r3(S.g54.Z - p.top) };
-  const pass = ['X', 'Y', 'Z'].every(a => Math.abs(err[a]) <= 0.05);
+  if (blocked()) return;
+  const p = S.part, G = g54(), err = { X: r3(G[0] - p.x0), Y: r3(G[1] - p.y0), Z: r3(G[2] - p.top) };
+  const pass = COLS.every(c => Math.abs(err[c]) <= TOL);
   const secs = Math.round((performance.now() - S.t0) / 1000), tm = `${Math.floor(secs / 60)} min ${secs % 60} s`;
-  const lines = [{ t: pass ? `Superado · ${tm} · ${S.crashes} choques` : `Revisa el reglaje · ${tm} · ${S.crashes} choques`, c: pass ? COL.green : COL.amber }];
-  for (const a of ['X', 'Y', 'Z']) { const ok = Math.abs(err[a]) <= 0.05, h = hint(a, err[a]); lines.push({ t: `${ok ? '✓' : '✗'} ${a}: error ${fc(err[a])} mm${h ? ' · ' + h : ''}`, c: ok ? COL.ink : COL.red }); }
-  lines.push({ t: 'Pulsa NUEVA para otra pieza, o corrige y vuelve a validar', c: COL.quiet });
-  S.result = { pass, lines, text: [`Reglaje Mini Mill · ${new Date().toLocaleString('es-ES')}`, ...lines.map(l => l.t)].join('\n') };
-  setMsg(pass ? 'Cero correcto en los tres ejes' : 'Hay algún cero fuera de tolerancia (0,05 mm)', pass ? 'ok' : 'warn');
+  const lines = [{ t: `${pass ? 'Superado' : 'Revisa el reglaje'} · ${tm} · ${S.crashes} errores graves`, c: pass ? COL.green : COL.amber }];
+  for (const c of COLS) { const ok = Math.abs(err[c]) <= TOL, h = hint(c, err[c]); lines.push({ t: `${ok ? '✓' : '✗'} G54 ${c}: error ${fc(err[c])} mm${h ? ' · ' + h : ''}`, c: ok ? COL.ink : COL.red }); }
+  lines.push({ t: 'PIEZA NUEVA para repetir, o corrige y vuelve a validar', c: COL.quiet });
+  S.result = { pass, lines, text: [`Reglaje Mini Mill (palpador 3D) · ${new Date().toLocaleString('es-ES')}`, ...lines.map(l => l.t)].join('\n') };
+  setMsg(pass ? 'Cero G54 correcto en los tres ejes' : `Hay algún cero fuera de tolerancia (${TOL.toFixed(2).replace('.', ',')} mm)`, pass ? 'ok' : 'warn');
   sfx(pass ? 'set' : 'kick'); cpBtn.hidden = false;
 }
 function setMsg(t, tone) { S.msg = t; S.tone = tone; dirty = true; }
+function info(t) { setMsg(t, 'info'); }
 
 /* ---------- sonido y vibración ---------- */
 let ac = null, humNode = null;
@@ -369,23 +554,34 @@ function buzz(v, ms) {
 
 /* ---------- entrada ---------- */
 const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(), tmpM = new THREE.Matrix4();
-let held = null;
-function btnAt(hitp) { if (!hitp || !hitp.uv) return null; const x = hitp.uv.x * PW, y = (1 - hitp.uv.y) * PH; return BTN.find(k => x >= k.x && x <= k.x + k.w && y >= k.y && y <= k.y + k.h) || null; }
-function press(k) { if (!k) return; audio(); held = k; if (k.hold) { if (S.crashed) setMsg('Máquina parada por choque. Pulsa RESET', 'err'); else S.cjog = k.hold; } else { if (k.id !== 'vm' && k.id !== 'vp') sfx('click'); k.act(); } dirty = true; }
-function release() { if (held && held.hold) S.cjog = 0; held = null; dirty = true; }
-function mouseHit(e) { ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObject(panel)[0]; }
-renderer.domElement.addEventListener('pointerdown', e => { const k = btnAt(mouseHit(e)); if (k) { controls.enabled = false; press(k); } });
+function hitBtn(hits) {
+  for (const h of hits) { const p = PANELS.find(q => q.m === h.object); if (!p || !h.uv) continue;
+    const x = h.uv.x * p.W, y = (1 - h.uv.y) * p.H;
+    return p.btns.find(k => x >= k.x && x <= k.x + k.w && y >= k.y && y <= k.y + k.h) || null; }
+  return null;
+}
+const meshes = PANELS.map(p => p.m);
+function press(k) {
+  if (!k) return; audio(); held = k;
+  if (k.jog) { const a = k.jog[1], d = k.jog[0] === '+' ? 1 : -1; S.axis = a; S.jogHold = { a, d, t: performance.now() }; sfx('click'); }
+  else { if (!k.id.startsWith('wh')) sfx('click'); k.act(); }
+  dirty = true;
+}
+function release() { S.jogHold = null; S.cjog = 0; held = null; dirty = true; }
+function mouseHits(e) { ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(meshes); }
+renderer.domElement.addEventListener('pointerdown', e => { const k = hitBtn(mouseHits(e)); if (k) { controls.enabled = false; press(k); } });
 addEventListener('pointerup', () => { release(); controls.enabled = true; });
-renderer.domElement.addEventListener('pointermove', e => { const k = btnAt(mouseHit(e)); if (k !== hover) { hover = k; dirty = true; } renderer.domElement.style.cursor = k ? 'pointer' : ''; });
+renderer.domElement.addEventListener('pointermove', e => { const k = hitBtn(mouseHits(e)); if (k !== hover) { hover = k; dirty = true; } renderer.domElement.style.cursor = k ? 'pointer' : ''; });
 const keysDown = {};
 addEventListener('keydown', e => {
-  if (e.target.closest && e.target.closest('button,summary')) { if (e.key === 'Enter' || e.key === ' ') return; }
+  if (e.target.closest && e.target.closest('button,summary,a')) { if (e.key === 'Enter' || e.key === ' ') return; }
   const k = e.key; audio();
-  if (/^[xyz]$/i.test(k) && !e.ctrlKey && !e.metaKey) { S.axis = k.toUpperCase(); setMsg('Eje ' + S.axis + ' seleccionado', 'info'); }
+  if (/^[xyz]$/i.test(k) && !e.ctrlKey && !e.metaKey) { S.axis = k.toUpperCase(); }
   else if (k === 'i' || k === 'I') { S.inc = INCS[(INCS.indexOf(S.inc) + 1) % 4]; }
   else if (k === 'ArrowRight' || k === 'ArrowLeft') { e.preventDefault(); const dir = k === 'ArrowRight' ? 1 : -1; for (let n = e.shiftKey ? 10 : 1; n--;) handle(dir); }
-  else if ((k === 'a' || k === 'd') && !keysDown[k]) { keysDown[k] = 1; if (!S.crashed) S.cjog = k === 'a' ? -1 : 1; else setMsg('Máquina parada por choque. Pulsa RESET', 'err'); }
-  else if (k === 's' || k === 'S') toggleSpindle();
+  else if (k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); moveCur(k === 'ArrowUp' ? -1 : 1, 0); }
+  else if (k === '[' || k === ']') moveCur(0, k === '[' ? -1 : 1);
+  else if ((k === 'a' || k === 'd') && !keysDown[k]) { keysDown[k] = 1; if (!blocked()) S.cjog = k === 'a' ? -1 : 1; }
   else if (k === 'p' || k === 'P') partZero();
   else if (/^[0-9.\-]$/.test(k)) key(k);
   else if (k === 'Enter') applyInput(true);
@@ -405,54 +601,57 @@ const ctrls = [0, 1].map(i => {
   const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]), new THREE.LineBasicMaterial({ color: '#2ec5e6' }));
   line.scale.z = 2; c.add(line);
   c.add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.09), dark));
-  c.userData.line = line;
-  c.addEventListener('selectstart', () => press(btnAt(ctrlHit(c))));
+  c.addEventListener('selectstart', () => press(hitBtn(ctrlHits(c))));
   c.addEventListener('selectend', release);
   scene.add(c); return c;
 });
-function ctrlHit(c) { tmpM.identity().extractRotation(c.matrixWorld); ray.ray.origin.setFromMatrixPosition(c.matrixWorld); ray.ray.direction.set(0, 0, -1).applyMatrix4(tmpM); return ray.intersectObject(panel)[0]; }
+function ctrlHits(c) { tmpM.identity().extractRotation(c.matrixWorld); ray.ray.origin.setFromMatrixPosition(c.matrixWorld); ray.ray.direction.set(0, 0, -1).applyMatrix4(tmpM); return ray.intersectObjects(meshes); }
 let lastStick = 0;
 
 /* ---------- vistas de escritorio ---------- */
-const views = { v1: [[0.05, 1.65, 0.9], [0.15, 1.2, -0.55]], v2: [[0.3, 1.45, 0.35], [0.62, 1.42, -0.1]], v3: [[-0.16, 1.32, -0.5], [0, 1.08, -0.95]] };
+const views = { v1: [[0.05, 1.65, 0.95], [0.05, 1.25, -0.5]], v2: [[0.32, 1.42, 0.42], [0.66, 1.36, -0.08]], v3: [[-0.16, 1.32, -0.5], [0, 1.08, -0.95]], v4: [[-0.28, 1.4, 0.45], [-0.61, 1.35, -0.05]] };
 for (const id in views) document.getElementById(id).onclick = () => { camera.position.set(...views[id][0]); controls.target.set(...views[id][1]); controls.update(); document.getElementById('help').open = false; };
 const cpBtn = document.getElementById('cp');
 cpBtn.onclick = async () => { try { await navigator.clipboard.writeText(S.result.text); cpBtn.textContent = 'Copiado'; } catch (e) { cpBtn.textContent = 'No se pudo copiar'; } setTimeout(() => cpBtn.textContent = 'Copiar resumen', 1500); };
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
 /* ---------- bucle ---------- */
-let last = performance.now(), lastDraw = 0, flash = 0;
+let last = performance.now(), lastDraw = 0, flash = 0, lastDial = 0;
 const tipW = new THREE.Vector3();
 renderer.setAnimationLoop(t => {
   const dt = Math.min((t - last) / 1000, 0.05); last = t;
-  if (S.cjog && !S.crashed) { const step = 50 * dt, n = Math.ceil(step / 0.5); for (let i = 0; i < n && S.cjog; i++) if (!jog(S.axis, S.cjog * step / n)) { S.cjog = 0; break; } }
+  if (S.jogHold && t - S.jogHold.t > 300) S.cjog = S.jogHold.d;
+  if (S.cjog && !S.alarm && !S.estop) {
+    const step = JOGV[S.inc] * dt, n = Math.max(1, Math.ceil(step / 0.05));
+    for (let i = 0; i < n && S.cjog; i++) if (!jog(S.axis, S.cjog * step / n)) { S.cjog = 0; S.jogHold = null; break; }
+  }
   const sess = renderer.xr.getSession();
   if (sess) {
     for (const src of sess.inputSources) { const ax = src.gamepad && src.gamepad.axes; const x = ax ? (ax.length > 2 ? ax[2] : ax[0]) : 0; if (Math.abs(x) > 0.6 && t - lastStick > 110) { lastStick = t; handle(Math.sign(x)); } }
-    let h = null; for (const c of ctrls) { const k = btnAt(ctrlHit(c)); if (k) h = k; }
+    let h = null; for (const c of ctrls) { const k = hitBtn(ctrlHits(c)); if (k) h = k; }
     if (h !== hover) { hover = h; dirty = true; }
   }
   mesa.position.set(T0 - S.mx * MM, MESA_Y, Tz0 + S.my * MM);
-  if (model) { const dx = T0 - S.mx * MM - TBL[0], dz = Tz0 + S.my * MM - TBL[1]; for (const m of parts.x) m.position.set(dx, 0, dz); for (const m of parts.y) m.position.z = dz; for (const m of parts.z) m.position.y = Hy0 + S.mz * MM + 0.13 - NOSE; }
+  if (model) { const dx = T0 - S.mx * MM - TBL[0], dz = Tz0 + S.my * MM - TBL[1]; for (const m of parts.x) m.position.set(dx, 0, dz); for (const m of parts.y) m.position.z = dz; for (const m of parts.z) m.position.y = Hy0 + S.mz * MM + TL - NOSE; }
   cab.position.set(SPX, Hy0 + S.mz * MM, SPZ);
-  if (S.spindle && !S.crashed) S.ang += dt * 2 * Math.PI * 10;
-  holder.rotation.y = shank.rotation.y = S.ang;
-  let off = 0;
-  if (S.spindle && !S.crashed) off = S.contact === 'touch' ? 1.5 : S.contact === 'near' ? 0.5 * (-S.pen / 0.5) : 0.5;
-  tip.position.set(off * MM * Math.cos(S.ang), 0.005, off * MM * Math.sin(S.ang));
-  const c = S.contact === 'crash' ? COL.red : S.contact === 'touch' || S.contact === 'paper' ? COL.green : S.contact === 'near' ? COL.amber : '#b8c2cc';
-  tipMat.color.set(c); tipMat.emissive.set(c === '#b8c2cc' ? '#000000' : c); tipMat.emissiveIntensity = 0.35;
+  probe.rotation.y = S.spindle ? probe.rotation.y + dt * 30 : 0;
+  // desviación visible de la bola
+  const c = S.contact; let dx = 0, dy = 0, dz = 0;
+  if (c) { const defl = Math.max(0, BALL - c.r) * MM;
+    if (c.kind === 'top') dy = defl; else { const o = c.o, px = Math.max(o.x0, Math.min(o.x1, S.mx)), py = Math.max(o.y0, Math.min(o.y1, S.my)); let vx = S.mx - px, vy = S.my - py; const L = Math.hypot(vx, vy) || 1; dx = vx / L * defl; dz = -vy / L * defl; } }
+  stylus.position.set(dx, dy, dz);
   if (flash > 0) { flash = Math.max(0, flash - dt * 2); scene.background.copy(BG).lerp(new THREE.Color(COL.red), flash * 0.6); }
-  if (dirty && t - lastDraw > 66) { draw(); dirty = false; lastDraw = t; }
-  tip.getWorldPosition(tipW);
-  lupaCam.position.set(tipW.x - 0.06, tipW.y + 0.035, tipW.z + 0.14); lupaCam.lookAt(tipW.x, tipW.y - 0.004, tipW.z);
+  if (dialDirty && t - lastDial > 40) { drawDial(S.read); dialDirty = false; lastDial = t; }
+  if (t - lastDraw > 80 && (dirty || t - lastDraw > 500)) { drawPendant(); drawBoard(); dirty = false; lastDraw = t; }
+  probe.getWorldPosition(tipW);
+  lupaCam.position.set(tipW.x - 0.06, tipW.y + 0.045, tipW.z + 0.21); lupaCam.lookAt(tipW.x - 0.004, tipW.y + 0.03, tipW.z);
   const xr = renderer.xr.enabled; renderer.xr.enabled = false; lupa.visible = false;
   renderer.setRenderTarget(rt); renderer.render(scene, lupaCam); renderer.setRenderTarget(null);
   renderer.xr.enabled = xr; lupa.visible = true;
   renderer.render(scene, camera);
 });
 newPart();
-draw();
+drawDial(BALL); drawPendant(); drawBoard();
 }
 </script>
 </body>
