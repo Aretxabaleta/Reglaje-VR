@@ -3,7 +3,7 @@
 Simulador WebXR de reglaje y toma de ceros (G54) para el alumnado de CIFP Mendizabala LHII.
 Se abre en el navegador de Meta Quest 2 / Pico 4 y en el ordenador (ratón y teclado).
 
-Web: https://aretxabaleta.github.io/reglaje-vr/
+Web: https://aretxabaleta.github.io/Reglaje-VR/
 
 ## Créditos y aviso
 - Proyecto educativo, sin ánimo de lucro.
