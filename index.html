@@ -38,7 +38,7 @@ canvas{display:block}
 </div>
 <details id="help" open>
   <summary>Cómo se juega</summary>
-  <p style="margin:6px 0"><b>1.</b> Antes de nada, en la mesa auxiliar: bulón encima del taco de Z y bisel hasta que marque 0. <b>2.</b> POWER UP con la puerta cerrada. <b>3.</b> Con el palpador (T10, herramienta patrón, H10 = 0) toca la mesa con el reloj a 0 y haz PART ZERO SET en <b>G59 Z</b>. <b>4.</b> Pon el taco en la mesa de la máquina y activa G59 en MDI (<code>G59;</code> INSERT, CYCLE START). <b>5.</b> Herramienta por herramienta, empezando por el patrón: sobre el taco hasta 0, TOOL OFFSET MEASURE en OFFSET → Herrm y <b>−50 ENTER</b>. El patrón tiene que dar 0. Cambia con <code>T1M06;</code>. <b>6.</b> Con el palpador coge G54 X−, Y− y Z en la pieza y activa G54 en MDI. VALIDAR.</p>
+  <p style="margin:6px 0"><b>1.</b> Antes de nada, en la mesa auxiliar: apoya el bulón encima del taco de Z y comprueba que marca 0. <b>2.</b> POWER UP con la puerta cerrada. <b>3.</b> En OFFSET → Herrm pon H10 del palpador a 0 (0 y F1): es la herramienta patrón. Con el palpador toca la mesa con el reloj a 0 y haz PART ZERO SET en <b>G59 Z</b>. <b>4.</b> Pon el taco en la mesa de la máquina y activa G59 en MDI (<code>G59;</code> INSERT, CYCLE START). <b>5.</b> Resto de herramientas (el palpador no se mide): <code>T1M06;</code>, sobre el taco hasta 0, TOOL OFFSET MEASURE en OFFSET → Herrm y <b>−50 ENTER</b>. <b>6.</b> Con el palpador coge G54 X−, Y− y Z en la pieza y activa G54 en MDI. VALIDAR.</p>
   <div>Teclado: <kbd>X</kbd><kbd>Y</kbd><kbd>Z</kbd> eje · <kbd>I</kbd> incremento · <kbd>←</kbd><kbd>→</kbd> volante · <kbd>A</kbd>/<kbd>D</kbd> mantener = jog · <kbd>↑</kbd><kbd>↓</kbd><kbd>[</kbd><kbd>]</kbd> cursor · <kbd>P</kbd> PART ZERO SET · <kbd>M</kbd> TOOL OFFSET MEASURE · <kbd>Enter</kbd> agregar · <kbd>F</kbd> F1 · <kbd>R</kbd> RESET · <kbd>Shift</kbd>+<kbd>Enter</kbd> CYCLE START. En la pantalla MDI el teclado escribe y <kbd>Enter</kbd> = INSERT. Arrastra el volante con el ratón para girarlo. Pulsa sobre el taco, el bulón o la puerta para cogerlos o moverlos.</div>
   <p class="note">En las gafas: gatillo = pulsar o coger; mantén el gatillo sobre el volante y gira la muñeca; joystick izquierda/derecha = volante.</p>
   <p class="note">Simulador educativo de CIFP Mendizabala LHII, sin ánimo de lucro y sin relación con Haas Automation, Inc. Modelo 3D de la máquina: «Haas Mini Mill», de la biblioteca de GrabCAD (<a href="https://grabcad.com/library/haas-mini-mill-1">grabcad.com/library/haas-mini-mill-1</a>), usado con crédito a su autor y con los logotipos retirados. Foto del teclado: taller de Mendizabala.</p>
@@ -235,14 +235,14 @@ function newPart() {
     { n: 'mesa', x0: -660, x1: 254, y0: -305, y1: 0.5, top: TABLE_Z }];
   TDEF[1].L = r3(rnd(92, 98)); TDEF[2].L = r3(rnd(100, 106)); TDEF[3].L = r3(rnd(125, 132));
   S.ofs = {}; for (const r of ROWS) S.ofs[r] = OFS0[r].slice();
-  S.H = { 1: 0, 2: 0, 3: 0, 10: 0 }; S.Hinfo = {};
-  S.bezel = r3((Math.random() < 0.5 ? -1 : 1) * Math.round(rnd(6, 26)) / 100);
+  S.H = { 1: 0, 2: 0, 3: 0, 10: 118.318 }; S.Hinfo = {};
+  S.bezel = 0;
   Object.assign(S, { tool: 10, wo: 'G54', woSet: {}, everTool: {}, spindle: false, input: '', crashes: 0, result: null, t0: performance.now(), mdi: [],
     touched: { X: false, Y: false, Z: false }, setRead: {}, cjog: 0, jogHold: null, cur: { r: 2, c: 0 }, screen: 'ofs', tab: 'Trab',
     tacoAt: 'bench', bulonAt: 'bench', hold: null, calibrated: false, contact: null, read: BALL, tacoRead: null, busy: null });
   if (S.homed) { S.mg = 0; S.alarm = ''; }
   buildTools(); placeObjects();
-  setMsg(S.homed ? 'Pieza nueva amarrada. Empieza calibrando el taco con el bulón.' : 'Antes de nada: calibra el taco de Z con el bulón en la mesa auxiliar. Luego POWER UP.', S.homed ? 'info' : 'warn');
+  setMsg(S.homed ? 'Pieza nueva amarrada. Empieza comprobando el taco con el bulón.' : 'Antes de nada: apoya el bulón sobre el taco de Z (mesa auxiliar) y comprueba que marca 0. Luego POWER UP.', S.homed ? 'info' : 'warn');
   cpBtn.hidden = true; afterMove(true);
 }
 function initMachine() { Object.assign(S, { mx: -180, my: -120, mg: -60, axis: 'X', inc: 0.01, homed: false, alarm: '102 SERVOS OFF', estop: false, door: 0, doorT: 0, help: true, msg: '', tone: 'info', wheel: 0 }); }
@@ -501,16 +501,16 @@ const expG59 = () => TABLE_Z + L(10);
 const expH = n => r3(L(n) - L(10));
 const okG = c => Math.abs(g54()[COLS.indexOf(c)] - expG(c)) <= TOL;
 const ok59 = () => Math.abs(S.ofs.G59[2] - expG59()) <= TOL;
-const okH = n => Math.abs(S.H[n] - expH(n)) <= TOL && !!S.Hinfo[n];
+const okH = n => n === 10 ? Math.abs(S.H[10]) <= TOL : Math.abs(S.H[n] - expH(n)) <= TOL && !!S.Hinfo[n];
 function steps() {
-  return [['Antes de nada: bulón sobre el taco (mesa auxiliar) y bisel a 0', S.calibrated], ['Quita el bulón', S.calibrated && S.bulonAt === 'bench'],
+  return [['Antes de nada: apoya el bulón sobre el taco y comprueba que marca 0', S.calibrated], ['Quita el bulón', S.calibrated && S.bulonAt === 'bench'],
     ['POWER UP con la puerta cerrada', S.homed], ['Abre la puerta', S.door > 0.5 || ok59()],
+    ['OFFSET → Herrm: H10 del palpador (patrón) a 0 (escribe 0 y F1)', okH(10)],
     ['Palpador sobre la mesa (delante de la mordaza) hasta 0', S.touched.T || ok59()],
     ['OFFSET → Trab, cursor en G59 Z y PART ZERO SET', ok59()],
     ['Pon el taco en la mesa de la máquina', S.tacoAt === 'table' || okH(3)],
-    ['Cierra la puerta. MDI: G59; INSERT y CYCLE START', S.woSet.G59 || okH(10)],
-    ['Patrón T10 sobre el taco a 0 · Herrm · TOOL OFFSET MEASURE · −50 ENTER → 0', okH(10)],
-    ['T1M06; y mide T1 igual (sobre el taco, medir, −50)', okH(1)], ['T2: mídela igual', okH(2)], ['T3: mídela igual', okH(3)],
+    ['Cierra la puerta. MDI: G59; INSERT y CYCLE START', S.woSet.G59 || okH(1)],
+    ['T1M06; · T1 sobre el taco a 0 · Herrm · TOOL OFFSET MEASURE · −50 ENTER', okH(1)], ['T2: mídela igual', okH(2)], ['T3: mídela igual', okH(3)],
     ['Vuelve al palpador: T10M06;', (S.tool === 10 && okH(3)) || okG('X')],
     ['G54 X−: reloj a 0 y PART ZERO SET', okG('X')], ['G54 Y−: reloj a 0 y PART ZERO SET', okG('Y')], ['G54 Z: reloj a 0 y PART ZERO SET', okG('Z')],
     ['MDI: G54; para activarlo', S.wo === 'G54' && okG('Z') && S.woSet.G54], ['Pulsa VALIDAR', !!S.result]];
@@ -540,7 +540,7 @@ function drawBoard() {
   Q.t.needsUpdate = true;
 }
 function readLine() {
-  if (S.bulonAt === 'taco' && S.tacoAt === 'bench') return `Taco en calibración: ${es(S.bezel)} mm (gira el bisel)`;
+  if (S.bulonAt === 'taco' && S.tacoAt === 'bench') return 'Taco con el bulón: 0,000 mm · comprobado';
   if (cur().type === 'probe' && S.tacoRead == null) return S.contact ? `Palpador: ${es(S.read)} mm (${S.contact.o.n})` : sinContacto();
   if (S.tacoRead != null) return `Taco de Z: ${es(S.tacoRead)} mm`;
   return sinContacto();
@@ -680,7 +680,7 @@ function partZero() {
   if (S.screen !== 'ofs' || S.tab !== 'Trab') { setMsg('Abre OFFSET → pestaña Trab y pon el cursor en la casilla', 'warn'); return; }
   const row = ROWS[S.cur.r], c = S.cur.c, col = COLS[c];
   S.ofs[row][c] = r3(col === 'Z' ? S.mg - S.H[S.tool] : mpos(col));
-  S.setRead[row + col] = cur().type === 'probe' ? (S.contact ? { r: S.read, n: S.contact.o.n } : null) : 'tool';
+  S.setRead[row + col] = cur().type === 'probe' ? (S.contact ? { r: S.read, n: S.contact.o.n, h: S.H[S.tool] } : null) : 'tool';
   setMsg(`${row} ${col} = ${f3(S.ofs[row][c])}`, row === 'G54' ? 'info' : 'warn'); sfx('set');
 }
 function toolOffsetMeasure() {
@@ -698,8 +698,7 @@ function applyInput(add) {
     S.H[S.tool] = r3(add ? S.H[S.tool] + v : v); S.input = '';
     const hi = S.Hinfo[S.tool] || (S.Hinfo[S.tool] = { read: null, wo: S.wo, cal: S.calibrated, m50: 0, manual: true });
     const m50 = add && Math.abs(v + 50) < 1e-9; if (m50) hi.m50++; else hi.manual = true;
-    const pat = S.tool === 10 && m50, okp = Math.abs(S.H[10]) <= TOL;
-    setMsg(`H${hh(S.tool)} → ${f3(S.H[S.tool])}${pat ? (okp ? ' · el patrón da 0: taco y G59 correctos' : ' · el patrón NO da 0: revisa el taco y el G59') : ''}`, pat ? (okp ? 'ok' : 'warn') : 'info'); sfx('set'); return;
+    setMsg(`H${hh(S.tool)} → ${f3(S.H[S.tool])}${S.tool === 10 ? (Math.abs(S.H[10]) <= TOL ? ' · palpador patrón a 0' : ' · el palpador patrón tiene que quedar a 0') : ''}`, 'info'); sfx('set'); return;
   }
   const row = ROWS[S.cur.r], c = S.cur.c, col = COLS[c]; S.ofs[row][c] = r3(add ? S.ofs[row][c] + v : v); S.input = '';
   S.setRead[row + col] = 'manual';
@@ -741,10 +740,12 @@ function hint(c, e, row = 'G54') {
   if (sr && sr.r !== undefined && Math.abs(sr.r) > TOL) return `reloj en ${es(sr.r)} al fijar`;
   if (sr && sr.n && sr.n !== (row === 'G59' ? 'mesa' : 'pieza')) return `palpaste la ${sr.n}`;
   if (sr === null) return 'fijado sin tocar nada';
+  if (c === 'Z' && sr && sr.h && Math.abs(sr.h) > TOL) return 'H10 no estaba a 0 al fijar';
   if (sr === 'tool') return 'fijaste el cero sin el palpador en el husillo';
   return 'vuelve a palpar y termina con 0,001';
 }
 function hintH(n, e) {
+  if (n === 10) return Math.abs(e) <= TOL ? '' : 'el palpador patrón tiene que tener H10 = 0';
   const hi = S.Hinfo[n];
   if (!hi) return 'sin medir';
   if (Math.abs(e) <= TOL) return '';
@@ -753,7 +754,7 @@ function hintH(n, e) {
   if (hi.wo !== 'G59') return `medida con ${hi.wo} activo`;
   if (hi.read == null) return 'sin tocar el taco';
   if (Math.abs(hi.read) > TOL) return `taco en ${es(hi.read)}`;
-  if (!hi.cal) return 'taco sin calibrar';
+  if (!hi.cal) return 'taco sin comprobar';
   if (!ok59()) return 'G59 Z mal';
   return hi.manual ? 'tocado a mano' : 'repite';
 }
@@ -762,13 +763,14 @@ function validate() {
   const G = g54(), err = {}; for (const c of COLS) err[c] = r3(G[COLS.indexOf(c)] - expG(c));
   const e59 = r3(S.ofs.G59[2] - expG59());
   const eh = {}; for (const n of [10, 1, 2, 3]) eh[n] = r3(S.H[n] - expH(n));
-  const pass = Math.abs(e59) <= TOL && COLS.every(c => Math.abs(err[c]) <= TOL) && [10, 1, 2, 3].every(n => !hintH(n, eh[n])) && S.wo === 'G54';
+  const pass = Math.abs(e59) <= TOL && COLS.every(c => Math.abs(err[c]) <= TOL) && [10, 1, 2, 3].every(n => !hintH(n, eh[n])) && S.wo === 'G54' && S.calibrated;
   const secs = Math.round((performance.now() - S.t0) / 1000), tm = `${Math.floor(secs / 60)} min ${secs % 60} s`;
   const lines = [{ t: `${pass ? 'Superado' : 'Revisa el reglaje'} · ${tm} · ${S.crashes} errores graves`, c: pass ? COL.green : COL.amber }];
   { const ok = Math.abs(e59) <= TOL, h = hint('Z', e59, 'G59'); lines.push({ t: `${ok ? '✓' : '✗'} G59 Z (mesa): ${fc(e59)} mm${h ? ' · ' + h : ''}`, c: ok ? COL.ink : COL.red }); }
   const hs = [10, 1, 2, 3].map(n => { const h = hintH(n, eh[n]); return { t: `${h ? '✗' : '✓'} H${hh(n)} ${fc(eh[n])}${h ? ' (' + h + ')' : ''}`, ok: !h }; });
   for (const pr of [hs.slice(0, 2), hs.slice(2)]) lines.push({ t: pr.map(x => x.t).join(' · '), c: pr.every(x => x.ok) ? COL.ink : COL.red });
   lines.push({ t: COLS.map(c => { const h = hint(c, err[c]); return `${Math.abs(err[c]) <= TOL ? '✓' : '✗'} G54 ${c} ${fc(err[c])}${h ? ' (' + h + ')' : ''}`; }).join(' · '), c: COLS.every(c => Math.abs(err[c]) <= TOL) ? COL.ink : COL.red });
+  if (!S.calibrated) lines.push({ t: '✗ No comprobaste el taco con el bulón antes de usarlo', c: COL.red });
   if (S.wo !== 'G54') lines.push({ t: `✗ Corrector activo ${S.wo}: activa G54 en MDI`, c: COL.red });
   S.result = { pass, lines, text: [`Reglaje Mini Mill · ${new Date().toLocaleString('es-ES')}`, ...lines.map(l => l.t)].join('\n') };
   setMsg(pass ? 'Reglaje correcto: G59, longitudes de herramienta y G54' : `Hay valores fuera de tolerancia (${es(TOL)} mm)`, pass ? 'ok' : 'warn');
@@ -799,7 +801,7 @@ function dropAt(target) {
       S.tacoAt = 'table'; S.hold = null; setMsg(S.calibrated ? 'Taco sobre la mesa. Cierra la puerta y cambia de herramienta.' : 'Taco en la mesa… pero aún no está calibrado.', S.calibrated ? 'ok' : 'warn');
     } else if (target === 'benchTaco') { S.tacoAt = 'bench'; S.hold = null; info('Taco en la mesa auxiliar.'); } else return;
   } else {
-    if (target === 'onTaco' && S.tacoAt === 'bench') { S.bulonAt = 'taco'; S.hold = null; setMsg('Bulón encima del taco. Gira el bisel (pulsa los lados del reloj) hasta 0.', 'ok'); }
+    if (target === 'onTaco' && S.tacoAt === 'bench') { S.bulonAt = 'taco'; S.hold = null; S.bezel = 0; S.calibrated = true; tacoDirty = true; setMsg('El taco marca 0 con el bulón: comprobado. Quita el bulón y lleva el taco a la mesa.', 'ok'); }
     else if (target === 'benchBulon') { S.bulonAt = 'bench'; S.hold = null; info('Bulón en su sitio.'); } else return;
   }
   sfx('set'); afterMove(true);
@@ -814,8 +816,45 @@ function turnBezel(dir) {
 let ac = null, humNode = null;
 function audio() { try { ac = ac || new AudioContext(); if (ac.state === 'suspended') ac.resume(); } catch (e) { ac = null; } return ac; }
 function tone(f, d, type, vol) { const a = audio(); if (!a) return; const o = a.createOscillator(), gn = a.createGain(); o.type = type; o.frequency.value = f; gn.gain.setValueAtTime(vol, a.currentTime); gn.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + d); o.connect(gn).connect(a.destination); o.start(); o.stop(a.currentTime + d); }
-function sfx(k) { if (k === 'click') tone(1800, 0.02, 'square', 0.03); if (k === 'kick') tone(880, 0.12, 'sine', 0.15); if (k === 'crash') tone(110, 0.5, 'sawtooth', 0.25); if (k === 'set') { tone(660, 0.08, 'sine', 0.12); setTimeout(() => tone(990, 0.1, 'sine', 0.12), 90); } if (k === 'atc') { tone(180, 0.35, 'sawtooth', 0.05); setTimeout(() => tone(240, 0.2, 'square', 0.04), 400); } }
-function hum(on) { const a = audio(); if (!a) return; if (on && !humNode) { const o = a.createOscillator(), gn = a.createGain(); o.type = 'triangle'; o.frequency.value = 80; gn.gain.value = 0.02; o.connect(gn).connect(a.destination); o.start(); humNode = { o, gn }; } else if (!on && humNode) { humNode.o.stop(); humNode = null; } }
+function sfx(k) { if (k === 'click') tone(1800, 0.02, 'square', 0.03); if (k === 'kick') tone(880, 0.12, 'sine', 0.15); if (k === 'crash') { tone(110, 0.5, 'sawtooth', 0.25); burst(0.3, 900, 0.6, 0.25); } if (k === 'set') { tone(660, 0.08, 'sine', 0.12); setTimeout(() => tone(990, 0.1, 'sine', 0.12), 90); } }
+let noiseBuf = null;
+function burst(dur, f, q, vol) {   // ráfaga de ruido filtrado (aire, golpes)
+  const a = audio(); if (!a) return;
+  if (!noiseBuf) { noiseBuf = a.createBuffer(1, a.sampleRate, a.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const s = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime;
+  s.buffer = noiseBuf; s.loop = true; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(bp).connect(g).connect(a.destination); s.start(t); s.stop(t + dur + 0.05);
+}
+function thump(f, dur, vol) { const a = audio(); if (!a) return; const o = a.createOscillator(), g = a.createGain(), t = a.currentTime; o.type = 'sine'; o.frequency.setValueAtTime(f * 1.8, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.05); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur); }
+function motor(dur, f, vol) { const a = audio(); if (!a) return; const o = a.createOscillator(), lp = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime; o.type = 'sawtooth'; o.frequency.setValueAtTime(f * 0.6, t); o.frequency.linearRampToValueAtTime(f, t + 0.12); o.frequency.linearRampToValueAtTime(f * 0.7, t + dur); lp.type = 'lowpass'; lp.frequency.value = 600; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.08); g.gain.setValueAtTime(vol, t + dur - 0.1); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(lp).connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.02); }
+// husillo: arranque y parada con rampa, zumbido grave + silbido
+function hum(on) {
+  const a = audio(); if (!a) return; const t = a.currentTime;
+  if (on && !humNode) {
+    const o1 = a.createOscillator(), o2 = a.createOscillator(), lp = a.createBiquadFilter(), g1 = a.createGain(), g2 = a.createGain(), m = a.createGain();
+    o1.type = 'sawtooth'; o2.type = 'sine'; lp.type = 'lowpass'; lp.frequency.value = 500;
+    o1.frequency.setValueAtTime(15, t); o1.frequency.exponentialRampToValueAtTime(85, t + 1.4);
+    o2.frequency.setValueAtTime(300, t); o2.frequency.exponentialRampToValueAtTime(2200, t + 1.4);
+    g1.gain.value = 0.05; g2.gain.value = 0.008; m.gain.setValueAtTime(0.0001, t); m.gain.exponentialRampToValueAtTime(1, t + 0.4);
+    o1.connect(lp).connect(g1).connect(m); o2.connect(g2).connect(m); m.connect(a.destination); o1.start(); o2.start();
+    humNode = { o1, o2, m };
+  } else if (!on && humNode) {
+    const h = humNode; humNode = null;
+    h.o1.frequency.cancelScheduledValues(t); h.o2.frequency.cancelScheduledValues(t);
+    h.o1.frequency.setValueAtTime(h.o1.frequency.value, t); h.o1.frequency.exponentialRampToValueAtTime(12, t + 1.6);
+    h.o2.frequency.setValueAtTime(h.o2.frequency.value, t); h.o2.frequency.exponentialRampToValueAtTime(150, t + 1.6);
+    h.m.gain.setValueAtTime(1, t); h.m.gain.exponentialRampToValueAtTime(0.0001, t + 1.7); h.o1.stop(t + 1.8); h.o2.stop(t + 1.8);
+  }
+}
+// servos de los ejes: el volumen y el tono siguen a la velocidad
+let servo = null;
+function servoLevel(v) {
+  const a = ac; if (!a || a.state !== 'running') return;
+  if (!servo) { const o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain(); o.type = 'triangle'; o2.type = 'square'; o2.frequency.value = 55; const g2 = a.createGain(); g2.gain.value = 0.15; g.gain.value = 0; o.connect(g); o2.connect(g2).connect(g); g.connect(a.destination); o.start(); o2.start(); servo = { o, g }; }
+  const k = Math.min(1, v / 120), t = a.currentTime;
+  servo.g.gain.setTargetAtTime(k > 0.005 ? 0.008 + 0.03 * k : 0, t, 0.05); servo.o.frequency.setTargetAtTime(180 + 900 * k, t, 0.05);
+}
 function buzz(v, ms) { const s = renderer.xr.getSession(); if (!s) return; for (const src of s.inputSources) { const gp = src.gamepad; try { if (gp && gp.hapticActuators && gp.hapticActuators[0]) gp.hapticActuators[0].pulse(v, ms); else if (gp && gp.vibrationActuator) gp.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: v, weakMagnitude: v }); } catch (e) {} } }
 
 /* =================== entrada =================== */
@@ -827,7 +866,7 @@ function resolve(hits) {
     const k = kindOf(h.object); if (!k) continue;
     if (k.panel) { const p = k.panel, x = h.uv.x * p.W, y = (1 - h.uv.y) * p.H; const b = p.btns.find(q => x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h); return b ? { btn: b, x, y } : null; }
     if (k.target) return { target: k.target };
-    if (k.kind === 'bezel') { if (S.bulonAt === 'taco') return { bezel: h.uv.x < 0.5 ? -1 : 1 }; return { obj: 'taco' }; }
+    if (k.kind === 'bezel') return S.bulonAt === 'taco' ? null : { obj: 'taco' };
     if (k.kind === 'taco' || k.kind === 'bulon') { if (S.hold === k.kind) continue; return { obj: k.kind }; }
     if (k.kind === 'door') return { door: true };
   }
@@ -906,7 +945,7 @@ cpBtn.onclick = async () => { try { await navigator.clipboard.writeText(S.result
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
 /* =================== bucle =================== */
-let last = performance.now(), lastDraw = 0, flash = 0, lastDial = 0;
+let last = performance.now(), lastDraw = 0, flash = 0, lastDial = 0, lastPos = [0, 0, 0];
 const tipW = new THREE.Vector3(), holdOff = new THREE.Vector3();
 const ease = x => x < 0 ? 0 : x > 1 ? 1 : x * x * (3 - 2 * x);
 renderer.setAnimationLoop(t => {
@@ -922,7 +961,11 @@ renderer.setAnimationLoop(t => {
       S.mg = r3(b.from * (1 - ease(e / 0.8)));
       const slide = e < 0.8 ? 0 : e < 1.3 ? ease((e - 0.8) / 0.5) : e < 1.8 ? 1 : 1 - ease((e - 1.8) / 0.5);
       for (const m of parts.atc) m.position.x = slide * 0.12; pocketGroup.position.x = slide * 0.12;
-      if (e > 1.5 && !b.swapped) { b.swapped = true; S.tool = b.to; S.everTool[b.to] = true; showTool(); sfx('atc'); }
+      if (e > 0.8 && !b.s1) { b.s1 = true; motor(0.5, 120, 0.06); }
+      if (e > 1.32 && !b.s2) { b.s2 = true; thump(70, 0.18, 0.25); burst(0.35, 2800, 0.8, 0.12); }
+      if (e > 1.5 && !b.swapped) { b.swapped = true; S.tool = b.to; S.everTool[b.to] = true; showTool(); thump(90, 0.15, 0.2); burst(0.25, 3500, 1, 0.08); }
+      if (e > 1.8 && !b.s3) { b.s3 = true; motor(0.5, 110, 0.06); }
+      if (e > 2.3 && !b.s4) { b.s4 = true; thump(60, 0.2, 0.22); }
       if (e > 2.4) { S.busy = null; for (const m of parts.atc) m.position.x = 0; pocketGroup.position.x = 0; setMsg(`T${S.tool} (${cur().n}) en el husillo.`, 'ok'); }
       afterMove(true);
     }
@@ -942,6 +985,7 @@ renderer.setAnimationLoop(t => {
       while (Math.abs(a - wheelGrab.ang) >= step) { const s = Math.sign(a - wheelGrab.ang); handle(-s); wheelGrab.ang += s * step; wheelGrab.moved = true; }
     }
   }
+  { const p = [S.mx, S.my, S.mg], q = lastPos; servoLevel(dt > 0 ? Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) / dt : 0); lastPos = p; }
   mesa.position.set(T0 - S.mx * MM, MESA_Y, Tz0 + S.my * MM);
   S.doorT += (S.door - S.doorT) * Math.min(1, dt * 4);
   if (model) { const dx = T0 - S.mx * MM - TBL[0], dz = Tz0 + S.my * MM - TBL[1]; for (const m of parts.x) m.position.set(dx, 0, dz); for (const m of parts.y) m.position.z = dz; for (const m of parts.z) m.position.y = Hy0 + S.mg * MM - NOSE; for (const m of parts.door) m.position.x = -0.42 * S.doorT; }
