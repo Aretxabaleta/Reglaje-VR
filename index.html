@@ -38,7 +38,7 @@ canvas{display:block}
 </div>
 <details id="help" open>
   <summary>Cómo se juega</summary>
-  <p style="margin:6px 0"><b>1.</b> POWER UP con la puerta cerrada. <b>2.</b> Con el palpador 3D (T10) coge el G54 en la esquina izquierda-delantera (X−, Y−) y Z arriba: reloj a 0 y PART ZERO SET con el cursor en la casilla. <b>3.</b> En la mesa auxiliar, pon el bulón sobre el taco de Z y gira el bisel hasta 0; luego lleva el taco a la mesa de la máquina. <b>4.</b> Cambia de herramienta (MDI: <code>T1M06;</code> INSERT y CYCLE START), baja sobre el taco hasta 0 y TOOL OFFSET MEASURE en OFFSET → Herrm. Repite con T2 y T3 y pulsa VALIDAR.</p>
+  <p style="margin:6px 0"><b>1.</b> Antes de nada, en la mesa auxiliar: bulón encima del taco de Z y bisel hasta que marque 0. <b>2.</b> POWER UP con la puerta cerrada. <b>3.</b> Con el palpador (T10, herramienta patrón, H10 = 0) toca la mesa con el reloj a 0 y haz PART ZERO SET en <b>G59 Z</b>. <b>4.</b> Pon el taco en la mesa de la máquina y activa G59 en MDI (<code>G59;</code> INSERT, CYCLE START). <b>5.</b> Herramienta por herramienta, empezando por el patrón: sobre el taco hasta 0, TOOL OFFSET MEASURE en OFFSET → Herrm y <b>−50 ENTER</b>. El patrón tiene que dar 0. Cambia con <code>T1M06;</code>. <b>6.</b> Con el palpador coge G54 X−, Y− y Z en la pieza y activa G54 en MDI. VALIDAR.</p>
   <div>Teclado: <kbd>X</kbd><kbd>Y</kbd><kbd>Z</kbd> eje · <kbd>I</kbd> incremento · <kbd>←</kbd><kbd>→</kbd> volante · <kbd>A</kbd>/<kbd>D</kbd> mantener = jog · <kbd>↑</kbd><kbd>↓</kbd><kbd>[</kbd><kbd>]</kbd> cursor · <kbd>P</kbd> PART ZERO SET · <kbd>M</kbd> TOOL OFFSET MEASURE · <kbd>Enter</kbd> agregar · <kbd>F</kbd> F1 · <kbd>R</kbd> RESET · <kbd>Shift</kbd>+<kbd>Enter</kbd> CYCLE START. En la pantalla MDI el teclado escribe y <kbd>Enter</kbd> = INSERT. Arrastra el volante con el ratón para girarlo. Pulsa sobre el taco, el bulón o la puerta para cogerlos o moverlos.</div>
   <p class="note">En las gafas: gatillo = pulsar o coger; mantén el gatillo sobre el volante y gira la muñeca; joystick izquierda/derecha = volante.</p>
   <p class="note">Simulador educativo de CIFP Mendizabala LHII, sin ánimo de lucro y sin relación con Haas Automation, Inc. Modelo 3D de la máquina: «Haas Mini Mill», de la biblioteca de GrabCAD (<a href="https://grabcad.com/library/haas-mini-mill-1">grabcad.com/library/haas-mini-mill-1</a>), usado con crédito a su autor y con los logotipos retirados. Foto del teclado: taller de Mendizabala.</p>
@@ -62,7 +62,7 @@ const JOGV = { 0.001: 1, 0.01: 4, 0.1: 15, 1: 40 };
 const ROWS = ['G52', 'G54', 'G55', 'G56', 'G57', 'G58', 'G59'], COLS = ['X', 'Y', 'Z'];
 const OFS0 = { G52: [0, 0, 0], G54: [-220.894, -154.995, -247.167], G55: [-195.91, -91.542, -62.731], G56: [-295.635, -104.1, -30.29], G57: [-194.565, -165.891, -30.29], G58: [0, 0, 0], G59: [0, -163.3, -117.173] };
 const ORDER = [1, 2, 3, 10];
-const TDEF = { 1: { n: 'Planeadora Ø50', type: 'face', r: 25 }, 2: { n: 'Fresa Ø10', type: 'end', r: 5 }, 3: { n: 'Broca Ø8,5', type: 'drill', r: 4.25 }, 10: { n: 'Palpador 3D', type: 'probe', r: BALL, L: 118.318 } };
+const TDEF = { 1: { n: 'Planeadora Ø50', type: 'face', r: 25 }, 2: { n: 'Fresa Ø10', type: 'end', r: 5 }, 3: { n: 'Broca Ø8,5', type: 'drill', r: 4.25 }, 10: { n: 'Palpador 3D (patrón)', type: 'probe', r: BALL, L: 118.318 } };
 const COL = { ink: '#e8ecef', quiet: '#8fa0ad', cyan: '#2ec5e6', green: '#2fbf71', amber: '#f2a20c', red: '#e5484d' };
 const rnd = (a, b) => a + Math.random() * (b - a), r3 = v => Math.round(v * 1000) / 1000;
 const f3 = v => (Object.is(r3(v), -0) ? 0 : r3(v)).toFixed(3);
@@ -235,14 +235,14 @@ function newPart() {
     { n: 'mesa', x0: -660, x1: 254, y0: -305, y1: 0.5, top: TABLE_Z }];
   TDEF[1].L = r3(rnd(92, 98)); TDEF[2].L = r3(rnd(100, 106)); TDEF[3].L = r3(rnd(125, 132));
   S.ofs = {}; for (const r of ROWS) S.ofs[r] = OFS0[r].slice();
-  S.H = { 1: 0, 2: 0, 3: 0, 10: 118.318 }; S.Hread = {}; S.Hcal = {};
+  S.H = { 1: 0, 2: 0, 3: 0, 10: 0 }; S.Hinfo = {};
   S.bezel = r3((Math.random() < 0.5 ? -1 : 1) * Math.round(rnd(6, 26)) / 100);
-  Object.assign(S, { tool: 10, everTool: {}, spindle: false, input: '', crashes: 0, result: null, t0: performance.now(), mdi: [],
+  Object.assign(S, { tool: 10, wo: 'G54', woSet: {}, everTool: {}, spindle: false, input: '', crashes: 0, result: null, t0: performance.now(), mdi: [],
     touched: { X: false, Y: false, Z: false }, setRead: {}, cjog: 0, jogHold: null, cur: { r: 2, c: 0 }, screen: 'ofs', tab: 'Trab',
     tacoAt: 'bench', bulonAt: 'bench', hold: null, calibrated: false, contact: null, read: BALL, tacoRead: null, busy: null });
   if (S.homed) { S.mg = 0; S.alarm = ''; }
   buildTools(); placeObjects();
-  setMsg(S.homed ? 'Pieza nueva amarrada. Coge el cero con el palpador.' : 'Máquina apagada (102 SERVOS OFF). Pulsa POWER UP con la puerta cerrada.', S.homed ? 'info' : 'warn');
+  setMsg(S.homed ? 'Pieza nueva amarrada. Empieza calibrando el taco con el bulón.' : 'Antes de nada: calibra el taco de Z con el bulón en la mesa auxiliar. Luego POWER UP.', S.homed ? 'info' : 'warn');
   cpBtn.hidden = true; afterMove(true);
 }
 function initMachine() { Object.assign(S, { mx: -180, my: -120, mg: -60, axis: 'X', inc: 0.01, homed: false, alarm: '102 SERVOS OFF', estop: false, door: 0, doorT: 0, help: true, msg: '', tone: 'info', wheel: 0 }); }
@@ -431,7 +431,7 @@ function drawScreen(g, X, Y, W, H) {
       g.fillStyle = ri % 2 ? '#dfe5ec' : '#f3f5f8'; g.fillRect(X + 8, y, W - 16, 23);
       txt(g, r, cx[0] + cw / 2, y + 12, '15px ui-monospace,monospace', '#222', 'center');
       COLS.forEach((c, ci) => { if (S.cur.r === ri && S.cur.c === ci) { g.fillStyle = '#f0a030'; g.fillRect(cx[ci + 1] + 2, y + 1, cw - 4, 21); } txt(g, fmtOfs(S.ofs[r][ci]), cx[ci + 1] + cw - 10, y + 12, '15px ui-monospace,monospace', '#111', 'right'); });
-      txt(g, r === 'G54' ? 'pieza del ejercicio' : '—', cx[4] + 8, y + 12, '13px system-ui', '#555');
+      txt(g, (r === 'G54' ? 'pieza' : r === 'G59' ? 'mesa (patrón)' : '—') + (r === S.wo ? ' · ACTIVO' : ''), cx[4] + 8, y + 12, (r === S.wo ? '600 ' : '') + '13px system-ui', r === S.wo ? '#2a7a3a' : '#555', 'left', 220);
     });
     txt(g, 'F1 Fijar valor', X + 20, top + 262, '600 15px system-ui', '#2d58b5');
     txt(g, 'ENTER Agreg valor', X + 190, top + 262, '600 15px system-ui', '#2d58b5');
@@ -439,7 +439,7 @@ function drawScreen(g, X, Y, W, H) {
   } else if (S.screen === 'ofs') {
     hdr(g, X + 4, top, W - 8, 'Correctores'); tabs(g, X + 4, top + 28);
     txt(g, 'HERRAM ACTIVA: ' + S.tool, X + 20, top + 68, '600 16px system-ui', '#2d58b5');
-    txt(g, 'Ref. taco Z: ' + f3(Zs) + ' (cara del taco calibrado)', X + W - 20, top + 68, '13px system-ui', '#2d58b5', 'right');
+    txt(g, `Corrector activo: ${S.wo} · medir y luego −50 ENTER`, X + W - 20, top + 68, '13px system-ui', '#2d58b5', 'right');
     g.fillStyle = '#2d58b5'; g.fillRect(X + 8, top + 84, W - 16, 22);
     const cx = [X + 60, X + 210, X + 360, X + 560];
     ['CORR HERRAM', 'Longitud GEOMTRIA(H)', 'RADIO GEOMTRIA(D)', 'Herramienta'].forEach((h, i) => txt(g, h, cx[i], top + 95, '600 13px system-ui', '#fff', 'center'));
@@ -447,7 +447,7 @@ function drawScreen(g, X, Y, W, H) {
       const y = top + 108 + i * 26; g.fillStyle = n === S.tool ? '#f0a030' : i % 2 ? '#dfe5ec' : '#f3f5f8'; g.fillRect(X + 8, y, W - 16, 25);
       [n === 10 ? '10 Huso' : String(n), fmtOfs(S.H[n]), f3(TDEF[n].r), TDEF[n].n].forEach((v, j) => txt(g, v, cx[j], y + 13, '15px ui-monospace,monospace', '#111', 'center'));
     });
-    txt(g, 'TOOL OFFSET MEASURE  Medir desplaz de herr', X + 20, top + 236, '600 15px system-ui', '#2d58b5');
+    txt(g, 'TOOL OFFSET MEASURE  Medir desplaz de herr  (H = Máq Z − ' + S.wo + ' Z)', X + 20, top + 236, '600 15px system-ui', '#2d58b5', 'left', 680);
     txt(g, 'F1 Fijar valor   ENTER Agreg valor   NEXT TOOL siguiente', X + 20, top + 262, '600 14px system-ui', '#2d58b5', 'left', 680);
   } else if (S.screen === 'mdi') {
     hdr(g, X + 4, top, 300, 'MDI                         N100');
@@ -456,14 +456,14 @@ function drawScreen(g, X, Y, W, H) {
     if (!S.mdi.length) txt(g, '(escribe p. ej. T1M06; e INSERT)', X + 14, top + 44, '14px system-ui', '#888');
     hdr(g, X + 312, top, 200, 'Códigos activos');
     g.fillStyle = '#f3f5f8'; g.fillRect(X + 312, top + 26, 200, 240);
-    ['G00 MOVIMIENTO RÁPIDO', 'G90 POSICIÓN ABSOLUTA', 'G40 CANCEL COMP', 'G80 CANCELAR CICLO', 'G54 CORREC PIEZ #54', `H${hh(S.tool)}   T${S.tool}   ${S.spindle ? 'M03' : 'M05'}`].forEach((l, i) => txt(g, l, X + 320, top + 46 + i * 26, '13px ui-monospace,monospace', '#222', 'left', 186));
+    ['G00 MOVIMIENTO RÁPIDO', 'G90 POSICIÓN ABSOLUTA', 'G40 CANCEL COMP', 'G80 CANCELAR CICLO', `${S.wo} CORREC PIEZ #${S.wo.slice(1)}`, `H${hh(S.tool)}   T${S.tool}   ${S.spindle ? 'M03' : 'M05'}`].forEach((l, i) => txt(g, l, X + 320, top + 46 + i * 26, '13px ui-monospace,monospace', '#222', 'left', 186));
     hdr(g, X + 520, top, W - 524, 'HERRAM ACTIVA');
     g.fillStyle = '#f3f5f8'; g.fillRect(X + 520, top + 26, W - 524, 240);
     [`Herrm: ${S.tool}`, `CORRE: ${S.tool}`, T.n, `H: ${fmtOfs(S.H[S.tool])}`, `D: ${f3(T.r)}`, 'CYCLE START ejecuta'].forEach((l, i) => txt(g, l, X + 530, top + 46 + i * 26, '14px system-ui', '#222', 'left', W - 540));
   } else {
-    hdr(g, X + 4, top, W - 8, `Posiciones  ·  PROGRAMA G54 G43 H${hh(S.tool)}`);
+    hdr(g, X + 4, top, W - 8, `Posiciones  ·  PROGRAMA ${S.wo} G43 H${hh(S.tool)}`);
     COLS.forEach((c, i) => { const y = top + 70 + i * 62; txt(g, c, X + 40, y, '700 40px system-ui', '#222'); txt(g, f3(work(c)), X + 420, y, '600 40px ui-monospace,monospace', '#111', 'right'); txt(g, 'Máq ' + f3(mpos(c)), X + 690, y, '22px ui-monospace,monospace', '#555', 'right'); });
-    txt(g, 'Trab G54 (grande) · Máquina (derecha)', X + 20, top + 262, '14px system-ui', '#2d58b5');
+    txt(g, `Trab ${S.wo} (grande) · Máquina (derecha)`, X + 20, top + 262, '14px system-ui', '#2d58b5');
   }
   hdr(g, X + 4, mid, 250, 'Husillo prin');
   g.fillStyle = '#f3f5f8'; g.fillRect(X + 4, mid + 26, 250, 152);
@@ -477,7 +477,7 @@ function drawScreen(g, X, Y, W, H) {
   g.fillStyle = '#f3f5f8'; g.fillRect(X + 262, mid + 26, W - 266, 152);
   txt(g, 'POSICIÓN: (MM)', X + 300, mid + 40, '13px system-ui', '#333');
   txt(g, 'VEL DESP: ' + S.inc.toFixed(3), X + W - 12, mid + 40, '600 13px ui-monospace,monospace', '#333', 'right');
-  txt(g, 'Trab G54', X + 440, mid + 58, '600 14px system-ui', '#333', 'right'); txt(g, 'Máquina', X + 640, mid + 58, '600 14px system-ui', '#333', 'right');
+  txt(g, 'Trab ' + S.wo, X + 440, mid + 58, '600 14px system-ui', '#333', 'right'); txt(g, 'Máquina', X + 640, mid + 58, '600 14px system-ui', '#333', 'right');
   COLS.forEach((c, i) => {
     const y = mid + 84 + i * 30;
     if (S.axis === c) { g.fillStyle = '#f5ea3a'; g.fillRect(X + 300, y - 13, W - 310, 26); }
@@ -492,19 +492,28 @@ function drawScreen(g, X, Y, W, H) {
 function tabs(g, x, y) { ['Herrm', 'Trab', 'Tool Info'].forEach((t, i) => { g.fillStyle = S.tab === t ? '#f0a030' : '#2d58b5'; g.fillRect(x + 4 + i * 112, y, 108, 24); txt(g, t, x + 58 + i * 112, y + 12, '600 14px system-ui', '#fff', 'center'); }); }
 const fmtOfs = v => (v === 0 ? '0.' : f3(v));
 const mpos = c => c === 'Z' ? S.mg : S['m' + c.toLowerCase()];
-const work = c => c === 'Z' ? S.mg - g54()[2] - S.H[S.tool] : mpos(c) - g54()[COLS.indexOf(c)];
+const wof = () => S.ofs[S.wo];
+const work = c => c === 'Z' ? S.mg - wof()[2] - S.H[S.tool] : mpos(c) - wof()[COLS.indexOf(c)];
 
 /* =================== tablero =================== */
-const okG = c => Math.abs(g54()[COLS.indexOf(c)] - { X: S.part.x0, Y: S.part.y0, Z: S.part.top }[c]) <= TOL;
-const okH = n => Math.abs(S.H[n] - L(n)) <= TOL;
+const expG = c => ({ X: S.part.x0, Y: S.part.y0, Z: S.part.top + L(10) })[c];
+const expG59 = () => TABLE_Z + L(10);
+const expH = n => r3(L(n) - L(10));
+const okG = c => Math.abs(g54()[COLS.indexOf(c)] - expG(c)) <= TOL;
+const ok59 = () => Math.abs(S.ofs.G59[2] - expG59()) <= TOL;
+const okH = n => Math.abs(S.H[n] - expH(n)) <= TOL && !!S.Hinfo[n];
 function steps() {
-  return [['POWER UP con la puerta cerrada', S.homed], ['Abre la puerta', S.door > 0.5 || okG('X')],
-    ['OFFSET → Trab, cursor en G54', S.cur.r === 1 || okG('X')],
-    ['X−: reloj del palpador a 0 y PART ZERO SET', okG('X')], ['Y−: reloj a 0 y PART ZERO SET', okG('Y')], ['Z: reloj a 0 y PART ZERO SET', okG('Z')],
-    ['Calibra el taco: bulón encima y bisel a 0', S.calibrated], ['Quita el bulón y pon el taco en la mesa de la máquina', S.tacoAt === 'table'],
-    ['Cierra la puerta y cambia a T1 (MDI: T1M06; INSERT, CYCLE START)', !!S.everTool[1]],
-    ['T1 sobre el taco hasta 0 · OFFSET → Herrm · TOOL OFFSET MEASURE', okH(1)],
-    ['Cambia a T2 y mídela igual', okH(2)], ['Cambia a T3 y mídela igual', okH(3)], ['Pulsa VALIDAR', !!S.result]];
+  return [['Antes de nada: bulón sobre el taco (mesa auxiliar) y bisel a 0', S.calibrated], ['Quita el bulón', S.calibrated && S.bulonAt === 'bench'],
+    ['POWER UP con la puerta cerrada', S.homed], ['Abre la puerta', S.door > 0.5 || ok59()],
+    ['Palpador sobre la mesa (delante de la mordaza) hasta 0', S.touched.T || ok59()],
+    ['OFFSET → Trab, cursor en G59 Z y PART ZERO SET', ok59()],
+    ['Pon el taco en la mesa de la máquina', S.tacoAt === 'table' || okH(3)],
+    ['Cierra la puerta. MDI: G59; INSERT y CYCLE START', S.woSet.G59 || okH(10)],
+    ['Patrón T10 sobre el taco a 0 · Herrm · TOOL OFFSET MEASURE · −50 ENTER → 0', okH(10)],
+    ['T1M06; y mide T1 igual (sobre el taco, medir, −50)', okH(1)], ['T2: mídela igual', okH(2)], ['T3: mídela igual', okH(3)],
+    ['Vuelve al palpador: T10M06;', (S.tool === 10 && okH(3)) || okG('X')],
+    ['G54 X−: reloj a 0 y PART ZERO SET', okG('X')], ['G54 Y−: reloj a 0 y PART ZERO SET', okG('Y')], ['G54 Z: reloj a 0 y PART ZERO SET', okG('Z')],
+    ['MDI: G54; para activarlo', S.wo === 'G54' && okG('Z') && S.woSet.G54], ['Pulsa VALIDAR', !!S.result]];
 }
 function drawBoard() {
   const g = Q.g, W = 800;
@@ -532,11 +541,11 @@ function drawBoard() {
 }
 function readLine() {
   if (S.bulonAt === 'taco' && S.tacoAt === 'bench') return `Taco en calibración: ${es(S.bezel)} mm (gira el bisel)`;
-  if (cur().type === 'probe') return S.contact ? `Palpador: ${es(S.read)} mm (${S.contact.o.n})` : sinContacto();
+  if (cur().type === 'probe' && S.tacoRead == null) return S.contact ? `Palpador: ${es(S.read)} mm (${S.contact.o.n})` : sinContacto();
   if (S.tacoRead != null) return `Taco de Z: ${es(S.tacoRead)} mm`;
   return sinContacto();
 }
-function readCol() { const v = cur().type === 'probe' ? (S.contact ? S.read : null) : S.tacoRead; return v == null ? COL.quiet : Math.abs(v) <= TOL ? COL.green : COL.cyan; }
+function readCol() { const v = S.tacoRead != null ? S.tacoRead : cur().type === 'probe' ? (S.contact ? S.read : null) : null; return v == null ? COL.quiet : Math.abs(v) <= TOL ? COL.green : COL.cyan; }
 function sinContacto() { const n = nearest(); return n ? `Sin contacto · a ${n.d.toFixed(1).replace('.', ',')} mm de ${n.n}` : 'Sin contacto · lejos'; }
 function wrap(g, text, x, y, w, lh, font, col, max) {
   g.font = font; g.fillStyle = col; g.textAlign = 'left'; g.textBaseline = 'middle';
@@ -558,7 +567,13 @@ function nearest() {
 function sense() {
   const T = cur(), t = tip(), res = { crash: null, contact: null, taco: null };
   if (T.type === 'probe') {
-    for (const o of allObst()) {
+    if (S.tacoAt === 'table') {
+      const c = Math.hypot(S.mx - TACO_X, S.my - TACO_Y), rz = t - Zs;
+      if (c < 18.5 + BALL && rz < TACO_PRE) { res.taco = rz; if (rz < -TACO_OVER) res.crash = 'Has hundido el taco de Z más allá de su recorrido'; }
+      else if (c < 25 + 24 && t + 42 < Zs) res.crash = 'El cuerpo del palpador ha chocado con el taco de Z';
+      else if (c < 25 + BALL && t < Zs) res.crash = 'El palpador ha chocado con el cuerpo del taco de Z';
+    }
+    for (const o of obst) {
       const d = distRect(S.mx, S.my, o);
       if (t + 42 < o.top && d < 24) res.crash = res.crash || `El cuerpo del palpador ha chocado con la ${o.n}`;
       let r = null, kind = null;
@@ -595,6 +610,7 @@ function afterMove(silent) {
     if (k === 'side' && S.my < p.y0 && S.mx > p.x0 && S.mx < p.x1) S.touched.Y = true;
     if (k === 'top') S.touched.Z = true;
   }
+  if (S.contact && S.contact.o.n === 'mesa' && Math.abs(S.contact.r) <= 0.05) S.touched.T = true;
   if (!silent) {
     if (S.contact && !prev) { setMsg(`Contacto con la ${S.contact.o.n}: el reloj empieza a moverse`, 'ok'); sfx('kick'); buzz(0.5, 90); }
     else if (S.contact && Math.abs(S.contact.r) <= 0.005 && !(prev && Math.abs(prev.r) <= 0.005)) { setMsg('Reloj del palpador en 0', 'ok'); buzz(0.25, 40); }
@@ -664,23 +680,29 @@ function partZero() {
   if (S.screen !== 'ofs' || S.tab !== 'Trab') { setMsg('Abre OFFSET → pestaña Trab y pon el cursor en la casilla', 'warn'); return; }
   const row = ROWS[S.cur.r], c = S.cur.c, col = COLS[c];
   S.ofs[row][c] = r3(col === 'Z' ? S.mg - S.H[S.tool] : mpos(col));
-  if (row === 'G54') S.setRead[col] = cur().type === 'probe' ? (S.contact ? S.read : null) : 'tool';
+  S.setRead[row + col] = cur().type === 'probe' ? (S.contact ? { r: S.read, n: S.contact.o.n } : null) : 'tool';
   setMsg(`${row} ${col} = ${f3(S.ofs[row][c])}`, row === 'G54' ? 'info' : 'warn'); sfx('set');
 }
 function toolOffsetMeasure() {
   if (blocked()) return;
   if (S.screen !== 'ofs' || S.tab !== 'Herrm') { setMsg('Abre OFFSET → pestaña Herrm para medir la herramienta', 'warn'); return; }
-  S.H[S.tool] = r3(S.mg - Zs); S.Hread[S.tool] = S.tacoRead; S.Hcal[S.tool] = S.calibrated;
-  setMsg(`H${hh(S.tool)} = ${f3(S.H[S.tool])} (Máquina Z − referencia del taco)`, 'info'); sfx('set');
+  S.H[S.tool] = r3(S.mg - wof()[2]); S.Hinfo[S.tool] = { read: S.tacoRead, wo: S.wo, cal: S.calibrated, m50: 0, manual: false };
+  setMsg(`H${hh(S.tool)} = ${f3(S.H[S.tool])} (Máquina Z − ${S.wo} Z). Ahora resta el taco: −50 y ENTER.`, 'info'); sfx('set');
 }
 function key(k) { if (S.screen !== 'mdi') { if (k === '-' && S.input) return; if (k === '.' && S.input.includes('.')) return; } if (S.input.length < 24) S.input += k; }
 function applyInput(add) {
   const v = parseFloat(S.input);
   if (!isFinite(v)) { setMsg('Escribe un valor en Input antes de ENTER o F1', 'warn'); return; }
   if (S.screen !== 'ofs') { setMsg('Abre OFFSET para cambiar correctores', 'warn'); return; }
-  if (S.tab === 'Herrm') { S.H[S.tool] = r3(add ? S.H[S.tool] + v : v); S.input = ''; S.Hread[S.tool] = 'manual'; setMsg(`H${hh(S.tool)} → ${f3(S.H[S.tool])}`, 'info'); sfx('set'); return; }
+  if (S.tab === 'Herrm') {
+    S.H[S.tool] = r3(add ? S.H[S.tool] + v : v); S.input = '';
+    const hi = S.Hinfo[S.tool] || (S.Hinfo[S.tool] = { read: null, wo: S.wo, cal: S.calibrated, m50: 0, manual: true });
+    const m50 = add && Math.abs(v + 50) < 1e-9; if (m50) hi.m50++; else hi.manual = true;
+    const pat = S.tool === 10 && m50, okp = Math.abs(S.H[10]) <= TOL;
+    setMsg(`H${hh(S.tool)} → ${f3(S.H[S.tool])}${pat ? (okp ? ' · el patrón da 0: taco y G59 correctos' : ' · el patrón NO da 0: revisa el taco y el G59') : ''}`, pat ? (okp ? 'ok' : 'warn') : 'info'); sfx('set'); return;
+  }
   const row = ROWS[S.cur.r], c = S.cur.c, col = COLS[c]; S.ofs[row][c] = r3(add ? S.ofs[row][c] + v : v); S.input = '';
-  if (row === 'G54') S.setRead[col] = 'manual';
+  S.setRead[row + col] = 'manual';
   setMsg(`${row} ${col} ${add ? 'suma ' + fc(v) : 'fijado'} → ${f3(S.ofs[row][c])}`, 'info'); sfx('set');
 }
 function mdiInsert() { if (S.screen !== 'mdi') { setMsg('Pulsa MDI para escribir un programa', 'warn'); return; } const t = S.input.trim(); if (!t) return; S.mdi.push(t.endsWith(';') ? t : t + ' ;'); S.input = ''; sfx('click'); }
@@ -689,8 +711,11 @@ function cycleStart() {
   if (blocked()) return;
   const prog = S.mdi.join(' ').toUpperCase().replace(/\s+/g, '');
   if (!prog) { setMsg('El programa MDI está vacío: escribe T1M06; y pulsa INSERT', 'warn'); return; }
+  const wo = [...prog.matchAll(/G5([4-9])(?!\d)/g)].pop();
+  if (wo) { S.wo = 'G5' + wo[1]; S.woSet[S.wo] = true; setMsg(`${S.wo} activo`, 'ok'); }
   const mt = prog.match(/T(\d+)M0?6/);
-  if (mt) { changeTool(+mt[1]); return; }
+  if (mt) { S.mdi = []; changeTool(+mt[1]); return; }
+  if (wo) { S.mdi = []; return; }
   if (/M0?[34](?!\d)/.test(prog)) { spindleOn('M03'); return; }
   if (/M0?5(?!\d)/.test(prog)) { spindleStop(); return; }
   if (/G28/.test(prog)) { zeroReturn(); return; }
@@ -706,39 +731,47 @@ function changeTool(n) {
   if (S.spindle) spindleStop();
   S.busy = { kind: 'atc', t0: performance.now(), to: n, from: S.mg, swapped: false }; setMsg(`Cambiando a T${n} (${TDEF[n].n})…`, 'info');
 }
-function hint(c, e) {
+function hint(c, e, row = 'G54') {
   if (Math.abs(e) <= TOL) return '';
   const i = COLS.indexOf(c);
-  if (r3(g54()[i]) === OFS0.G54[i]) return 'sigue el valor del compañero anterior';
+  if (r3(S.ofs[row][i]) === OFS0[row][i]) return 'sin fijar (valor anterior)';
   if (c !== 'Z') for (const k of [2, 4, 5]) if (Math.abs(Math.abs(e) - k) < 0.06) return 'con el palpador 3D no se compensa el radio';
   if (c !== 'Z' && Math.abs(e - 100) < 3) return 'has palpado el lado contrario';
-  const sr = S.setRead[c];
-  if (typeof sr === 'number' && Math.abs(sr) > TOL) return `PART ZERO SET con el reloj en ${es(sr)} mm`;
-  if (sr === null) return 'PART ZERO SET sin tocar la pieza';
+  const sr = S.setRead[row + c];
+  if (sr && sr.r !== undefined && Math.abs(sr.r) > TOL) return `reloj en ${es(sr.r)} al fijar`;
+  if (sr && sr.n && sr.n !== (row === 'G59' ? 'mesa' : 'pieza')) return `palpaste la ${sr.n}`;
+  if (sr === null) return 'fijado sin tocar nada';
   if (sr === 'tool') return 'fijaste el cero sin el palpador en el husillo';
   return 'vuelve a palpar y termina con 0,001';
 }
 function hintH(n, e) {
+  const hi = S.Hinfo[n];
+  if (!hi) return 'sin medir';
   if (Math.abs(e) <= TOL) return '';
-  if (S.H[n] === 0) return 'sin medir';
-  const hr = S.Hread[n];
-  if (hr === 'manual') return 'valor escrito a mano';
-  if (hr == null) return 'TOOL OFFSET MEASURE sin tocar el taco';
-  if (Math.abs(hr) > TOL) return `medida con el reloj del taco en ${es(hr)} mm`;
-  if (!S.Hcal[n]) return 'el taco no estaba calibrado';
-  return 'repite la medición';
+  if (hi.m50 === 0 && Math.abs(e - 50) < 1) return 'falta −50';
+  if (hi.m50 > 1) return '−50 repetido';
+  if (hi.wo !== 'G59') return `medida con ${hi.wo} activo`;
+  if (hi.read == null) return 'sin tocar el taco';
+  if (Math.abs(hi.read) > TOL) return `taco en ${es(hi.read)}`;
+  if (!hi.cal) return 'taco sin calibrar';
+  if (!ok59()) return 'G59 Z mal';
+  return hi.manual ? 'tocado a mano' : 'repite';
 }
 function validate() {
   if (S.busy) return;
-  const p = S.part, G = g54(), err = { X: r3(G[0] - p.x0), Y: r3(G[1] - p.y0), Z: r3(G[2] - p.top) };
-  const eh = {}; for (const n of [1, 2, 3]) eh[n] = r3(S.H[n] - L(n));
-  const pass = COLS.every(c => Math.abs(err[c]) <= TOL) && [1, 2, 3].every(n => Math.abs(eh[n]) <= TOL);
+  const G = g54(), err = {}; for (const c of COLS) err[c] = r3(G[COLS.indexOf(c)] - expG(c));
+  const e59 = r3(S.ofs.G59[2] - expG59());
+  const eh = {}; for (const n of [10, 1, 2, 3]) eh[n] = r3(S.H[n] - expH(n));
+  const pass = Math.abs(e59) <= TOL && COLS.every(c => Math.abs(err[c]) <= TOL) && [10, 1, 2, 3].every(n => !hintH(n, eh[n])) && S.wo === 'G54';
   const secs = Math.round((performance.now() - S.t0) / 1000), tm = `${Math.floor(secs / 60)} min ${secs % 60} s`;
   const lines = [{ t: `${pass ? 'Superado' : 'Revisa el reglaje'} · ${tm} · ${S.crashes} errores graves`, c: pass ? COL.green : COL.amber }];
-  for (const c of COLS) { const ok = Math.abs(err[c]) <= TOL, h = hint(c, err[c]); lines.push({ t: `${ok ? '✓' : '✗'} G54 ${c}: ${fc(err[c])} mm${h ? ' · ' + h : ''}`, c: ok ? COL.ink : COL.red }); }
-  for (const n of [1, 2, 3]) { const ok = Math.abs(eh[n]) <= TOL, h = hintH(n, eh[n]); lines.push({ t: `${ok ? '✓' : '✗'} H${hh(n)} ${TDEF[n].n}: ${fc(eh[n])} mm${h ? ' · ' + h : ''}`, c: ok ? COL.ink : COL.red }); }
+  { const ok = Math.abs(e59) <= TOL, h = hint('Z', e59, 'G59'); lines.push({ t: `${ok ? '✓' : '✗'} G59 Z (mesa): ${fc(e59)} mm${h ? ' · ' + h : ''}`, c: ok ? COL.ink : COL.red }); }
+  const hs = [10, 1, 2, 3].map(n => { const h = hintH(n, eh[n]); return { t: `${h ? '✗' : '✓'} H${hh(n)} ${fc(eh[n])}${h ? ' (' + h + ')' : ''}`, ok: !h }; });
+  for (const pr of [hs.slice(0, 2), hs.slice(2)]) lines.push({ t: pr.map(x => x.t).join(' · '), c: pr.every(x => x.ok) ? COL.ink : COL.red });
+  lines.push({ t: COLS.map(c => { const h = hint(c, err[c]); return `${Math.abs(err[c]) <= TOL ? '✓' : '✗'} G54 ${c} ${fc(err[c])}${h ? ' (' + h + ')' : ''}`; }).join(' · '), c: COLS.every(c => Math.abs(err[c]) <= TOL) ? COL.ink : COL.red });
+  if (S.wo !== 'G54') lines.push({ t: `✗ Corrector activo ${S.wo}: activa G54 en MDI`, c: COL.red });
   S.result = { pass, lines, text: [`Reglaje Mini Mill · ${new Date().toLocaleString('es-ES')}`, ...lines.map(l => l.t)].join('\n') };
-  setMsg(pass ? 'Reglaje correcto: G54 y longitudes de herramienta' : `Hay valores fuera de tolerancia (${es(TOL)} mm)`, pass ? 'ok' : 'warn');
+  setMsg(pass ? 'Reglaje correcto: G59, longitudes de herramienta y G54' : `Hay valores fuera de tolerancia (${es(TOL)} mm)`, pass ? 'ok' : 'warn');
   sfx(pass ? 'set' : 'kick'); cpBtn.hidden = false;
 }
 function setMsg(t, tone) { S.msg = t; S.tone = tone; dirty = true; }
