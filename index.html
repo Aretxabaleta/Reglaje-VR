@@ -961,9 +961,11 @@ renderer.setAnimationLoop(t => {
   if (t - lastDraw > 80 && (dirty || t - lastDraw > 500)) { drawPendant(); drawBoard(); dirty = false; lastDraw = t; }
   if (S.bulonAt === 'taco' && S.tacoAt === 'bench') { tacoDial.getWorldPosition(tipW); lupaCam.position.set(tipW.x, tipW.y + 0.012, tipW.z + 0.1); lupaCam.lookAt(tipW); }
   else { cab.getWorldPosition(tipW); lupaCam.position.set(tipW.x - 0.06, tipW.y + 0.045, tipW.z + 0.21); lupaCam.lookAt(tipW.x - 0.004, tipW.y + 0.03, tipW.z); }
-  const xr = renderer.xr.enabled; renderer.xr.enabled = false; lupa.visible = false;
-  renderer.setRenderTarget(rt); renderer.render(scene, lupaCam); renderer.setRenderTarget(null);
+  const prevRT = renderer.getRenderTarget(), xr = renderer.xr.enabled;
+  renderer.xr.enabled = false; lupa.visible = false;
+  renderer.setRenderTarget(rt); renderer.render(scene, lupaCam);
   renderer.xr.enabled = xr; lupa.visible = true;
+  renderer.setRenderTarget(prevRT);   // en VR es el framebuffer de las gafas: no volver a null
   renderer.render(scene, camera);
 });
 initMachine(); newPart();
