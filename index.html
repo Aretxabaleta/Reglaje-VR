@@ -6,19 +6,19 @@
 <title>Reglaje VR Mini Mill</title>
 <style>
 /* VOICE: taller de mecanizado, directo, sin adornos
-   IDEA: la propia máquina con su control en castellano y el palpador 3D con su reloj
+   IDEA: la propia máquina con su control real, el palpador 3D y el taco de Z con su bulón
    PICTURE: escena 3D a pantalla completa con el modelo real de la máquina
    COLOUR and TYPE: neutros de taller; verde ok, ámbar cerca, rojo choque, cian tocable; system-ui
-   LAYOUT: escena completa, barra superior fina, ayuda de teclas abajo a la izquierda */
+   LAYOUT: escena completa, barra superior fina, ayuda abajo a la izquierda */
 :root{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 html,body{margin:0;height:100%;background:#1b1f23;color:#e8ecef;font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
 canvas{display:block}
 #bar{position:fixed;top:0;left:0;right:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 12px;background:rgba(18,22,26,.88);z-index:2}
 #bar b{margin-right:auto;font-size:16px}
-.h{min-height:40px;padding:0 14px;border-radius:8px;border:1px solid #3a4550;background:#26303a;color:#e8ecef;font:inherit;cursor:pointer}
+.h{min-height:40px;padding:0 12px;border-radius:8px;border:1px solid #3a4550;background:#26303a;color:#e8ecef;font:inherit;cursor:pointer}
 .h:focus-visible{outline:2px solid #2ec5e6;outline-offset:2px}
-#help{position:fixed;left:12px;bottom:12px;max-width:min(600px,calc(100vw - 24px));max-height:60vh;overflow:auto;background:rgba(18,22,26,.9);padding:10px 14px;border-radius:8px;font-size:13px;z-index:2}
+#help{position:fixed;left:12px;bottom:12px;max-width:min(620px,calc(100vw - 24px));max-height:60vh;overflow:auto;background:rgba(18,22,26,.92);padding:10px 14px;border-radius:8px;font-size:13px;z-index:2}
 #help summary{cursor:pointer;font-weight:600;font-size:14px}
 #help kbd{background:#2a333c;border-radius:4px;padding:0 5px;font:12px ui-monospace,monospace}
 .note{color:#9fb0bd;margin:6px 0 0}
@@ -29,18 +29,19 @@ canvas{display:block}
 <body>
 <div id="bar">
   <b>Mendizabala · Reglaje Mini Mill (prototipo)</b>
-  <button class="h" id="v1">Vista general</button>
+  <button class="h" id="v1">General</button>
   <button class="h" id="v2">Control</button>
   <button class="h" id="v3">Pieza</button>
   <button class="h" id="v4">Pasos y lupa</button>
+  <button class="h" id="v5">Taco de Z</button>
   <button class="h" id="cp" hidden>Copiar resumen</button>
 </div>
 <details id="help" open>
   <summary>Cómo se juega</summary>
-  <p style="margin:6px 0">Coge el cero G54 con el <b>palpador 3D</b> en la esquina <b>izquierda-delantera</b> de la pieza (X−, Y−) y Z en la cara de arriba. Acércate hasta que el reloj marque <b>0</b> y pulsa PART ZERO SET con el cursor en la casilla correcta de G54. Con el palpador 3D <b>no se compensa el radio</b> y el husillo <b>nunca</b> debe girar.</p>
-  <div>Teclado: <kbd>X</kbd><kbd>Y</kbd><kbd>Z</kbd> eje del volante · <kbd>I</kbd> incremento · <kbd>←</kbd><kbd>→</kbd> volante · <kbd>A</kbd>/<kbd>D</kbd> mantener = jog · <kbd>↑</kbd><kbd>↓</kbd><kbd>[</kbd><kbd>]</kbd> cursor de correctores · <kbd>P</kbd> PART ZERO SET · números, <kbd>.</kbd> <kbd>-</kbd> · <kbd>Enter</kbd> agregar · <kbd>F</kbd> F1 fijar · <kbd>R</kbd> RESET · <kbd>V</kbd> validar · <kbd>N</kbd> pieza nueva · <kbd>H</kbd> guiado/examen</div>
-  <p class="note">En las gafas: gatillo = pulsar teclas, joystick izquierda/derecha = volante.</p>
-  <p class="note">Simulador educativo de CIFP Mendizabala LHII, sin ánimo de lucro y sin relación con Haas Automation, Inc. Modelo 3D de la máquina: «Haas Mini Mill», de la biblioteca de GrabCAD (<a href="https://grabcad.com/library/haas-mini-mill-1">grabcad.com/library/haas-mini-mill-1</a>), usado con crédito a su autor y con los logotipos retirados.</p>
+  <p style="margin:6px 0"><b>1.</b> POWER UP con la puerta cerrada. <b>2.</b> Con el palpador 3D (T10) coge el G54 en la esquina izquierda-delantera (X−, Y−) y Z arriba: reloj a 0 y PART ZERO SET con el cursor en la casilla. <b>3.</b> En la mesa auxiliar, pon el bulón sobre el taco de Z y gira el bisel hasta 0; luego lleva el taco a la mesa de la máquina. <b>4.</b> Cambia de herramienta (MDI: <code>T1M06;</code> INSERT y CYCLE START), baja sobre el taco hasta 0 y TOOL OFFSET MEASURE en OFFSET → Herrm. Repite con T2 y T3 y pulsa VALIDAR.</p>
+  <div>Teclado: <kbd>X</kbd><kbd>Y</kbd><kbd>Z</kbd> eje · <kbd>I</kbd> incremento · <kbd>←</kbd><kbd>→</kbd> volante · <kbd>A</kbd>/<kbd>D</kbd> mantener = jog · <kbd>↑</kbd><kbd>↓</kbd><kbd>[</kbd><kbd>]</kbd> cursor · <kbd>P</kbd> PART ZERO SET · <kbd>M</kbd> TOOL OFFSET MEASURE · <kbd>Enter</kbd> agregar · <kbd>F</kbd> F1 · <kbd>R</kbd> RESET · <kbd>Shift</kbd>+<kbd>Enter</kbd> CYCLE START. En la pantalla MDI el teclado escribe y <kbd>Enter</kbd> = INSERT. Arrastra el volante con el ratón para girarlo. Pulsa sobre el taco, el bulón o la puerta para cogerlos o moverlos.</div>
+  <p class="note">En las gafas: gatillo = pulsar o coger; mantén el gatillo sobre el volante y gira la muñeca; joystick izquierda/derecha = volante.</p>
+  <p class="note">Simulador educativo de CIFP Mendizabala LHII, sin ánimo de lucro y sin relación con Haas Automation, Inc. Modelo 3D de la máquina: «Haas Mini Mill», de la biblioteca de GrabCAD (<a href="https://grabcad.com/library/haas-mini-mill-1">grabcad.com/library/haas-mini-mill-1</a>), usado con crédito a su autor y con los logotipos retirados. Foto del teclado: taller de Mendizabala.</p>
 </details>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
@@ -51,28 +52,29 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 {
-/* ---------- constantes ---------- */
+/* =================== constantes =================== */
 const MM = 0.001, Hy0 = 1.295, MESA_Y = 0.945, SPX = 0, SPZ = -0.95, T0 = SPX - 0.203, Tz0 = SPZ + 0.152;
-const TL = 0.155;                 // nariz del husillo → punto nominal del palpador (m)
-const BALL = 2;                   // radio de la bola y precarrera del reloj (mm)
-const OVER = 1.5;                 // sobrecarrera admisible del palpador (mm)
-const TOL = 0.02;                 // tolerancia de validación (mm)
+const TABLE_Z = -330, TACO_H = 50, TACO_PRE = 0.45, TACO_OVER = 0.45, TACO_X = -150, TACO_Y = -268;
+const BALL = 2, OVER = 1.5, TOL = 0.02;
 const LIM = { X: [-406, 0], Y: [-305, 0], Z: [-254, 0] };
 const INCS = [0.001, 0.01, 0.1, 1];
-const JOGV = { 0.001: 1, 0.01: 4, 0.1: 15, 1: 40 };   // mm/s al mantener una tecla de jog
+const JOGV = { 0.001: 1, 0.01: 4, 0.1: 15, 1: 40 };
 const ROWS = ['G52', 'G54', 'G55', 'G56', 'G57', 'G58', 'G59'], COLS = ['X', 'Y', 'Z'];
 const OFS0 = { G52: [0, 0, 0], G54: [-220.894, -154.995, -247.167], G55: [-195.91, -91.542, -62.731], G56: [-295.635, -104.1, -30.29], G57: [-194.565, -165.891, -30.29], G58: [0, 0, 0], G59: [0, -163.3, -117.173] };
+const ORDER = [1, 2, 3, 10];
+const TDEF = { 1: { n: 'Planeadora Ø50', type: 'face', r: 25 }, 2: { n: 'Fresa Ø10', type: 'end', r: 5 }, 3: { n: 'Broca Ø8,5', type: 'drill', r: 4.25 }, 10: { n: 'Palpador 3D', type: 'probe', r: BALL, L: 118.318 } };
 const COL = { ink: '#e8ecef', quiet: '#8fa0ad', cyan: '#2ec5e6', green: '#2fbf71', amber: '#f2a20c', red: '#e5484d' };
-const S = { mx: 0, my: 0, mz: 0, axis: 'X', inc: 0.01, spindle: false, alarm: '', estop: false, ofs: {}, cur: { r: 2, c: 0 }, input: '',
-  msg: '', tone: 'info', help: true, t0: 0, crashes: 0, result: null, part: null, read: BALL, contact: null, touched: { X: false, Y: false, Z: false },
-  setRead: {}, cjog: 0, jogHold: null, safe: [0, 0, 0], screen: 'ofs', tab: 'Trab', wheel: 0 };
-let obst = [], dirty = true, dialDirty = true;
 const rnd = (a, b) => a + Math.random() * (b - a), r3 = v => Math.round(v * 1000) / 1000;
 const f3 = v => (Object.is(r3(v), -0) ? 0 : r3(v)).toFixed(3);
 const fc = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(3).replace('.', ',');
-const g54 = () => S.ofs.G54;
+const es = v => v.toFixed(3).replace('.', ',');
+const S = {};
+let obst = [], dirty = true, dialDirty = true, tacoDirty = true;
+const g54 = () => S.ofs.G54, L = n => TDEF[n].L, cur = () => TDEF[S.tool];
+const tip = () => S.mg - L(S.tool);
+const Zs = TABLE_Z + TACO_H;
 
-/* ---------- escena ---------- */
+/* =================== escena =================== */
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
@@ -81,45 +83,30 @@ renderer.xr.setReferenceSpaceType('local-floor');
 document.body.appendChild(renderer.domElement);
 document.body.appendChild(VRButton.createButton(renderer));
 const scene = new THREE.Scene();
-const BG = new THREE.Color('#2a3036');
-scene.background = BG.clone();
-const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.01, 30);
-camera.position.set(0.05, 1.65, 0.95);
+const BG = new THREE.Color('#2a3036'); scene.background = BG.clone();
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.01, 30); scene.add(camera);
+camera.position.set(0.15, 1.65, 1.05);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0.05, 1.25, -0.5); controls.update();
+controls.target.set(0.15, 1.25, -0.45); controls.update();
 scene.add(new THREE.HemisphereLight('#e6eef5', '#3a3f44', 1.7));
-const sun = new THREE.DirectionalLight('#ffffff', 1.5); sun.position.set(1.2, 3, 2); scene.add(sun);
+const sun = new THREE.DirectionalLight('#ffffff', 1.4); sun.position.set(1.2, 3, 2); scene.add(sun);
+const inLight = new THREE.PointLight('#f4fbff', 0, 1.6, 1.5); inLight.position.set(0, 1.62, -0.85); scene.add(inLight);
 const M = (c, r = 0.65, m = 0.1) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
-const steel = M('#b7bec4', 0.35, 0.75), dark = M('#2b3138'), black = M('#16181a', 0.5, 0.2);
+const steel = M('#b7bec4', 0.32, 0.8), chrome = M('#e6eaed', 0.3, 0.55), dark = M('#2b3138'), black = M('#16181a', 0.5, 0.2), carb = M('#8e979f', 0.35, 0.7);
 const box = (w, h, d, mat, x, y, z, parent) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); (parent || scene).add(m); return m; };
-const cyl = (r, h, mat, parent, y, seg = 28) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat); m.position.y = y; parent.add(m); return m; };
-
+const cyl = (r, h, mat, parent, y, seg = 28, r2) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r2 ?? r, h, seg), mat); m.position.y = y; parent.add(m); return m; };
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), M('#2f7fc1', 0.8, 0)); floor.rotation.x = -Math.PI / 2; scene.add(floor);
 const white = M('#d9dde1');
 const grey = [box(1.4, 0.92, 0.95, white, 0, 0.46, -1.05), box(0.5, 1.35, 0.35, white, 0, 0.92 + 0.675, -1.475)];
 const mesa = new THREE.Group(); scene.add(mesa);
 grey.push(box(0.914, 0.04, 0.305, M('#6f7a84'), 0, 0, 0, mesa));
-const cab = new THREE.Group(); scene.add(cab);
-grey.push(box(0.3, 0.36, 0.4, white, 0, TL + 0.18, -0.15, cab));
+const cab = new THREE.Group(); scene.add(cab);   // origen = punta de la herramienta activa
 
-/* ---------- palpador 3D con reloj ---------- */
-const probe = new THREE.Group(); cab.add(probe);      // y=0: punto nominal (reloj a 0)
-cyl(0.016, 0.012, steel, probe, 0.149);                // cono / portapinzas
-cyl(0.021, 0.024, steel, probe, 0.131);                // tuerca
-cyl(0.012, 0.016, steel, probe, 0.111);                // mango
-const body = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.045, 40), black);
-body.rotation.x = Math.PI / 2; body.position.y = 0.072; probe.add(body);
-cyl(0.007, 0.012, black, probe, 0.044);
-const stylus = new THREE.Group(); probe.add(stylus);
-cyl(0.0009, 0.034, M('#d9467a', 0.4, 0.2), stylus, 0.019, 12);
-const ball = new THREE.Mesh(new THREE.SphereGeometry(BALL * MM, 20, 14), M('#c9ced3', 0.25, 0.8)); stylus.add(ball);   // centro en el nominal: en reposo la bola asoma 2 mm (precarrera)
-const dc = document.createElement('canvas'); dc.width = dc.height = 256;
-const dg = dc.getContext('2d');
-const dtex = new THREE.CanvasTexture(dc); dtex.colorSpace = THREE.SRGBColorSpace;
-const dial = new THREE.Mesh(new THREE.CircleGeometry(0.026, 48), new THREE.MeshBasicMaterial({ map: dtex }));
-dial.position.set(0, 0.072, 0.0228); probe.add(dial);
-function drawDial(r) {
-  const c = dg, R0 = 124; c.clearRect(0, 0, 256, 256); c.save(); c.translate(128, 128);
+/* =================== relojes =================== */
+function dialCanvas() { const c = document.createElement('canvas'); c.width = c.height = 256; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return { c, g: c.getContext('2d'), t }; }
+const D1 = dialCanvas(), D2 = dialCanvas();
+function drawProbeDial(r) {
+  const c = D1.g, R0 = 124; c.clearRect(0, 0, 256, 256); c.save(); c.translate(128, 128);
   c.fillStyle = '#b9bec3'; c.beginPath(); c.arc(0, 0, R0, 0, 7); c.fill();
   c.fillStyle = '#fbfbf8'; c.beginPath(); c.arc(0, 0, R0 - 9, 0, 7); c.fill();
   c.strokeStyle = '#222'; c.fillStyle = '#222';
@@ -131,66 +118,172 @@ function drawDial(r) {
   c.lineWidth = 6; c.strokeStyle = '#d23a3a'; c.beginPath(); c.arc(0, 0, 46, ia(1.6), ia(2.4)); c.stroke();
   c.fillStyle = '#222'; c.font = '600 12px system-ui';
   for (const v of [2, 1, 0, -1, -2]) { const a = ia(v); c.fillText(String(v), Math.cos(a) * 34, Math.sin(a) * 34); }
-  const rc = Math.max(-2.4, Math.min(2.4, r));
-  const ra = ia(rc); c.strokeStyle = '#d23a3a'; c.lineWidth = 3; c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(ra) * 52, Math.sin(ra) * 52); c.stroke();
+  const rc = Math.max(-2.4, Math.min(2.4, r)), ra = ia(rc);
+  c.strokeStyle = '#d23a3a'; c.lineWidth = 3; c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(ra) * 52, Math.sin(ra) * 52); c.stroke();
   const frac = ((BALL - rc) % 1 + 1) % 1, na = -Math.PI / 2 + frac * Math.PI * 2;
   c.strokeStyle = '#111'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(-Math.cos(na) * 14, -Math.sin(na) * 14); c.lineTo(Math.cos(na) * (R0 - 16), Math.sin(na) * (R0 - 16)); c.stroke();
   c.fillStyle = '#d23a3a'; c.beginPath(); c.arc(0, 0, 6, 0, 7); c.fill();
-  c.restore(); dtex.needsUpdate = true;
+  c.restore(); D1.t.needsUpdate = true;
+}
+function drawTacoDial(r) {   // reloj equilibrado 0-50-0, 0,01 mm; r en mm (positivo = sin llegar al 0)
+  const c = D2.g, R0 = 124; c.clearRect(0, 0, 256, 256); c.save(); c.translate(128, 128);
+  c.fillStyle = '#e4e7ea'; c.beginPath(); c.arc(0, 0, R0, 0, 7); c.fill();
+  c.strokeStyle = '#9aa1a8'; c.lineWidth = 6; c.beginPath(); c.arc(0, 0, R0 - 4, 0, 7); c.stroke();
+  c.fillStyle = '#fdfdfb'; c.beginPath(); c.arc(0, 0, R0 - 10, 0, 7); c.fill();
+  c.strokeStyle = '#222';
+  for (let i = 0; i < 100; i++) { const a = i / 100 * Math.PI * 2 - Math.PI / 2, l = i % 10 === 0 ? 14 : i % 5 === 0 ? 10 : 6; c.lineWidth = i % 10 === 0 ? 2 : 1; c.beginPath(); c.moveTo(Math.cos(a) * (R0 - 12), Math.sin(a) * (R0 - 12)); c.lineTo(Math.cos(a) * (R0 - 12 - l), Math.sin(a) * (R0 - 12 - l)); c.stroke(); }
+  c.fillStyle = '#222'; c.font = '600 18px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 - Math.PI / 2, v = i <= 5 ? i * 10 : (10 - i) * 10; c.fillText(String(v), Math.cos(a) * 84, Math.sin(a) * 84); }
+  c.font = '11px system-ui'; c.fillText('0,01 mm', 0, 46);
+  const rc = Math.max(-0.6, Math.min(0.6, r)), na = -Math.PI / 2 - rc / 0.5 * Math.PI;
+  c.strokeStyle = '#111'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(-Math.cos(na) * 14, -Math.sin(na) * 14); c.lineTo(Math.cos(na) * (R0 - 18), Math.sin(na) * (R0 - 18)); c.stroke();
+  c.fillStyle = '#555'; c.beginPath(); c.arc(0, 0, 6, 0, 7); c.fill();
+  c.restore(); D2.t.needsUpdate = true;
 }
 
-/* ---------- mordaza y pieza (coordenadas de máquina, mm) ---------- */
+/* =================== herramientas =================== */
+function holder(g, Lm, from) {
+  cyl(0.011, Math.max(0.001, Lm - 0.045 - from), steel, g, (from + Lm - 0.045) / 2);
+  cyl(0.021, 0.024, steel, g, Lm - 0.033);
+  cyl(0.017, 0.012, steel, g, Lm - 0.015);
+  cyl(0.014, 0.008, dark, g, Lm - 0.004);
+}
+function makeTool(n) {
+  const d = TDEF[n], g = new THREE.Group(), Lm = d.L * MM;
+  if (d.type === 'probe') {
+    const st = new THREE.Group(); g.add(st); g.userData.stylus = st;
+    cyl(0.0009, 0.034, M('#d9467a', 0.4, 0.2), st, 0.019, 12);
+    st.add(new THREE.Mesh(new THREE.SphereGeometry(BALL * MM, 20, 14), M('#c9ced3', 0.25, 0.8)));
+    cyl(0.007, 0.008, black, g, 0.040);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.04, 40), black); body.rotation.x = Math.PI / 2; body.position.y = 0.066; g.add(body);
+    const dial = new THREE.Mesh(new THREE.CircleGeometry(0.021, 48), new THREE.MeshBasicMaterial({ map: D1.t })); dial.position.set(0, 0.066, 0.0202); g.add(dial);
+    cyl(0.011, 0.008, steel, g, 0.090); cyl(0.019, 0.012, steel, g, 0.100); cyl(0.015, 0.006, dark, g, 0.1155);
+  } else if (d.type === 'face') {
+    cyl(0.025, 0.04, dark, g, 0.02, 32);
+    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2, k = box(0.008, 0.008, 0.004, M('#c9a64a', 0.4, 0.6), Math.cos(a) * 0.022, 0.004, Math.sin(a) * 0.022, g); k.rotation.y = -a; }
+    cyl(0.016, Lm - 0.07, steel, g, 0.04 + (Lm - 0.07) / 2);
+    cyl(0.03, 0.012, steel, g, Lm - 0.024); cyl(0.02, 0.012, dark, g, Lm - 0.006);
+  } else if (d.type === 'end') {
+    cyl(0.005, 0.03, carb, g, 0.015, 16); holder(g, Lm, 0.03);
+  } else {
+    const tc = new THREE.Mesh(new THREE.ConeGeometry(0.00425, 0.0025, 16), carb); tc.rotation.x = Math.PI; tc.position.y = 0.00125; g.add(tc);
+    cyl(0.00425, 0.07, carb, g, 0.0375, 16); holder(g, Lm, 0.0725);
+  }
+  return g;
+}
+let TOOLS = {};
+const pocketGroup = new THREE.Group(); scene.add(pocketGroup);
+const CAR = new THREE.Vector3(-0.38, 1.37, -0.94);
+function buildTools() {
+  for (const n in TOOLS) { cab.remove(TOOLS[n].spindle); pocketGroup.remove(TOOLS[n].pocket); }
+  TOOLS = {};
+  ORDER.forEach((n, i) => {
+    const sp = makeTool(n), pk = makeTool(n);
+    cab.add(sp);
+    const a = -0.9 + i * 0.45; pk.position.set(CAR.x + Math.cos(a) * 0.17, CAR.y - L(n) * MM, CAR.z + Math.sin(a) * 0.17); pocketGroup.add(pk);
+    TOOLS[n] = { spindle: sp, pocket: pk };
+  });
+  showTool();
+}
+function showTool() { for (const n in TOOLS) { const on = +n === S.tool; TOOLS[n].spindle.visible = on; TOOLS[n].pocket.visible = !on; } }
+
+/* =================== mordaza, pieza, taco, bulón =================== */
 const lx = X => (X + 203) * MM, lz = Y => -(Y + 152) * MM, ly = Z => Hy0 + Z * MM - MESA_Y;
 const viseGroup = new THREE.Group(); mesa.add(viseGroup);
 const POM = M('#f1efe8', 0.55), viseM = M('#8d8f8a', 0.4, 0.6), jawM = M('#9b9278', 0.35, 0.6);
 function slab(x0, x1, y0, y1, z0, z1, mat) { const m = new THREE.Mesh(new THREE.BoxGeometry((x1 - x0) * MM, (z1 - z0) * MM, (y1 - y0) * MM), mat); m.position.set(lx((x0 + x1) / 2), ly((z0 + z1) / 2), lz((y0 + y1) / 2)); viseGroup.add(m); return m; }
+const BENCH = new THREE.Vector3(1.05, 0.88, 0.2);
+box(0.6, 0.04, 0.42, M('#7a5a3a', 0.8, 0), BENCH.x, BENCH.y - 0.02, BENCH.z);
+for (const [dx, dz] of [[-0.27, -0.18], [0.27, -0.18], [-0.27, 0.18], [0.27, 0.18]]) box(0.03, BENCH.y - 0.04, 0.03, dark, BENCH.x + dx, (BENCH.y - 0.04) / 2, BENCH.z + dz);
+box(0.3, 0.03, 0.22, M('#26282b', 0.4, 0.1), BENCH.x - 0.08, BENCH.y + 0.015, BENCH.z - 0.02);
+const BENCH_TOP = BENCH.y + 0.03;
+// taco de Z (objeto aparte, sin marca)
+const taco = new THREE.Group(); scene.add(taco); taco.userData.kind = 'taco';
+cyl(0.025, 0.012, chrome, taco, 0.006, 48);
+cyl(0.0235, 0.02, chrome, taco, 0.022, 48);
+for (let i = 0; i < 4; i++) cyl(0.0245, 0.0018, steel, taco, 0.015 + i * 0.004, 48);
+cyl(0.025, 0.012, chrome, taco, 0.038, 48);
+const plunger = cyl(0.0185, 0.004, chrome, taco, 0.048, 48);
+const tacoDial = new THREE.Mesh(new THREE.CircleGeometry(0.0155, 48), new THREE.MeshBasicMaterial({ map: D2.t })); tacoDial.position.set(0, 0.025, 0.0255); taco.add(tacoDial); tacoDial.userData.kind = 'bezel';
+const bezel = new THREE.Mesh(new THREE.TorusGeometry(0.0162, 0.0012, 8, 48), chrome); bezel.position.copy(tacoDial.position); taco.add(bezel);
+// bulón de calibración (objeto aparte)
+const bulon = new THREE.Group(); scene.add(bulon); bulon.userData.kind = 'bulon';
+cyl(0.005, 0.05, chrome, bulon, 0.025, 24);
+cyl(0.0048, 0.001, steel, bulon, 0.0505, 24);
+const markMat = new THREE.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.35, depthWrite: false });
+function marker(r, target) { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.004, 32), markMat); m.visible = false; m.userData.target = target; scene.add(m); return m; }
+const mkBenchTaco = marker(0.03, 'benchTaco'), mkBenchBulon = marker(0.02, 'benchBulon'), mkOnTaco = marker(0.02, 'onTaco'), mkTable = marker(0.032, 'table');
+
 function newPart() {
   viseGroup.clear();
   const x0 = r3(rnd(-270, -245)), y0 = r3(rnd(-205, -195)), top = r3(rnd(-212, -206)), J = r3(top - rnd(17, 23)), base = -290, pb = J - 25;
   const jy0 = y0 - 12.5, jy1 = y0 + 112.5;
   S.part = { x0, x1: x0 + 100, y0, y1: y0 + 100, top };
-  slab(x0 - 75, x0 + 265, jy0 - 10, jy1 + 10, -330, base, viseM);                 // cuerpo
-  slab(x0 - 45, x0, jy0, jy1, base, J, jawM);                                     // mordaza fija (X−)
-  slab(x0 + 100, x0 + 150, jy0, jy1, base, J, jawM);                              // mordaza móvil (X+)
-  slab(x0 + 150, x0 + 235, jy0 + 15, jy1 - 15, base, J - 18, viseM);              // carro móvil
-  slab(x0 + 235, x0 + 265, y0 + 38, y0 + 62, base + 8, base + 32, steel);         // husillo
-  for (const yy of [y0 + 8, y0 + 86]) slab(x0 - 30, x0 + 130, yy, yy + 6, base, pb, steel);   // paralelas
+  slab(x0 - 75, x0 + 265, jy0 - 10, jy1 + 10, TABLE_Z, base, viseM);
+  slab(x0 - 45, x0, jy0, jy1, base, J, jawM);
+  slab(x0 + 100, x0 + 150, jy0, jy1, base, J, jawM);
+  slab(x0 + 150, x0 + 235, jy0 + 15, jy1 - 15, base, J - 18, viseM);
+  slab(x0 + 235, x0 + 265, y0 + 38, y0 + 62, base + 8, base + 32, steel);
+  for (const yy of [y0 + 8, y0 + 86]) slab(x0 - 30, x0 + 130, yy, yy + 6, base, pb, steel);
   slab(x0, x0 + 100, y0, y0 + 100, pb, top, POM);
   obst = [
     { n: 'pieza', x0, x1: x0 + 100, y0, y1: y0 + 100, top },
     { n: 'mordaza fija', x0: x0 - 45, x1: x0, y0: jy0, y1: jy1, top: J },
     { n: 'mordaza móvil', x0: x0 + 100, x1: x0 + 150, y0: jy0, y1: jy1, top: J },
     { n: 'carro de la mordaza', x0: x0 + 150, x1: x0 + 235, y0: jy0 + 15, y1: jy1 - 15, top: J - 18 },
-    { n: 'base de la mordaza', x0: x0 - 75, x1: x0 + 265, y0: jy0 - 10, y1: jy1 + 10, top: base }];
+    { n: 'base de la mordaza', x0: x0 - 75, x1: x0 + 265, y0: jy0 - 10, y1: jy1 + 10, top: base },
+    { n: 'mesa', x0: -660, x1: 254, y0: -305, y1: 0.5, top: TABLE_Z }];
+  TDEF[1].L = r3(rnd(92, 98)); TDEF[2].L = r3(rnd(100, 106)); TDEF[3].L = r3(rnd(125, 132));
   S.ofs = {}; for (const r of ROWS) S.ofs[r] = OFS0[r].slice();
-  Object.assign(S, { mx: 0, my: 0, mz: 0, alarm: '', estop: false, spindle: false, input: '', crashes: 0, result: null, t0: performance.now(),
-    touched: { X: false, Y: false, Z: false }, setRead: {}, safe: [0, 0, 0], cjog: 0, cur: { r: 2, c: 0 }, screen: 'ofs', tab: 'Trab' });
-  setMsg('Pieza nueva amarrada. Pon el cursor en G54 y acerca el palpador.', 'info');
+  S.H = { 1: 0, 2: 0, 3: 0, 10: 118.318 }; S.Hread = {}; S.Hcal = {};
+  S.bezel = r3((Math.random() < 0.5 ? -1 : 1) * Math.round(rnd(6, 26)) / 100);
+  Object.assign(S, { tool: 10, everTool: {}, spindle: false, input: '', crashes: 0, result: null, t0: performance.now(), mdi: [],
+    touched: { X: false, Y: false, Z: false }, setRead: {}, cjog: 0, jogHold: null, cur: { r: 2, c: 0 }, screen: 'ofs', tab: 'Trab',
+    tacoAt: 'bench', bulonAt: 'bench', hold: null, calibrated: false, contact: null, read: BALL, tacoRead: null, busy: null });
+  if (S.homed) { S.mg = 0; S.alarm = ''; }
+  buildTools(); placeObjects();
+  setMsg(S.homed ? 'Pieza nueva amarrada. Coge el cero con el palpador.' : 'Máquina apagada (102 SERVOS OFF). Pulsa POWER UP con la puerta cerrada.', S.homed ? 'info' : 'warn');
   cpBtn.hidden = true; afterMove(true);
 }
+function initMachine() { Object.assign(S, { mx: -180, my: -120, mg: -60, axis: 'X', inc: 0.01, homed: false, alarm: '102 SERVOS OFF', estop: false, door: 0, doorT: 0, help: true, msg: '', tone: 'info', wheel: 0 }); }
+function tacoWorld() { return new THREE.Vector3(T0 - S.mx * MM + lx(TACO_X), Hy0 + TABLE_Z * MM, Tz0 + S.my * MM + lz(TACO_Y)); }
+function placeObjects() {
+  if (S.hold !== 'taco') { if (S.tacoAt === 'bench') taco.position.set(BENCH.x - 0.14, BENCH_TOP, BENCH.z - 0.02); else taco.position.copy(tacoWorld()); taco.rotation.set(0, 0, 0); }
+  if (S.hold !== 'bulon') {
+    if (S.bulonAt === 'bench') { bulon.position.set(BENCH.x + 0.12, BENCH_TOP + 0.005, BENCH.z + 0.08); bulon.rotation.set(0, 0, Math.PI / 2); }
+    else { bulon.position.set(taco.position.x, taco.position.y + 0.05, taco.position.z); bulon.rotation.set(0, 0, 0); }
+  }
+  const pressed = S.bulonAt === 'taco' ? TACO_PRE : S.tacoRead != null ? Math.min(TACO_PRE + TACO_OVER, TACO_PRE - (S.tacoRead - S.bezel)) : 0;
+  plunger.position.y = 0.048 + (TACO_PRE - pressed) * MM;
+  mkBenchTaco.position.set(BENCH.x - 0.14, BENCH_TOP + 0.003, BENCH.z - 0.02);
+  mkBenchBulon.position.set(BENCH.x + 0.12, BENCH_TOP + 0.003, BENCH.z + 0.08);
+  mkOnTaco.position.set(taco.position.x, taco.position.y + 0.053, taco.position.z);
+  mkTable.position.copy(tacoWorld()).add(new THREE.Vector3(0, 0.003, 0));
+}
 
-/* ---------- modelo real (STEP) ---------- */
+/* =================== modelo real (STEP) =================== */
 const TBL = [-0.1445, 0.278 + SPZ - 0.0145], NOSE = 1.105;
-let model = null; const parts = { x: [], y: [], z: [] };
+let model = null; const parts = { x: [], y: [], z: [], door: [], atc: [] };
 new GLTFLoader().load('minimill.glb', gl => {
   model = gl.scene; model.position.set(0, 0, SPZ - 0.0145);
   model.traverse(o => {
     if (!o.isMesh) return;
     const n = o.name || '';
     if (n.startsWith('mesa_x')) parts.x.push(o); else if (n.startsWith('carro_y')) parts.y.push(o); else if (n.startsWith('cabezal_z')) parts.z.push(o);
-    if (n.startsWith('puerta')) o.position.x = -0.42;
+    if (n.startsWith('puerta')) { parts.door.push(o); o.userData.kind = 'door'; }
+    if (/MMH-01-19/.test(n)) parts.atc.push(o);
     if (n.endsWith('MMH-01-20') || n.endsWith('MMH-01-05_1')) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.18; o.material.depthWrite = false; }
-    if (/MMH-01-11/.test(n)) o.visible = false;      // el control lo pone el simulador
+    if (/MMH-01-11/.test(n)) o.visible = false;
   });
-  scene.add(model); for (const m of grey) m.visible = false;
+  scene.add(model); for (const m of grey) m.visible = false; clickables.push(...parts.door);
 }, undefined, () => setMsg('No se pudo cargar el modelo 3D: se usa la versión simplificada', 'warn'));
 
-/* ---------- utilidades de lienzo ---------- */
+/* =================== lienzos =================== */
 function plane(w, h, cw, ch) {
   const c = document.createElement('canvas'); c.width = cw; c.height = ch;
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t }));
-  return { c, g: c.getContext('2d'), t, m, W: cw, H: ch, btns: [] };
+  const p = { c, g: c.getContext('2d'), t, m, W: cw, H: ch, btns: [] }; m.userData.panel = p; return p;
 }
 function place(o, x, y, z, ry) { o.position.set(x, y, z); o.rotation.y = ry; scene.add(o); }
 function backing(w, h, x, y, z, ry) { const n = new THREE.Vector3(Math.sin(ry), 0, Math.cos(ry)); const k = box(w, h, 0.03, dark, x - n.x * 0.017, y, z - n.z * 0.017); k.rotation.y = ry; }
@@ -201,218 +294,250 @@ function label(text, w, h, px, bg, fg) {
   p.g.fillText(text, p.W / 2, p.H / 2); p.t.needsUpdate = true; return p.m;
 }
 const sticker = label('MENDIZABALA', 0.36, 0.07, 1000, '#2747a8', '#ffffff'); sticker.scale.setScalar(0.42); place(sticker, -0.61, 1.594, 0.6455 + SPZ - 0.0145, 0);
+const benchLbl = label('Mesa auxiliar · taco de Z y bulón', 0.4, 0.035, 1200, '#2b3138', '#e8ecef'); place(benchLbl, BENCH.x, BENCH.y + 0.25, BENCH.z - 0.2, -0.5);
 
-/* ---------- control (pendant) ---------- */
-const P = plane(0.56, 0.70, 1024, 1280);
-place(P.m, 0.66, 1.36, -0.08, -0.4); backing(0.58, 0.72, 0.66, 1.36, -0.08, -0.4);
-const B = (p, id, x, y, w, h, label, act, o = {}) => p.btns.push({ id, x, y, w, h, label, act, ...o });
-// columna izquierda
+/* =================== control (pendant) =================== */
+const PH = 1130, P = plane(0.56, 0.56 * PH / 1024, 1024, PH);
+place(P.m, 0.66, 1.36, -0.08, -0.4); backing(0.58, 0.56 * PH / 1024 + 0.02, 0.66, 1.36, -0.08, -0.4);
+const keyImg = new Image(); keyImg.onload = () => { dirty = true; }; keyImg.src = 'teclado.jpg';
+const KS = 744 / 1410, KX = 260, KY = 620;
+const B = (p, id, x, y, w, h, label, act, o = {}) => { const k = { id, x, y, w, h, label, act, ...o }; p.btns.push(k); return k; };
+const K = (id, ox, oy, ow, oh, act, o = {}) => B(P, id, KX + (ox - ow / 2 - 630) * KS, KY + (oy - oh / 2 - 255) * KS, ow * KS, oh * KS, '', act, { photo: true, ...o });
 B(P, 'estop', 50, 255, 160, 160, '', () => toggleEstop(), { round: true });
-B(P, 'whm', 30, 470, 100, 200, '', () => handle(-1), { ghost: true });
-B(P, 'whp', 130, 470, 100, 200, '', () => handle(1), { ghost: true });
-// bloque 1
-B(P, 'reset', 260, 622, 140, 56, 'RESET', () => reset(), { c: '#d9822b' });
-B(P, 'pwup', 408, 622, 66, 56, 'POWER\nUP', () => info('La máquina ya está referenciada.'), { c: '#3aa3c9' });
-B(P, 'recov', 482, 622, 66, 56, 'RECOVER', () => info('No hace falta en este ejercicio.'), { c: '#3aa3c9' });
-['F1', 'F2', 'F3', 'F4'].forEach((f, i) => B(P, f, 260 + i * 74, 688, 66, 52, f, () => fkey(f)));
-B(P, 'tom', 260, 750, 66, 62, 'TOOL\nOFFSET\nMEASURE', () => info('Medir herramientas: llegará en la fase 2.'));
-B(P, 'nxt', 334, 750, 66, 62, 'NEXT\nTOOL', () => info('El palpador (T10) ya está en el husillo.'));
-B(P, 'rel', 408, 750, 66, 62, 'TOOL\nRELEASE', () => info('No sueltes el palpador: lo necesitas.'));
-B(P, 'pzs', 482, 750, 66, 62, 'PART\nZERO\nSET', () => partZero());
-const JK = [[null, '+Z', '-Y'], ['+X', 'JOG\nLOCK', '-X'], ['+Y', '-Z', null]];
-JK.forEach((row, ri) => row.forEach((k, ci) => { if (!k) return; const x = 297 + ci * 74, y = 826 + ri * 66;
-  if (k.startsWith('JOG')) B(P, 'jl', x, y, 66, 58, k, () => info('JOG LOCK no se usa en este ejercicio.'), { c: '#e9ead9' });
-  else B(P, 'j' + k, x, y, 66, 58, k, () => {}, { jog: k, c: '#e9ead9' }); }));
-B(P, 'fwd', 260, 1042, 66, 56, 'FWD', () => spindleOn('FWD'));
-B(P, 'stop', 334, 1042, 66, 56, 'STOP', () => spindleStop());
-B(P, 'rev', 408, 1042, 66, 56, 'REV', () => spindleOn('REV'));
-// bloque 2
-B(P, 'pos', 566, 642, 92, 52, 'POSITION', () => { S.screen = 'pos'; });
-B(P, 'ofsk', 666, 642, 92, 52, 'OFFSET', () => { if (S.screen === 'ofs') S.tab = S.tab === 'Trab' ? 'Herrm' : 'Trab'; S.screen = 'ofs'; });
-B(P, 'hj', 566, 708, 92, 52, 'HANDLE\nJOG', () => info('Modo volante (HANDLE JOG) activo.'));
-INCS.forEach((v, i) => B(P, 'inc' + i, 566 + (i % 2) * 100, 772 + Math.floor(i / 2) * 64, 92, 56, ['.0001\n.1', '.001\n1.', '.01\n10.', '.1\n100.'][i], () => { S.inc = v; }, { on: () => S.inc === v }));
-B(P, 'cu', 631, 912, 62, 54, '▲', () => moveCur(-1, 0), { c: '#e9ead9' });
-B(P, 'cl', 566, 972, 62, 54, '◀', () => moveCur(0, -1), { c: '#e9ead9' });
-B(P, 'cd', 631, 972, 62, 54, '▼', () => moveCur(1, 0), { c: '#e9ead9' });
-B(P, 'cr', 696, 972, 62, 54, '▶', () => moveCur(0, 1), { c: '#e9ead9' });
-// bloque 3: teclado numérico
-['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', '.'].forEach((k, i) => B(P, 'k' + i, 778 + (i % 3) * 78, 642 + Math.floor(i / 3) * 66, 70, 58, k, () => key(k)));
-B(P, 'can', 778, 912, 109, 56, 'CANCEL', () => { S.input = S.input.slice(0, -1); });
-B(P, 'ent', 895, 912, 109, 56, 'ENTER', () => applyInput(true));
+B(P, 'wheel', 30, 465, 200, 200, '', () => {}, { wheel: true });
+B(P, 'cstart', 45, 1005, 70, 70, '', () => cycleStart(), { round: true });
+B(P, 'fhold', 150, 1005, 70, 70, '', () => info('FEED HOLD: no hay ningún movimiento de programa.'), { round: true });
+K('reset', 740, 300, 190, 60, () => reset());
+K('pwup', 900, 300, 88, 60, () => powerUp());
+K('recov', 1004, 300, 88, 60, () => info('RECOVER no hace falta en este ejercicio.'));
+K('F1', 686, 410, 90, 60, () => applyInput(false));
+['F2', 'F3'].forEach((f, i) => K(f, 792 + i * 106, 410, 90, 60, () => info(`${f} no se usa en este ejercicio.`)));
+K('F4', 1004, 410, 90, 60, () => { S.screen = 'ofs'; S.tab = S.tab === 'Trab' ? 'Herrm' : 'Trab'; });
+K('tom', 686, 486, 90, 64, () => toolOffsetMeasure());
+K('nxt', 792, 486, 90, 64, () => nextTool());
+K('rel', 898, 486, 90, 64, () => info('TOOL RELEASE: no sueltes la herramienta a mano en este ejercicio.'));
+K('pzs', 1004, 486, 90, 64, () => partZero());
+[['+Z', 850, 584], ['-Y', 928, 584], ['+X', 768, 666], ['-X', 928, 666], ['+Y', 768, 750], ['-Z', 850, 750]].forEach(([k, x, y]) => K('j' + k, x, y, 76, 62, () => {}, { jog: k }));
+K('jl', 850, 666, 76, 62, () => info('JOG LOCK no se usa en este ejercicio.'));
+for (const [x, y] of [[686, 584], [686, 666], [686, 750], [1010, 584], [1010, 666], [1010, 750]]) K('chip' + x + y, x, y, 76, 62, () => info('Virutas y refrigerante: no se usan en el reglaje.'));
+K('fwd', 686, 1048, 90, 58, () => spindleOn('FWD'));
+K('stop', 792, 1048, 90, 58, () => spindleStop());
+K('rev', 898, 1048, 90, 58, () => spindleOn('REV'));
+K('prog', 1134, 340, 92, 60, () => { S.screen = 'mdi'; });
+K('pos', 1240, 340, 92, 60, () => { S.screen = 'pos'; });
+K('ofsk', 1346, 340, 92, 60, () => { if (S.screen === 'ofs') S.tab = S.tab === 'Trab' ? 'Herrm' : 'Trab'; S.screen = 'ofs'; });
+K('alarms', 1134, 428, 92, 60, () => info(S.alarm ? 'Alarma activa: ' + S.alarm : 'No hay alarmas.'));
+K('cu', 1286, 540, 64, 60, () => moveCur(-1, 0)); K('cl', 1190, 626, 64, 60, () => moveCur(0, -1));
+K('cr', 1380, 626, 64, 60, () => moveCur(0, 1)); K('cd', 1286, 710, 64, 60, () => moveCur(1, 0));
+K('mdi', 1556, 474, 76, 60, () => { S.screen = 'mdi'; });
+K('hj', 1556, 556, 76, 60, () => info('Modo volante (HANDLE JOG) activo.'));
+K('zr', 1556, 636, 76, 60, () => info('ZERO RETURN: pulsa ALL para llevar todos los ejes a cero máquina.'));
+K('ins', 1680, 314, 88, 60, () => mdiInsert());
+K('del', 1892, 314, 88, 60, () => { S.mdi.pop(); });
+K('atcf', 1892, 474, 88, 60, () => atcStep(1)); K('atcr', 2000, 474, 88, 60, () => atcStep(-1));
+INCS.forEach((v, i) => K('inc' + i, 1680 + i * 106, 556, 88, 60, () => { S.inc = v; }, { on: () => S.inc === v }));
+K('all', 1680, 636, 88, 60, () => zeroReturn()); K('g28', 2000, 636, 88, 60, () => zeroReturn());
+K('erase', 2000, 712, 88, 60, () => { S.mdi = []; info('Programa MDI borrado.'); });
+const LET = [['A', 'B', 'C', 'D', 'E'], ['F', 'G', 'H', 'I', 'J', 'K'], ['L', 'M', 'N', 'O', 'P', 'Q'], ['R', 'S', 'T', 'U', 'V', 'W'], ['X', 'Y', 'Z', ';', '(', ')']];
+LET.forEach((row, ri) => row.forEach((ch, ci) => { const col = ri === 0 ? ci + 1 : ci; K('L' + ch, 1130 + col * 102, [818, 900, 976, 1056, 1132][ri], 88, 58, () => key(ch)); }));
+['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', '.'].forEach((k, i) => K('k' + i, 1768 + (i % 3) * 103, [818, 900, 980, 1056][Math.floor(i / 3)], 88, 58, () => key(k)));
+K('can', 1752, 1136, 100, 58, () => { S.input = S.input.slice(0, -1); });
+K('spc', 1856, 1136, 100, 58, () => key(' '));
+K('ent', 1960, 1136, 100, 58, () => S.screen === 'mdi' ? mdiInsert() : applyInput(true));
 
-/* ---------- tablero de pasos + lupa ---------- */
+/* =================== tablero de pasos + lupa =================== */
 const Q = plane(0.44, 0.44, 800, 800);
 place(Q.m, -0.62, 1.15, -0.04, 0.45); backing(0.46, 0.46, -0.62, 1.15, -0.04, 0.45);
-B(Q, 'val', 30, 690, 230, 80, 'VALIDAR', () => validate(), { c: '#2fbf71', dk: true });
-B(Q, 'new', 285, 690, 230, 80, 'PIEZA NUEVA', () => newPart(), { dk: true });
-B(Q, 'mode', 540, 690, 230, 80, 'GUIADO / EXAMEN', () => { S.help = !S.help; }, { dk: true });
+B(Q, 'val', 20, 700, 180, 80, 'VALIDAR', () => validate(), { c: '#2fbf71', dk: true });
+B(Q, 'new', 214, 700, 180, 80, 'PIEZA NUEVA', () => newPart(), { dk: true });
+B(Q, 'mode', 408, 700, 180, 80, 'GUIADO/EXAMEN', () => { S.help = !S.help; }, { dk: true });
+B(Q, 'door', 602, 700, 180, 80, 'PUERTA', () => toggleDoor(), { dk: true, c: '#2d4a80' });
 const rt = new THREE.WebGLRenderTarget(512, 512); rt.texture.colorSpace = THREE.SRGBColorSpace;
 const lupaCam = new THREE.PerspectiveCamera(34, 1, 0.005, 3);
 const lupa = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshBasicMaterial({ map: rt.texture }));
 place(lupa, -0.6, 1.57, -0.06, 0.45); backing(0.32, 0.34, -0.6, 1.585, -0.06, 0.45);
-const lupaLbl = label('LUPA · palpador y reloj', 0.3, 0.03, 1500, '#2b3138', '#e8ecef');
 const ln = new THREE.Vector3(Math.sin(0.45), 0, Math.cos(0.45));
-place(lupaLbl, -0.6 + ln.x * 0.001, 1.735, -0.06 + ln.z * 0.001, 0.45);
-const PANELS = [P, Q];
+place(label('LUPA · herramienta y relojes', 0.3, 0.03, 1500, '#2b3138', '#e8ecef'), -0.6 + ln.x * 0.001, 1.735, -0.06 + ln.z * 0.001, 0.45);
+const clickables = [P.m, Q.m, taco, bulon, mkBenchTaco, mkBenchBulon, mkOnTaco, mkTable];
 
-/* ---------- dibujo del control ---------- */
-let hover = null, held = null;
-function key3d(g, k) {
+/* =================== dibujo del control =================== */
+let hover = null, held = null, wheelGrab = null;
+function drawKey(g, k) {
   const on = k.on && k.on(), pr = held === k, hv = hover === k;
-  if (k.ghost) return;
-  if (k.round) return;
+  if (k.photo) {
+    if (on) { rrect(g, k.x, k.y, k.w, k.h, 6); g.fillStyle = 'rgba(255,210,40,.45)'; g.fill(); }
+    if (pr) { rrect(g, k.x, k.y, k.w, k.h, 6); g.fillStyle = 'rgba(46,197,230,.45)'; g.fill(); }
+    if (hv) { rrect(g, k.x - 2, k.y - 2, k.w + 4, k.h + 4, 7); g.lineWidth = 4; g.strokeStyle = COL.cyan; g.stroke(); }
+    return;
+  }
+  if (k.round || k.wheel) return;
   rrect(g, k.x, k.y, k.w, k.h, 10);
   g.fillStyle = pr ? '#8fd3e6' : on ? '#ffd24a' : (k.c || '#a9adb1'); g.fill();
   g.lineWidth = hv ? 5 : 2; g.strokeStyle = hv ? COL.cyan : 'rgba(0,0,0,.35)'; g.stroke();
-  const lines = k.label.split('\n'), fs = lines.length > 2 ? 12 : lines.length > 1 ? 15 : k.label.length > 5 ? 16 : 22;
-  g.fillStyle = k.dk ? '#fff' : '#1c1f22'; g.font = `700 ${k.dk ? 26 : fs}px system-ui`; g.textAlign = 'center'; g.textBaseline = 'middle';
-  lines.forEach((l, i) => g.fillText(l, k.x + k.w / 2, k.y + k.h / 2 + (i - (lines.length - 1) / 2) * (fs + 2), k.w - 6));
+  g.fillStyle = k.dk ? '#fff' : '#1c1f22'; g.font = `700 ${k.dk ? 22 : 16}px system-ui`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(k.label, k.x + k.w / 2, k.y + k.h / 2, k.w - 8);
 }
-function panelText(g, t, x, y, size, col, align = 'left', w) { g.font = size; g.fillStyle = col; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(t, x, y, w); }
-function hdr(g, x, y, w, t) { const gr = g.createLinearGradient(0, y, 0, y + 26); gr.addColorStop(0, '#4f6fa8'); gr.addColorStop(1, '#2d4a80'); g.fillStyle = gr; g.fillRect(x, y, w, 26); panelText(g, t, x + w / 2, y + 13, '600 16px system-ui', '#fff', 'center'); }
+function txt(g, t, x, y, font, col, align = 'left', w) { g.font = font; g.fillStyle = col; g.textAlign = align; g.textBaseline = 'middle'; g.fillText(t, x, y, w); }
+function hdr(g, x, y, w, t) { const gr = g.createLinearGradient(0, y, 0, y + 26); gr.addColorStop(0, '#4f6fa8'); gr.addColorStop(1, '#2d4a80'); g.fillStyle = gr; g.fillRect(x, y, w, 26); txt(g, t, x + w / 2, y + 13, '600 16px system-ui', '#fff', 'center'); }
+function roundBtn(g, x, y, r, c, id) { g.fillStyle = '#c9ccd0'; g.beginPath(); g.arc(x, y, r + 8, 0, 7); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); if (hover && hover.id === id) { g.strokeStyle = COL.cyan; g.lineWidth = 5; g.beginPath(); g.arc(x, y, r + 10, 0, 7); g.stroke(); } }
 function drawPendant() {
   const g = P.g;
-  g.fillStyle = '#d4d7da'; g.fillRect(0, 0, 1024, 1280);
-  g.fillStyle = '#2747a8'; g.fillRect(800, 10, 204, 40); panelText(g, 'MENDIZABALA', 902, 30, '800 20px system-ui', '#fff', 'center');
-  // columna izquierda
-  panelText(g, 'POWER ON', 85, 110, '700 15px system-ui', '#222', 'center'); panelText(g, 'POWER OFF', 180, 110, '700 15px system-ui', '#222', 'center');
-  for (const [x, c] of [[85, '#3c9a4c'], [180, '#c94a3a']]) { g.fillStyle = '#c9ccd0'; g.beginPath(); g.arc(x, 160, 30, 0, 7); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(x, 160, 22, 0, 7); g.fill(); }
-  panelText(g, 'EMERGENCY STOP', 130, 228, '700 15px system-ui', '#222', 'center');
+  g.fillStyle = '#d4d7da'; g.fillRect(0, 0, 1024, PH);
+  g.fillStyle = '#2747a8'; g.fillRect(800, 10, 204, 40); txt(g, 'MENDIZABALA', 902, 30, '800 20px system-ui', '#fff', 'center');
+  txt(g, 'POWER ON', 85, 110, '700 15px system-ui', '#222', 'center'); txt(g, 'POWER OFF', 180, 110, '700 15px system-ui', '#222', 'center');
+  roundBtn(g, 85, 160, 22, '#3c9a4c', 'pon'); roundBtn(g, 180, 160, 22, '#c94a3a', 'poff');
+  txt(g, 'EMERGENCY STOP', 130, 228, '700 15px system-ui', '#222', 'center');
   g.fillStyle = '#f2c230'; g.beginPath(); g.arc(130, 335, 78, 0, 7); g.fill();
   g.fillStyle = S.estop ? '#8a1f15' : '#d63a26'; g.beginPath(); g.arc(130, 335, 58, 0, 7); g.fill();
   if (hover && hover.id === 'estop') { g.strokeStyle = COL.cyan; g.lineWidth = 5; g.beginPath(); g.arc(130, 335, 80, 0, 7); g.stroke(); }
-  panelText(g, 'HANDLE JOG', 130, 455, '700 16px system-ui', '#222', 'center');
-  panelText(g, '−', 40, 470, '800 30px system-ui', '#2a63c8', 'center'); panelText(g, '+', 222, 470, '800 30px system-ui', '#2a63c8', 'center');
-  g.fillStyle = '#e9ecef'; g.beginPath(); g.arc(130, 570, 90, 0, 7); g.fill(); g.strokeStyle = '#9aa1a8'; g.lineWidth = 2; g.stroke();
-  g.strokeStyle = '#5a6168'; for (let i = 0; i < 100; i++) { const a = i / 100 * Math.PI * 2 + S.wheel; g.lineWidth = i % 10 ? 1 : 2; g.beginPath(); g.moveTo(130 + Math.cos(a) * 82, 570 + Math.sin(a) * 82); g.lineTo(130 + Math.cos(a) * (i % 10 ? 76 : 70), 570 + Math.sin(a) * (i % 10 ? 76 : 70)); g.stroke(); }
-  g.fillStyle = '#b5bbc1'; g.beginPath(); g.arc(130, 570, 55, 0, 7); g.fill();
-  g.fillStyle = '#3a3f44'; g.beginPath(); g.arc(130 + Math.cos(S.wheel - 1) * 38, 570 + Math.sin(S.wheel - 1) * 38, 10, 0, 7); g.fill();
-  for (const id of ['whm', 'whp']) if (hover && hover.id === id) { g.strokeStyle = COL.cyan; g.lineWidth = 5; g.beginPath(); g.arc(130, 570, 94, id === 'whm' ? Math.PI / 2 : -Math.PI / 2, id === 'whm' ? Math.PI * 1.5 : Math.PI / 2); g.stroke(); }
-  panelText(g, 'CYCLE START', 80, 1030, '700 14px system-ui', '#222', 'center'); panelText(g, 'FEED HOLD', 185, 1030, '700 14px system-ui', '#222', 'center');
-  for (const [x, c] of [[80, '#3c9a4c'], [185, '#c94a3a']]) { g.fillStyle = '#c9ccd0'; g.beginPath(); g.arc(x, 1085, 30, 0, 7); g.fill(); g.fillStyle = c; g.beginPath(); g.arc(x, 1085, 22, 0, 7); g.fill(); }
-  // etiquetas de bloques
-  panelText(g, 'SPINDLE', 520, 1070, '700 15px system-ui', '#222', 'center');
-  panelText(g, 'DISPLAY', 662, 626, '700 14px system-ui', '#222', 'center');
-  panelText(g, 'CURSOR', 727, 930, '700 13px system-ui', '#222', 'center');
-  // pantalla
+  txt(g, 'HANDLE JOG', 130, 448, '700 16px system-ui', '#222', 'center');
+  txt(g, '−', 36, 470, '800 30px system-ui', '#2a63c8', 'center'); txt(g, '+', 224, 470, '800 30px system-ui', '#2a63c8', 'center');
+  const wx = 130, wy = 565;
+  g.fillStyle = '#e9ecef'; g.beginPath(); g.arc(wx, wy, 92, 0, 7); g.fill();
+  g.fillStyle = '#cfe0f2'; g.beginPath(); g.arc(wx, wy, 90, 0, 7); g.fill();
+  g.strokeStyle = '#3d5f8c';
+  for (let i = 0; i < 100; i++) { const a = i / 100 * Math.PI * 2 + S.wheel; g.lineWidth = i % 10 ? 1 : 2; g.beginPath(); g.moveTo(wx + Math.cos(a) * 88, wy + Math.sin(a) * 88); g.lineTo(wx + Math.cos(a) * (i % 10 ? 81 : 74), wy + Math.sin(a) * (i % 10 ? 81 : 74)); g.stroke(); }
+  g.fillStyle = '#c3c9cf'; g.beginPath(); g.arc(wx, wy, 64, 0, 7); g.fill(); g.strokeStyle = '#8b939b'; g.lineWidth = 2; g.stroke();
+  g.fillStyle = '#9aa3ab'; g.beginPath(); g.arc(wx, wy, 44, 0, 7); g.fill();
+  g.fillStyle = '#e2e6ea'; g.beginPath(); g.arc(wx + Math.cos(S.wheel - 0.6) * 50, wy + Math.sin(S.wheel - 0.6) * 50, 11, 0, 7); g.fill(); g.strokeStyle = '#6b737b'; g.stroke();
+  if ((hover && hover.id === 'wheel') || wheelGrab) { g.strokeStyle = COL.cyan; g.lineWidth = 5; g.beginPath(); g.arc(wx, wy, 97, 0, 7); g.stroke(); }
+  txt(g, 'CYCLE START', 80, 985, '700 14px system-ui', '#222', 'center'); txt(g, 'FEED HOLD', 185, 985, '700 14px system-ui', '#222', 'center');
+  roundBtn(g, 80, 1040, 24, '#3c9a4c', 'cstart'); roundBtn(g, 185, 1040, 24, '#c94a3a', 'fhold');
   g.fillStyle = '#111'; rrect(g, 260, 60, 744, 548, 8); g.fill();
   drawScreen(g, 272, 72, 720, 524);
-  for (const k of P.btns) key3d(g, k);
+  if (keyImg.complete && keyImg.naturalWidth) g.drawImage(keyImg, KX, KY, 744, 491);
+  else { g.fillStyle = '#bfc3c7'; g.fillRect(KX, KY, 744, 491); txt(g, 'Cargando teclado…', KX + 372, KY + 245, '20px system-ui', '#333', 'center'); }
+  for (const k of P.btns) drawKey(g, k);
   P.t.needsUpdate = true;
 }
+const hh = n => String(n).padStart(2, '0');
 function drawScreen(g, X, Y, W, H) {
   g.save(); g.beginPath(); g.rect(X, Y, W, H); g.clip();
   g.fillStyle = '#e8edf2'; g.fillRect(X, Y, W, H);
-  // barra superior
   g.fillStyle = '#cfd6de'; g.fillRect(X, Y, W, 28);
-  const now = new Date(), hh = n => String(n).padStart(2, '0');
-  panelText(g, S.screen === 'ofs' ? 'Config: desplazam' : 'Posiciones', X + 8, Y + 14, '16px system-ui', '#333');
-  panelText(g, `${hh(now.getHours())}:${hh(now.getMinutes())}:${hh(now.getSeconds())}`, X + W - 8, Y + 14, '16px ui-monospace,monospace', '#333', 'right');
-  if (S.alarm) { g.fillStyle = '#d23a3a'; g.fillRect(X + 190, Y + 2, 380, 24); panelText(g, S.alarm, X + 380, Y + 14, '700 14px system-ui', '#fff', 'center', 370); }
-  const top = Y + 34, mid = Y + 304;
+  const now = new Date();
+  txt(g, S.screen === 'mdi' ? 'Editar: MDI' : S.screen === 'ofs' ? 'Config: desplazam' : 'Posiciones', X + 8, Y + 14, '16px system-ui', '#333');
+  txt(g, `${hh(now.getHours())}:${hh(now.getMinutes())}:${hh(now.getSeconds())}`, X + W - 8, Y + 14, '16px ui-monospace,monospace', '#333', 'right');
+  if (S.alarm) { g.fillStyle = '#d23a3a'; g.fillRect(X + 190, Y + 2, 380, 24); txt(g, S.alarm, X + 380, Y + 14, '700 14px system-ui', '#fff', 'center', 370); }
+  else if (S.door > 0.5) { g.fillStyle = '#f0a030'; g.fillRect(X + 190, Y + 2, 380, 24); txt(g, 'PUERTA ABIERTA', X + 380, Y + 14, '700 14px system-ui', '#fff', 'center'); }
+  const top = Y + 34, mid = Y + 304, T = cur();
   if (S.screen === 'ofs' && S.tab === 'Trab') {
-    hdr(g, X + 4, top, W - 8, 'Correctores');
-    tabs(g, X + 4, top + 28);
+    hdr(g, X + 4, top, W - 8, 'Correctores'); tabs(g, X + 4, top + 28);
     const cx = [X + 10, X + 130, X + 250, X + 370, X + 490], cw = 118;
     g.fillStyle = '#2d58b5'; g.fillRect(X + 8, top + 58, W - 16, 22);
-    ['G CODIGO', 'X EJE', 'Y EJE', 'Z EJE', 'Nota'].forEach((h, i) => panelText(g, h, cx[i] + cw / 2, top + 69, '600 13px system-ui', '#fff', 'center'));
+    ['G CODIGO', 'X EJE', 'Y EJE', 'Z EJE', 'Nota'].forEach((h, i) => txt(g, h, cx[i] + cw / 2, top + 69, '600 13px system-ui', '#fff', 'center'));
     ROWS.forEach((r, ri) => {
       const y = top + 82 + ri * 24;
       g.fillStyle = ri % 2 ? '#dfe5ec' : '#f3f5f8'; g.fillRect(X + 8, y, W - 16, 23);
-      panelText(g, r, cx[0] + cw / 2, y + 12, '15px ui-monospace,monospace', '#222', 'center');
-      COLS.forEach((c, ci) => {
-        const sel = S.cur.r === ri && S.cur.c === ci;
-        if (sel) { g.fillStyle = '#f0a030'; g.fillRect(cx[ci + 1] + 2, y + 1, cw - 4, 21); }
-        panelText(g, fmtOfs(S.ofs[r][ci]), cx[ci + 1] + cw - 10, y + 12, '15px ui-monospace,monospace', '#111', 'right');
-      });
-      panelText(g, r === 'G54' ? 'pieza del ejercicio' : '—', cx[4] + 8, y + 12, '13px system-ui', '#555');
+      txt(g, r, cx[0] + cw / 2, y + 12, '15px ui-monospace,monospace', '#222', 'center');
+      COLS.forEach((c, ci) => { if (S.cur.r === ri && S.cur.c === ci) { g.fillStyle = '#f0a030'; g.fillRect(cx[ci + 1] + 2, y + 1, cw - 4, 21); } txt(g, fmtOfs(S.ofs[r][ci]), cx[ci + 1] + cw - 10, y + 12, '15px ui-monospace,monospace', '#111', 'right'); });
+      txt(g, r === 'G54' ? 'pieza del ejercicio' : '—', cx[4] + 8, y + 12, '13px system-ui', '#555');
     });
-    panelText(g, 'F1  Fijar valor', X + 20, top + 262, '600 15px system-ui', '#2d58b5');
-    panelText(g, 'ENTER  Agreg valor', X + 230, top + 262, '600 15px system-ui', '#2d58b5');
-    panelText(g, 'PART ZERO SET  Fija la posición actual', X + 440, top + 262, '600 14px system-ui', '#2d58b5', 'left', 270);
+    txt(g, 'F1 Fijar valor', X + 20, top + 262, '600 15px system-ui', '#2d58b5');
+    txt(g, 'ENTER Agreg valor', X + 190, top + 262, '600 15px system-ui', '#2d58b5');
+    txt(g, 'PART ZERO SET fija la posición actual', X + 380, top + 262, '600 14px system-ui', '#2d58b5', 'left', 330);
   } else if (S.screen === 'ofs') {
     hdr(g, X + 4, top, W - 8, 'Correctores'); tabs(g, X + 4, top + 28);
-    panelText(g, 'HERRAM ACTIVA: 10', X + 20, top + 70, '600 16px system-ui', '#2d58b5');
-    g.fillStyle = '#2d58b5'; g.fillRect(X + 8, top + 86, W - 16, 22);
-    ['CORR HERRAM', 'Longitud GEOMTRIA(H)', 'RADIO GEOMTRIA(D)', 'Tipo'].forEach((h, i) => panelText(g, h, X + 90 + i * 175, top + 97, '600 13px system-ui', '#fff', 'center'));
-    [['10 Huso', '118.318', '2.000', '3D-Taster'], ['11', '0.', '0.', '—'], ['12', '0.', '0.', '—']].forEach((r, i) => {
-      const y = top + 110 + i * 24; g.fillStyle = i === 0 ? '#f0a030' : i % 2 ? '#dfe5ec' : '#f3f5f8'; g.fillRect(X + 8, y, W - 16, 23);
-      r.forEach((v, j) => panelText(g, v, X + 90 + j * 175, y + 12, '15px ui-monospace,monospace', '#111', 'center'));
+    txt(g, 'HERRAM ACTIVA: ' + S.tool, X + 20, top + 68, '600 16px system-ui', '#2d58b5');
+    txt(g, 'Ref. taco Z: ' + f3(Zs) + ' (cara del taco calibrado)', X + W - 20, top + 68, '13px system-ui', '#2d58b5', 'right');
+    g.fillStyle = '#2d58b5'; g.fillRect(X + 8, top + 84, W - 16, 22);
+    const cx = [X + 60, X + 210, X + 360, X + 560];
+    ['CORR HERRAM', 'Longitud GEOMTRIA(H)', 'RADIO GEOMTRIA(D)', 'Herramienta'].forEach((h, i) => txt(g, h, cx[i], top + 95, '600 13px system-ui', '#fff', 'center'));
+    ORDER.forEach((n, i) => {
+      const y = top + 108 + i * 26; g.fillStyle = n === S.tool ? '#f0a030' : i % 2 ? '#dfe5ec' : '#f3f5f8'; g.fillRect(X + 8, y, W - 16, 25);
+      [n === 10 ? '10 Huso' : String(n), fmtOfs(S.H[n]), f3(TDEF[n].r), TDEF[n].n].forEach((v, j) => txt(g, v, cx[j], y + 13, '15px ui-monospace,monospace', '#111', 'center'));
     });
-    panelText(g, 'OFFSET vuelve a la pestaña Trab', X + 20, top + 262, '600 15px system-ui', '#2d58b5');
+    txt(g, 'TOOL OFFSET MEASURE  Medir desplaz de herr', X + 20, top + 236, '600 15px system-ui', '#2d58b5');
+    txt(g, 'F1 Fijar valor   ENTER Agreg valor   NEXT TOOL siguiente', X + 20, top + 262, '600 14px system-ui', '#2d58b5', 'left', 680);
+  } else if (S.screen === 'mdi') {
+    hdr(g, X + 4, top, 300, 'MDI                         N100');
+    g.fillStyle = '#fff'; g.fillRect(X + 4, top + 26, 300, 240);
+    S.mdi.slice(-9).forEach((l, i) => txt(g, l, X + 14, top + 44 + i * 24, '16px ui-monospace,monospace', '#111'));
+    if (!S.mdi.length) txt(g, '(escribe p. ej. T1M06; e INSERT)', X + 14, top + 44, '14px system-ui', '#888');
+    hdr(g, X + 312, top, 200, 'Códigos activos');
+    g.fillStyle = '#f3f5f8'; g.fillRect(X + 312, top + 26, 200, 240);
+    ['G00 MOVIMIENTO RÁPIDO', 'G90 POSICIÓN ABSOLUTA', 'G40 CANCEL COMP', 'G80 CANCELAR CICLO', 'G54 CORREC PIEZ #54', `H${hh(S.tool)}   T${S.tool}   ${S.spindle ? 'M03' : 'M05'}`].forEach((l, i) => txt(g, l, X + 320, top + 46 + i * 26, '13px ui-monospace,monospace', '#222', 'left', 186));
+    hdr(g, X + 520, top, W - 524, 'HERRAM ACTIVA');
+    g.fillStyle = '#f3f5f8'; g.fillRect(X + 520, top + 26, W - 524, 240);
+    [`Herrm: ${S.tool}`, `CORRE: ${S.tool}`, T.n, `H: ${fmtOfs(S.H[S.tool])}`, `D: ${f3(T.r)}`, 'CYCLE START ejecuta'].forEach((l, i) => txt(g, l, X + 530, top + 46 + i * 26, '14px system-ui', '#222', 'left', W - 540));
   } else {
-    hdr(g, X + 4, top, W - 8, 'Posiciones  ·  PROGRAMA G54 G43 H10');
-    COLS.forEach((c, i) => {
-      const y = top + 70 + i * 62, m = mpos(c);
-      panelText(g, c, X + 40, y, '700 40px system-ui', '#222');
-      panelText(g, f3(m - g54()[i]), X + 420, y, '600 40px ui-monospace,monospace', '#111', 'right');
-      panelText(g, 'Máq ' + f3(m), X + 690, y, '22px ui-monospace,monospace', '#555', 'right');
-    });
-    panelText(g, 'Trab G54 (grande) · Máquina (derecha) · OFFSET vuelve a correctores', X + 20, top + 262, '14px system-ui', '#2d58b5');
+    hdr(g, X + 4, top, W - 8, `Posiciones  ·  PROGRAMA G54 G43 H${hh(S.tool)}`);
+    COLS.forEach((c, i) => { const y = top + 70 + i * 62; txt(g, c, X + 40, y, '700 40px system-ui', '#222'); txt(g, f3(work(c)), X + 420, y, '600 40px ui-monospace,monospace', '#111', 'right'); txt(g, 'Máq ' + f3(mpos(c)), X + 690, y, '22px ui-monospace,monospace', '#555', 'right'); });
+    txt(g, 'Trab G54 (grande) · Máquina (derecha)', X + 20, top + 262, '14px system-ui', '#2d58b5');
   }
-  // Husillo prin
   hdr(g, X + 4, mid, 250, 'Husillo prin');
   g.fillStyle = '#f3f5f8'; g.fillRect(X + 4, mid + 26, 250, 152);
   g.fillStyle = S.spindle ? '#2fbf71' : '#d23a3a';
   g.beginPath(); for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; g.lineTo(X + 50 + Math.cos(a) * 28, mid + 70 + Math.sin(a) * 28); } g.fill();
-  panelText(g, S.spindle ? 'GIRA' : 'STOP', X + 50, mid + 71, '800 13px system-ui', '#fff', 'center');
-  panelText(g, 'Veloc husillo:', X + 95, mid + 52, '14px system-ui', '#333'); panelText(g, (S.spindle ? '500' : '0') + ' RPM', X + 245, mid + 52, '14px ui-monospace,monospace', '#111', 'right');
-  panelText(g, 'Herram: T10 3D-Taster', X + 95, mid + 78, '14px system-ui', '#333');
-  panelText(g, 'Corr: H10', X + 95, mid + 100, '14px system-ui', '#333');
-  panelText(g, 'Rápido: 50%', X + 20, mid + 140, '14px system-ui', '#333');
-  // Avanc manu
+  txt(g, S.spindle ? 'GIRA' : 'STOP', X + 50, mid + 71, '800 13px system-ui', '#fff', 'center');
+  txt(g, 'Veloc husillo:', X + 95, mid + 52, '14px system-ui', '#333'); txt(g, (S.spindle ? '500' : '0') + ' RPM', X + 245, mid + 52, '14px ui-monospace,monospace', '#111', 'right');
+  txt(g, `Herram: T${S.tool}`, X + 95, mid + 78, '14px system-ui', '#333'); txt(g, `Corr: H${hh(S.tool)}`, X + 95, mid + 100, '14px system-ui', '#333');
+  txt(g, S.homed ? 'Referenciada' : 'SIN REFERENCIAR', X + 20, mid + 140, '600 14px system-ui', S.homed ? '#2a7a3a' : '#c0392b');
   hdr(g, X + 262, mid, W - 266, 'Avanc manu');
   g.fillStyle = '#f3f5f8'; g.fillRect(X + 262, mid + 26, W - 266, 152);
-  panelText(g, 'POSICIÓN: (MM)', X + 300, mid + 40, '13px system-ui', '#333');
-  panelText(g, 'VEL DESP: ' + S.inc.toFixed(3), X + W - 12, mid + 40, '600 13px ui-monospace,monospace', '#333', 'right');
-  panelText(g, 'Trab G54', X + 440, mid + 58, '600 14px system-ui', '#333', 'right'); panelText(g, 'Máquina', X + 640, mid + 58, '600 14px system-ui', '#333', 'right');
+  txt(g, 'POSICIÓN: (MM)', X + 300, mid + 40, '13px system-ui', '#333');
+  txt(g, 'VEL DESP: ' + S.inc.toFixed(3), X + W - 12, mid + 40, '600 13px ui-monospace,monospace', '#333', 'right');
+  txt(g, 'Trab G54', X + 440, mid + 58, '600 14px system-ui', '#333', 'right'); txt(g, 'Máquina', X + 640, mid + 58, '600 14px system-ui', '#333', 'right');
   COLS.forEach((c, i) => {
-    const y = mid + 84 + i * 30, m = mpos(c), sel = S.axis === c;
-    if (sel) { g.fillStyle = '#f5ea3a'; g.fillRect(X + 300, y - 13, W - 310, 26); }
-    panelText(g, c, X + 285, y, '700 17px system-ui', '#222', 'center');
-    panelText(g, f3(m - g54()[i]), X + 440, y, '17px ui-monospace,monospace', '#111', 'right');
-    panelText(g, f3(m), X + 640, y, '17px ui-monospace,monospace', '#111', 'right');
+    const y = mid + 84 + i * 30;
+    if (S.axis === c) { g.fillStyle = '#f5ea3a'; g.fillRect(X + 300, y - 13, W - 310, 26); }
+    txt(g, c, X + 285, y, '700 17px system-ui', '#222', 'center');
+    txt(g, f3(work(c)), X + 440, y, '17px ui-monospace,monospace', '#111', 'right');
+    txt(g, f3(mpos(c)), X + 640, y, '17px ui-monospace,monospace', '#111', 'right');
   });
-  // input
   g.fillStyle = '#9fc4ea'; g.fillRect(X + 4, Y + H - 34, W - 8, 30);
-  panelText(g, 'Input: ' + S.input + (Math.floor(performance.now() / 500) % 2 ? '|' : ''), X + 14, Y + H - 19, '16px ui-monospace,monospace', '#123');
+  txt(g, 'Input: ' + S.input + (Math.floor(performance.now() / 500) % 2 ? '|' : ''), X + 14, Y + H - 19, '16px ui-monospace,monospace', '#123');
   g.restore();
 }
-function tabs(g, x, y) { [['Herrm', 0], ['Trab', 1], ['Tool Info', 2]].forEach(([t, i]) => { const on = (S.tab === t); g.fillStyle = on ? '#f0a030' : '#2d58b5'; g.fillRect(x + 4 + i * 112, y, 108, 24); panelText(g, t, x + 58 + i * 112, y + 12, '600 14px system-ui', '#fff', 'center'); }); }
+function tabs(g, x, y) { ['Herrm', 'Trab', 'Tool Info'].forEach((t, i) => { g.fillStyle = S.tab === t ? '#f0a030' : '#2d58b5'; g.fillRect(x + 4 + i * 112, y, 108, 24); txt(g, t, x + 58 + i * 112, y + 12, '600 14px system-ui', '#fff', 'center'); }); }
 const fmtOfs = v => (v === 0 ? '0.' : f3(v));
-const mpos = c => S['m' + c.toLowerCase()];
+const mpos = c => c === 'Z' ? S.mg : S['m' + c.toLowerCase()];
+const work = c => c === 'Z' ? S.mg - g54()[2] - S.H[S.tool] : mpos(c) - g54()[COLS.indexOf(c)];
 
+/* =================== tablero =================== */
+const okG = c => Math.abs(g54()[COLS.indexOf(c)] - { X: S.part.x0, Y: S.part.y0, Z: S.part.top }[c]) <= TOL;
+const okH = n => Math.abs(S.H[n] - L(n)) <= TOL;
 function steps() {
-  const p = S.part, ok = (c, t) => Math.abs(g54()[c] - t) <= TOL;
-  return [['Cursor en G54 (OFFSET → Trab)', S.cur.r === 1], ['Husillo parado (el palpador no gira)', !S.spindle],
-    ['Toca X− hasta que el reloj marque 0', S.touched.X], ['PART ZERO SET en G54 X', ok('X', p.x0)],
-    ['Toca Y− hasta que el reloj marque 0', S.touched.Y], ['PART ZERO SET en G54 Y', ok('Y', p.y0)],
-    ['Encima de la pieza, baja Z hasta 0', S.touched.Z], ['PART ZERO SET en G54 Z', ok('Z', p.top)]];
+  return [['POWER UP con la puerta cerrada', S.homed], ['Abre la puerta', S.door > 0.5 || okG('X')],
+    ['OFFSET → Trab, cursor en G54', S.cur.r === 1 || okG('X')],
+    ['X−: reloj del palpador a 0 y PART ZERO SET', okG('X')], ['Y−: reloj a 0 y PART ZERO SET', okG('Y')], ['Z: reloj a 0 y PART ZERO SET', okG('Z')],
+    ['Calibra el taco: bulón encima y bisel a 0', S.calibrated], ['Quita el bulón y pon el taco en la mesa de la máquina', S.tacoAt === 'table'],
+    ['Cierra la puerta y cambia a T1 (MDI: T1M06; INSERT, CYCLE START)', !!S.everTool[1]],
+    ['T1 sobre el taco hasta 0 · OFFSET → Herrm · TOOL OFFSET MEASURE', okH(1)],
+    ['Cambia a T2 y mídela igual', okH(2)], ['Cambia a T3 y mídela igual', okH(3)], ['Pulsa VALIDAR', !!S.result]];
 }
 function drawBoard() {
   const g = Q.g, W = 800;
   g.fillStyle = '#151a1f'; g.fillRect(0, 0, W, 800);
   g.fillStyle = '#0f1316'; g.fillRect(0, 0, W, 60);
-  panelText(g, 'Reglaje con palpador 3D', 24, 31, '700 28px system-ui', COL.ink);
-  panelText(g, S.help ? 'Modo guiado' : 'Modo examen', W - 24, 31, '700 22px system-ui', S.help ? COL.cyan : COL.amber, 'right');
+  txt(g, 'Reglaje: cero pieza y herramientas', 24, 31, '700 26px system-ui', COL.ink);
+  txt(g, S.help ? 'Guiado' : 'Examen', W - 24, 31, '700 22px system-ui', S.help ? COL.cyan : COL.amber, 'right');
   const tc = { info: COL.quiet, ok: COL.green, warn: COL.amber, err: COL.red }[S.tone];
-  rrect(g, 20, 76, W - 40, 70, 10); g.fillStyle = tc; g.globalAlpha = 0.18; g.fill(); g.globalAlpha = 1; g.strokeStyle = tc; g.lineWidth = 2; g.stroke();
-  wrap(g, S.msg, 36, 100, W - 72, 26, '600 22px system-ui', COL.ink, 2);
+  rrect(g, 20, 72, W - 40, 74, 10); g.fillStyle = tc; g.globalAlpha = 0.18; g.fill(); g.globalAlpha = 1; g.strokeStyle = tc; g.lineWidth = 2; g.stroke();
+  wrap(g, S.msg, 36, 96, W - 72, 26, '600 21px system-ui', COL.ink, 2);
   if (S.result) {
-    S.result.lines.forEach((l, i) => wrap(g, l.t, 30, 190 + i * 74, W - 60, 28, (i ? '22px' : '700 26px') + ' system-ui', l.c || COL.ink, 2));
+    S.result.lines.forEach((l, i) => wrap(g, l.t, 30, 180 + i * 56, W - 60, 25, (i ? '20px' : '700 24px') + ' system-ui', l.c || COL.ink, 2));
   } else if (S.help) {
-    steps().forEach(([t, d], i) => { const y = 180 + i * 44; panelText(g, d ? '✓' : '○', 34, y, '700 26px system-ui', d ? COL.green : COL.quiet); panelText(g, t, 72, y, '23px system-ui', d ? COL.ink : COL.quiet, 'left', 700); });
-    const c = S.contact;
-    panelText(g, c ? `Reloj: ${S.read.toFixed(3).replace('.', ',')} mm  (${c.o.n})` : sinContacto(), 34, 548, '700 26px system-ui', c ? (Math.abs(S.read) <= TOL ? COL.green : COL.cyan) : COL.quiet, 'left', 740);
-    panelText(g, `Volante: eje ${S.axis} · ${S.inc.toFixed(3).replace('.', ',')} mm por clic`, 34, 600, '22px system-ui', COL.quiet);
+    const st = steps(), fi = st.findIndex(s => !s[1]), first = fi < 0 ? st.length - 1 : fi, from = Math.max(0, Math.min(first - 2, st.length - 9));
+    st.slice(from, from + 9).forEach(([t, d], i) => { const y = 174 + i * 40, isNext = from + i === first && !d; txt(g, d ? '✓' : isNext ? '▶' : '○', 30, y, '700 24px system-ui', d ? COL.green : isNext ? COL.cyan : COL.quiet); txt(g, `${from + i + 1}. ${t}`, 64, y, (isNext ? '600 ' : '') + '20px system-ui', d ? COL.ink : isNext ? COL.cyan : COL.quiet, 'left', 710); });
+    txt(g, readLine(), 30, 552, '700 24px system-ui', readCol(), 'left', 740);
+    txt(g, `T${S.tool} ${cur().n} · volante ${S.axis} · ${es(S.inc)} mm/clic · puerta ${S.door > 0.5 ? 'abierta' : 'cerrada'}`, 30, 600, '19px system-ui', COL.quiet, 'left', 740);
+    if (S.hold) txt(g, S.hold === 'taco' ? 'Llevas el taco: apunta a un círculo azul para dejarlo' : 'Llevas el bulón: apunta al círculo azul sobre el taco', 30, 646, '600 20px system-ui', COL.amber, 'left', 740);
   } else {
-    ['Sin pistas: lee el reloj del palpador en la lupa.', 'Cero en la esquina izquierda-delantera (X−, Y−).', 'Z en la cara superior de la pieza.', `Tolerancia ${TOL.toFixed(2).replace('.', ',')} mm. Al terminar, VALIDAR.`]
-      .forEach((t, i) => panelText(g, t, 34, 200 + i * 52, '24px system-ui', COL.ink, 'left', 740));
+    ['Sin pistas: lee los relojes en la lupa o acercándote.', 'G54 en la esquina X−, Y− y Z arriba de la pieza.', 'Calibra el taco antes de medir T1, T2 y T3.', `Tolerancia ${es(TOL)} mm. Al terminar, VALIDAR.`]
+      .forEach((t, i) => txt(g, t, 30, 200 + i * 52, '23px system-ui', COL.ink, 'left', 740));
   }
-  for (const k of Q.btns) key3d(g, k);
+  for (const k of Q.btns) drawKey(g, k);
   Q.t.needsUpdate = true;
 }
-function sinContacto() { const n = nearest(); return n ? `Sin contacto · a ${n.d.toFixed(1).replace('.', ',')} mm de la ${n.n}` : 'Sin contacto · lejos de la pieza'; }
+function readLine() {
+  if (S.bulonAt === 'taco' && S.tacoAt === 'bench') return `Taco en calibración: ${es(S.bezel)} mm (gira el bisel)`;
+  if (cur().type === 'probe') return S.contact ? `Palpador: ${es(S.read)} mm (${S.contact.o.n})` : sinContacto();
+  if (S.tacoRead != null) return `Taco de Z: ${es(S.tacoRead)} mm`;
+  return sinContacto();
+}
+function readCol() { const v = cur().type === 'probe' ? (S.contact ? S.read : null) : S.tacoRead; return v == null ? COL.quiet : Math.abs(v) <= TOL ? COL.green : COL.cyan; }
+function sinContacto() { const n = nearest(); return n ? `Sin contacto · a ${n.d.toFixed(1).replace('.', ',')} mm de ${n.n}` : 'Sin contacto · lejos'; }
 function wrap(g, text, x, y, w, lh, font, col, max) {
   g.font = font; g.fillStyle = col; g.textAlign = 'left'; g.textBaseline = 'middle';
   const words = String(text).split(' '); let line = '', n = 0;
@@ -420,169 +545,299 @@ function wrap(g, text, x, y, w, lh, font, col, max) {
   if (line && n < max) g.fillText(line, x, y + n * lh);
 }
 
-/* ---------- lógica de máquina ---------- */
-function distRect(x, y, o) {
-  const dx = Math.max(o.x0 - x, 0, x - o.x1), dy = Math.max(o.y0 - y, 0, y - o.y1);
-  return dx === 0 && dy === 0 ? -Math.min(x - o.x0, o.x1 - x, y - o.y0, o.y1 - y) : Math.hypot(dx, dy);
-}
+/* =================== física del contacto =================== */
+function distRect(x, y, o) { const dx = Math.max(o.x0 - x, 0, x - o.x1), dy = Math.max(o.y0 - y, 0, y - o.y1); return dx === 0 && dy === 0 ? -Math.min(x - o.x0, o.x1 - x, y - o.y0, o.y1 - y) : Math.hypot(dx, dy); }
+function allObst() { return S.tacoAt === 'table' ? [...obst, { n: 'taco de Z', x0: TACO_X - 25, x1: TACO_X + 25, y0: TACO_Y - 25, y1: TACO_Y + 25, top: Zs + TACO_PRE }] : obst; }
 function nearest() {
-  let best = null;
-  for (const o of obst) { const d = distRect(S.mx, S.my, o); let dd = null;
-    if (S.mz < o.top) dd = d - BALL; else if (d < BALL) dd = S.mz - o.top - BALL;
-    if (dd !== null && dd < 30 && (!best || dd < best.d)) best = { n: dd !== null && S.mz >= o.top ? o.n + ' (arriba)' : o.n, d: Math.max(dd, 0) }; }
+  const t = tip(), r = cur().r; let best = null;
+  for (const o of allObst()) { const d = distRect(S.mx, S.my, o); let dd = null;
+    if (t < o.top) dd = d - r; else if (d < r) dd = t - o.top;
+    if (dd !== null && dd < 40 && (!best || dd < best.d)) best = { n: (t >= o.top ? 'la cara de arriba de la ' : 'la ') + o.n, d: Math.max(dd, 0) }; }
   return best;
 }
 function sense() {
-  let best = null, body = null;
-  for (const o of obst) {
-    const d = distRect(S.mx, S.my, o);
-    if (S.mz + 42 < o.top && d < 30) body = o;
-    let r = null, kind = null;
-    if (S.mz < o.top) { if (d < BALL) { r = d; kind = 'side'; } }
-    else if (d < BALL) { const rz = S.mz - o.top; if (rz < BALL) { r = rz; kind = 'top'; } }
-    if (r !== null && (!best || r < best.r)) best = { r, o, kind };
+  const T = cur(), t = tip(), res = { crash: null, contact: null, taco: null };
+  if (T.type === 'probe') {
+    for (const o of allObst()) {
+      const d = distRect(S.mx, S.my, o);
+      if (t + 42 < o.top && d < 24) res.crash = res.crash || `El cuerpo del palpador ha chocado con la ${o.n}`;
+      let r = null, kind = null;
+      if (t < o.top) { if (d < BALL) { r = d; kind = 'side'; } } else if (d < BALL) { const rz = t - o.top; if (rz < BALL) { r = rz; kind = 'top'; } }
+      if (r !== null && (!res.contact || r < res.contact.r)) res.contact = { r, o, kind };
+    }
+    if (res.contact && res.contact.r < -OVER) res.crash = res.crash || `Has pasado el recorrido del palpador contra la ${res.contact.o.n}`;
+  } else {
+    const hl = T.type === 'face' ? 40 : T.type === 'end' ? 45 : 72;
+    for (const o of obst) {
+      const d = distRect(S.mx, S.my, o);
+      if (t < o.top - 0.02 && d < T.r) res.crash = res.crash || `La herramienta T${S.tool} ha chocado con la ${o.n}`;
+      if (t + hl < o.top && d < 21) res.crash = res.crash || `El portaherramientas ha chocado con la ${o.n}`;
+      if (d < T.r && t - o.top <= 0.05 && t >= o.top - 0.02) res.contact = { r: t - o.top, o, kind: 'touch' };
+    }
+    if (S.tacoAt === 'table') {
+      const c = Math.hypot(S.mx - TACO_X, S.my - TACO_Y), rz = t - Zs;
+      if (c < 18.5 + T.r && rz < TACO_PRE) { res.taco = rz; if (rz < -TACO_OVER) res.crash = res.crash || 'Has hundido el taco de Z más allá de su recorrido'; }
+      else if (c < 25 + T.r && t < Zs - 0.5) res.crash = res.crash || 'La herramienta ha chocado con el cuerpo del taco de Z';
+    }
+    if (S.spindle && (res.contact || res.taco != null)) res.crash = res.crash || 'Has tocado con el husillo girando: has marcado la pieza o el taco';
   }
-  return { best, body };
+  return res;
 }
 function afterMove(silent) {
-  const { best, body } = sense(), prev = S.contact;
-  S.contact = best; S.read = best ? best.r : BALL; dialDirty = true;
-  if (body || (best && best.r < -OVER)) {
-    crash(body ? `El cuerpo del palpador ha chocado con la ${body.n}` : `Has pasado el recorrido del palpador contra la ${best.o.n} (más de ${OVER.toFixed(1).replace('.', ',')} mm tras el 0)`);
-    return;
-  }
-  if (best && best.o === obst[0] && Math.abs(best.r) <= 0.05) {
-    const p = S.part;
-    if (best.kind === 'side' && S.mx < p.x0 && S.my > p.y0 && S.my < p.y1) S.touched.X = true;
-    if (best.kind === 'side' && S.my < p.y0 && S.mx > p.x0 && S.mx < p.x1) S.touched.Y = true;
-    if (best.kind === 'top') S.touched.Z = true;
+  const r = sense(), prev = S.contact, prevT = S.tacoRead;
+  S.contact = cur().type === 'probe' ? r.contact : null; S.read = S.contact ? S.contact.r : BALL;
+  S.tacoRead = r.taco == null ? null : r3(r.taco + S.bezel);
+  dialDirty = true; tacoDirty = true;
+  if (r.crash) { crash(r.crash); return; }
+  if (S.contact && S.contact.o === obst[0] && Math.abs(S.contact.r) <= 0.05) {
+    const p = S.part, k = S.contact.kind;
+    if (k === 'side' && S.mx < p.x0 && S.my > p.y0 && S.my < p.y1) S.touched.X = true;
+    if (k === 'side' && S.my < p.y0 && S.mx > p.x0 && S.mx < p.x1) S.touched.Y = true;
+    if (k === 'top') S.touched.Z = true;
   }
   if (!silent) {
-    if (best && !prev) { setMsg(`Contacto con la ${best.o.n}: el reloj empieza a moverse`, 'ok'); sfx('kick'); buzz(0.5, 90); }
-    else if (!best && prev) setMsg('Sin contacto', 'info');
-    else if (best && Math.abs(best.r) <= 0.005 && !(prev && Math.abs(prev.r) <= 0.005)) { setMsg('Reloj en 0: el eje está justo sobre la superficie', 'ok'); buzz(0.25, 40); }
-    else if (best && best.r < -0.3 && !(prev && prev.r < -0.3)) setMsg('Te has pasado del 0: vuelve atrás despacio', 'warn');
+    if (S.contact && !prev) { setMsg(`Contacto con la ${S.contact.o.n}: el reloj empieza a moverse`, 'ok'); sfx('kick'); buzz(0.5, 90); }
+    else if (S.contact && Math.abs(S.contact.r) <= 0.005 && !(prev && Math.abs(prev.r) <= 0.005)) { setMsg('Reloj del palpador en 0', 'ok'); buzz(0.25, 40); }
+    else if (S.contact && S.contact.r < -0.3 && !(prev && prev.r < -0.3)) setMsg('Te has pasado del 0: vuelve atrás despacio', 'warn');
+    if (S.tacoRead != null && prevT == null) { setMsg('La herramienta toca el taco: baja hasta que su reloj marque 0', 'ok'); sfx('kick'); buzz(0.5, 90); }
+    else if (S.tacoRead != null && Math.abs(S.tacoRead) <= 0.005 && !(prevT != null && Math.abs(prevT) <= 0.005)) { setMsg('Taco de Z en 0: pulsa TOOL OFFSET MEASURE (OFFSET → Herrm)', 'ok'); buzz(0.25, 40); }
+    if (r.contact && r.contact.kind === 'touch' && !S.spindle) setMsg(`La herramienta roza la ${r.contact.o.n}: sube un poco`, 'warn');
   }
-  S.safe = [S.mx, S.my, S.mz];
-  dirty = true;
+  S.safe = [S.mx, S.my, S.mg]; dirty = true; placeObjects();
 }
 function crash(why) {
   S.alarm = 'ALARMA: choque · pulse RESET'; S.crashes++; S.cjog = 0; S.jogHold = null;
   setMsg('CHOQUE: ' + why + '. Pulsa RESET y retírate.', 'err'); sfx('crash'); buzz(1, 400); flash = 1; dirty = true;
 }
-function blocked() { if (S.estop) { setMsg('Parada de emergencia pulsada: suéltala y pulsa RESET', 'err'); return true; } if (S.alarm) { setMsg('Hay una alarma: pulsa RESET', 'err'); return true; } return false; }
+
+/* =================== órdenes de la máquina =================== */
+function blocked() {
+  if (S.busy) { info('La máquina está ocupada…'); return true; }
+  if (S.estop) { setMsg('Parada de emergencia pulsada: suéltala y pulsa RESET', 'err'); return true; }
+  if (!S.homed) { setMsg('La máquina no está referenciada: pulsa POWER UP con la puerta cerrada', 'warn'); return true; }
+  if (S.alarm) { setMsg('Hay una alarma: pulsa RESET', 'err'); return true; }
+  return false;
+}
 function jog(a, d) {
   if (blocked()) return false;
-  const k = 'm' + a.toLowerCase(), v = r3(Math.min(LIM[a][1], Math.max(LIM[a][0], S[k] + d)));
+  const k = a === 'Z' ? 'mg' : 'm' + a.toLowerCase(), v = r3(Math.min(LIM[a][1], Math.max(LIM[a][0], S[k] + d)));
   if (v === S[k]) { if (d) setMsg(`Final de carrera en ${a}`, 'warn'); return false; }
   S[k] = v; S.result = null; afterMove(); return true;
 }
-function handle(dir) { if (jog(S.axis, dir * S.inc)) { S.wheel += dir * Math.PI / 50; sfx('click'); buzz(0.05, 10); } }
+function handle(dir) { if (jog(S.axis, dir * S.inc)) { S.wheel += dir * Math.PI / 50; sfx('click'); buzz(0.05, 10); dirty = true; } }
+function powerUp() {
+  if (S.estop) { setMsg('Suelta la parada de emergencia primero', 'err'); return; }
+  if (S.door > 0.5) { setMsg('Cierra la puerta para referenciar la máquina', 'warn'); return; }
+  if (S.homed) { info('La máquina ya está referenciada.'); return; }
+  S.alarm = ''; startHome('Referenciando ejes (POWER UP)…');
+}
+function zeroReturn() { if (blocked()) return; if (S.door > 0.5) { setMsg('Cierra la puerta para volver a cero máquina', 'warn'); return; } startHome('Volviendo a cero máquina…'); }
+function startHome(msg) { S.busy = { kind: 'home', t0: performance.now(), from: [S.mx, S.my, S.mg] }; setMsg(msg, 'info'); sfx('set'); }
+function toggleDoor() {
+  if (S.busy) { info('Espera a que termine el movimiento'); return; }
+  S.door = S.door > 0.5 ? 0 : 1;
+  if (S.door && S.spindle) { S.spindle = false; hum(false); S.alarm = 'PUERTA ABIERTA CON HUSILLO'; setMsg('Has abierto la puerta con el husillo girando: se ha parado. Pulsa RESET.', 'err'); sfx('crash'); return; }
+  info(S.door ? 'Puerta abierta. Con la puerta abierta no gira el husillo ni cambia herramientas.' : 'Puerta cerrada.');
+}
 function spindleOn(dir) {
   if (blocked()) return;
-  S.spindle = true; S.alarm = 'ERROR: palpador 3D girando'; S.crashes++; hum(true); sfx('crash'); buzz(1, 300); flash = 0.7;
-  setMsg(`Has pulsado ${dir} con el palpador 3D: nunca debe girar, se estropea. Pulsa STOP y RESET.`, 'err');
+  if (S.door > 0.5) { setMsg('Cierra la puerta antes de arrancar el husillo', 'warn'); return; }
+  if (cur().type === 'probe') { S.spindle = true; S.alarm = 'ERROR: palpador 3D girando'; S.crashes++; hum(true); sfx('crash'); buzz(1, 300); flash = 0.7; setMsg(`Has pulsado ${dir} con el palpador 3D: nunca debe girar. Pulsa STOP y RESET.`, 'err'); return; }
+  S.spindle = true; hum(true); setMsg(`Husillo en marcha (${dir}). Para medir herramientas tiene que estar parado.`, 'warn'); afterMove(true);
 }
-function spindleStop() { if (S.spindle) { S.spindle = false; hum(false); setMsg('Husillo parado. Pulsa RESET para borrar la alarma.', 'warn'); } else info('El husillo ya está parado.'); }
+function spindleStop() { if (S.spindle) { S.spindle = false; hum(false); setMsg(S.alarm ? 'Husillo parado. Pulsa RESET.' : 'Husillo parado.', S.alarm ? 'warn' : 'info'); } else info('El husillo ya está parado.'); }
 function toggleEstop() {
   S.estop = !S.estop; S.cjog = 0; S.jogHold = null;
-  if (S.estop) { S.spindle = false; hum(false); setMsg('PARADA DE EMERGENCIA pulsada. Gírala (púlsala otra vez) y luego RESET.', 'err'); sfx('crash'); }
+  if (S.estop) { S.spindle = false; hum(false); S.busy = null; setMsg('PARADA DE EMERGENCIA. Gírala (púlsala otra vez) y luego RESET.', 'err'); sfx('crash'); }
   else setMsg('Seta liberada. Pulsa RESET.', 'warn');
 }
 function reset() {
   if (S.estop) { setMsg('Primero suelta la parada de emergencia', 'err'); return; }
-  if (S.spindle) { setMsg('Para el husillo (STOP) antes de RESET', 'err'); return; }
+  if (S.spindle && S.alarm) { setMsg('Para el husillo (STOP) antes de RESET', 'err'); return; }
+  if (!S.homed) { setMsg('Pulsa POWER UP para referenciar la máquina', 'warn'); return; }
   if (!S.alarm) { info('Sin alarmas.'); return; }
-  S.alarm = ''; [S.mx, S.my, S.mz] = S.safe; afterMove(true);
-  setMsg('Alarma borrada. Aléjate antes de volver a acercarte.', 'warn');
+  S.alarm = ''; [S.mx, S.my, S.mg] = S.safe; afterMove(true); setMsg('Alarma borrada. Aléjate antes de volver a acercarte.', 'warn');
 }
 function moveCur(dr, dc) { S.screen = 'ofs'; S.tab = 'Trab'; S.cur.r = Math.max(0, Math.min(ROWS.length - 1, S.cur.r + dr)); S.cur.c = Math.max(0, Math.min(2, S.cur.c + dc)); }
-function cell() { return { row: ROWS[S.cur.r], c: S.cur.c, col: COLS[S.cur.c] }; }
 function partZero() {
   if (blocked()) return;
   if (S.screen !== 'ofs' || S.tab !== 'Trab') { setMsg('Abre OFFSET → pestaña Trab y pon el cursor en la casilla', 'warn'); return; }
-  const { row, c, col } = cell();
-  S.ofs[row][c] = r3(mpos(col));
-  if (row === 'G54') S.setRead[col] = S.contact ? S.read : null;
-  setMsg(`${row} ${col} = ${f3(S.ofs[row][c])} (posición de máquina actual)`, row === 'G54' ? 'info' : 'warn'); sfx('set');
+  const row = ROWS[S.cur.r], c = S.cur.c, col = COLS[c];
+  S.ofs[row][c] = r3(col === 'Z' ? S.mg - S.H[S.tool] : mpos(col));
+  if (row === 'G54') S.setRead[col] = cur().type === 'probe' ? (S.contact ? S.read : null) : 'tool';
+  setMsg(`${row} ${col} = ${f3(S.ofs[row][c])}`, row === 'G54' ? 'info' : 'warn'); sfx('set');
 }
-function key(k) { if (k === '-' && S.input) return; if (k === '.' && S.input.includes('.')) return; if (S.input.length < 10) S.input += k; }
-function fkey(f) { if (f === 'F1') applyInput(false); else if (f === 'F4') { S.screen = 'ofs'; S.tab = S.tab === 'Trab' ? 'Herrm' : 'Trab'; } else info(`${f} no se usa en este ejercicio.`); }
+function toolOffsetMeasure() {
+  if (blocked()) return;
+  if (S.screen !== 'ofs' || S.tab !== 'Herrm') { setMsg('Abre OFFSET → pestaña Herrm para medir la herramienta', 'warn'); return; }
+  S.H[S.tool] = r3(S.mg - Zs); S.Hread[S.tool] = S.tacoRead; S.Hcal[S.tool] = S.calibrated;
+  setMsg(`H${hh(S.tool)} = ${f3(S.H[S.tool])} (Máquina Z − referencia del taco)`, 'info'); sfx('set');
+}
+function key(k) { if (S.screen !== 'mdi') { if (k === '-' && S.input) return; if (k === '.' && S.input.includes('.')) return; } if (S.input.length < 24) S.input += k; }
 function applyInput(add) {
   const v = parseFloat(S.input);
-  if (!isFinite(v)) { setMsg('Escribe un valor (Input) antes de ENTER o F1', 'warn'); return; }
-  if (S.screen !== 'ofs' || S.tab !== 'Trab') { setMsg('Abre OFFSET → Trab para cambiar correctores', 'warn'); return; }
-  const { row, c, col } = cell(); S.ofs[row][c] = r3(add ? S.ofs[row][c] + v : v); S.input = '';
+  if (!isFinite(v)) { setMsg('Escribe un valor en Input antes de ENTER o F1', 'warn'); return; }
+  if (S.screen !== 'ofs') { setMsg('Abre OFFSET para cambiar correctores', 'warn'); return; }
+  if (S.tab === 'Herrm') { S.H[S.tool] = r3(add ? S.H[S.tool] + v : v); S.input = ''; S.Hread[S.tool] = 'manual'; setMsg(`H${hh(S.tool)} → ${f3(S.H[S.tool])}`, 'info'); sfx('set'); return; }
+  const row = ROWS[S.cur.r], c = S.cur.c, col = COLS[c]; S.ofs[row][c] = r3(add ? S.ofs[row][c] + v : v); S.input = '';
   if (row === 'G54') S.setRead[col] = 'manual';
   setMsg(`${row} ${col} ${add ? 'suma ' + fc(v) : 'fijado'} → ${f3(S.ofs[row][c])}`, 'info'); sfx('set');
 }
+function mdiInsert() { if (S.screen !== 'mdi') { setMsg('Pulsa MDI para escribir un programa', 'warn'); return; } const t = S.input.trim(); if (!t) return; S.mdi.push(t.endsWith(';') ? t : t + ' ;'); S.input = ''; sfx('click'); }
+function cycleStart() {
+  if (S.screen !== 'mdi') { setMsg('CYCLE START ejecuta el programa MDI: pulsa MDI primero', 'warn'); return; }
+  if (blocked()) return;
+  const prog = S.mdi.join(' ').toUpperCase().replace(/\s+/g, '');
+  if (!prog) { setMsg('El programa MDI está vacío: escribe T1M06; y pulsa INSERT', 'warn'); return; }
+  const mt = prog.match(/T(\d+)M0?6/);
+  if (mt) { changeTool(+mt[1]); return; }
+  if (/M0?[34](?!\d)/.test(prog)) { spindleOn('M03'); return; }
+  if (/M0?5(?!\d)/.test(prog)) { spindleStop(); return; }
+  if (/G28/.test(prog)) { zeroReturn(); return; }
+  setMsg('No reconozco el programa. Para cambiar de herramienta: T1M06;', 'warn');
+}
+function nextTool() { if (S.screen !== 'ofs' || S.tab !== 'Herrm') { setMsg('NEXT TOOL se usa en OFFSET → Herrm', 'warn'); return; } atcStep(1); }
+function atcStep(d) { const i = ORDER.indexOf(S.tool); changeTool(ORDER[(i + d + ORDER.length) % ORDER.length]); }
+function changeTool(n) {
+  if (blocked()) return;
+  if (!TDEF[n]) { setMsg(`No hay herramienta T${n} en el carrusel (hay T1, T2, T3 y T10)`, 'warn'); return; }
+  if (S.door > 0.5) { setMsg('Cierra la puerta para cambiar de herramienta', 'warn'); return; }
+  if (n === S.tool) { info(`T${n} ya está en el husillo.`); return; }
+  if (S.spindle) spindleStop();
+  S.busy = { kind: 'atc', t0: performance.now(), to: n, from: S.mg, swapped: false }; setMsg(`Cambiando a T${n} (${TDEF[n].n})…`, 'info');
+}
 function hint(c, e) {
   if (Math.abs(e) <= TOL) return '';
-  if (r3(g54()[COLS.indexOf(c)]) === OFS0.G54[COLS.indexOf(c)]) return 'sigue el valor del compañero anterior: no lo has fijado';
-  for (const k of [2, 4, 5]) if (Math.abs(Math.abs(e) - k) < 0.06) return 'con el palpador 3D no se compensa el radio: el 0 del reloj ya es el eje sobre el borde';
-  if (c !== 'Z' && Math.abs(e - 100) < 3) return 'has palpado el lado contrario: el cero es X−/Y−';
+  const i = COLS.indexOf(c);
+  if (r3(g54()[i]) === OFS0.G54[i]) return 'sigue el valor del compañero anterior';
+  if (c !== 'Z') for (const k of [2, 4, 5]) if (Math.abs(Math.abs(e) - k) < 0.06) return 'con el palpador 3D no se compensa el radio';
+  if (c !== 'Z' && Math.abs(e - 100) < 3) return 'has palpado el lado contrario';
   const sr = S.setRead[c];
-  if (typeof sr === 'number' && Math.abs(sr) > TOL) return `pulsaste PART ZERO SET con el reloj en ${sr.toFixed(3).replace('.', ',')} mm: déjalo en 0`;
-  if (sr === null) return 'pulsaste PART ZERO SET sin estar tocando la pieza';
-  return 'vuelve a palpar con 0,01 y termina con 0,001';
+  if (typeof sr === 'number' && Math.abs(sr) > TOL) return `PART ZERO SET con el reloj en ${es(sr)} mm`;
+  if (sr === null) return 'PART ZERO SET sin tocar la pieza';
+  if (sr === 'tool') return 'fijaste el cero sin el palpador en el husillo';
+  return 'vuelve a palpar y termina con 0,001';
+}
+function hintH(n, e) {
+  if (Math.abs(e) <= TOL) return '';
+  if (S.H[n] === 0) return 'sin medir';
+  const hr = S.Hread[n];
+  if (hr === 'manual') return 'valor escrito a mano';
+  if (hr == null) return 'TOOL OFFSET MEASURE sin tocar el taco';
+  if (Math.abs(hr) > TOL) return `medida con el reloj del taco en ${es(hr)} mm`;
+  if (!S.Hcal[n]) return 'el taco no estaba calibrado';
+  return 'repite la medición';
 }
 function validate() {
-  if (blocked()) return;
+  if (S.busy) return;
   const p = S.part, G = g54(), err = { X: r3(G[0] - p.x0), Y: r3(G[1] - p.y0), Z: r3(G[2] - p.top) };
-  const pass = COLS.every(c => Math.abs(err[c]) <= TOL);
+  const eh = {}; for (const n of [1, 2, 3]) eh[n] = r3(S.H[n] - L(n));
+  const pass = COLS.every(c => Math.abs(err[c]) <= TOL) && [1, 2, 3].every(n => Math.abs(eh[n]) <= TOL);
   const secs = Math.round((performance.now() - S.t0) / 1000), tm = `${Math.floor(secs / 60)} min ${secs % 60} s`;
   const lines = [{ t: `${pass ? 'Superado' : 'Revisa el reglaje'} · ${tm} · ${S.crashes} errores graves`, c: pass ? COL.green : COL.amber }];
-  for (const c of COLS) { const ok = Math.abs(err[c]) <= TOL, h = hint(c, err[c]); lines.push({ t: `${ok ? '✓' : '✗'} G54 ${c}: error ${fc(err[c])} mm${h ? ' · ' + h : ''}`, c: ok ? COL.ink : COL.red }); }
-  lines.push({ t: 'PIEZA NUEVA para repetir, o corrige y vuelve a validar', c: COL.quiet });
-  S.result = { pass, lines, text: [`Reglaje Mini Mill (palpador 3D) · ${new Date().toLocaleString('es-ES')}`, ...lines.map(l => l.t)].join('\n') };
-  setMsg(pass ? 'Cero G54 correcto en los tres ejes' : `Hay algún cero fuera de tolerancia (${TOL.toFixed(2).replace('.', ',')} mm)`, pass ? 'ok' : 'warn');
+  for (const c of COLS) { const ok = Math.abs(err[c]) <= TOL, h = hint(c, err[c]); lines.push({ t: `${ok ? '✓' : '✗'} G54 ${c}: ${fc(err[c])} mm${h ? ' · ' + h : ''}`, c: ok ? COL.ink : COL.red }); }
+  for (const n of [1, 2, 3]) { const ok = Math.abs(eh[n]) <= TOL, h = hintH(n, eh[n]); lines.push({ t: `${ok ? '✓' : '✗'} H${hh(n)} ${TDEF[n].n}: ${fc(eh[n])} mm${h ? ' · ' + h : ''}`, c: ok ? COL.ink : COL.red }); }
+  S.result = { pass, lines, text: [`Reglaje Mini Mill · ${new Date().toLocaleString('es-ES')}`, ...lines.map(l => l.t)].join('\n') };
+  setMsg(pass ? 'Reglaje correcto: G54 y longitudes de herramienta' : `Hay valores fuera de tolerancia (${es(TOL)} mm)`, pass ? 'ok' : 'warn');
   sfx(pass ? 'set' : 'kick'); cpBtn.hidden = false;
 }
 function setMsg(t, tone) { S.msg = t; S.tone = tone; dirty = true; }
 function info(t) { setMsg(t, 'info'); }
 
-/* ---------- sonido y vibración ---------- */
+/* ---- objetos: taco y bulón ---- */
+function pickObj(kind) {
+  if (S.hold) { info('Ya llevas un objeto: déjalo en un círculo azul'); return; }
+  if (kind === 'taco') {
+    if (S.bulonAt === 'taco') { setMsg('Quita primero el bulón de encima del taco', 'warn'); return; }
+    if (S.tacoAt === 'table' && S.door < 0.5) { setMsg('Abre la puerta para coger el taco', 'warn'); return; }
+    if (S.tacoAt === 'table' && S.tacoRead != null) { setMsg('Sube la herramienta antes de quitar el taco', 'warn'); return; }
+  }
+  S.hold = kind; if (kind === 'taco') S.tacoAt = 'hand'; else S.bulonAt = 'hand';
+  sfx('click'); afterMove(true);
+  setMsg(kind === 'taco' ? 'Taco cogido. Déjalo en la mesa auxiliar o en la mesa de la máquina (círculo azul).' : 'Bulón cogido. Ponlo encima del taco para calibrarlo.', 'info');
+}
+function dropAt(target) {
+  const h = S.hold; if (!h) return;
+  if (h === 'taco') {
+    if (target === 'table') {
+      if (S.door < 0.5) { setMsg('Abre la puerta para meter el taco en la máquina', 'warn'); return; }
+      const c = Math.hypot(S.mx - TACO_X, S.my - TACO_Y);
+      if (c < 25 + cur().r + 2 && tip() < Zs + 5) { setMsg('La herramienta está encima de ese sitio: sube Z antes de poner el taco', 'warn'); return; }
+      S.tacoAt = 'table'; S.hold = null; setMsg(S.calibrated ? 'Taco sobre la mesa. Cierra la puerta y cambia de herramienta.' : 'Taco en la mesa… pero aún no está calibrado.', S.calibrated ? 'ok' : 'warn');
+    } else if (target === 'benchTaco') { S.tacoAt = 'bench'; S.hold = null; info('Taco en la mesa auxiliar.'); } else return;
+  } else {
+    if (target === 'onTaco' && S.tacoAt === 'bench') { S.bulonAt = 'taco'; S.hold = null; setMsg('Bulón encima del taco. Gira el bisel (pulsa los lados del reloj) hasta 0.', 'ok'); }
+    else if (target === 'benchBulon') { S.bulonAt = 'bench'; S.hold = null; info('Bulón en su sitio.'); } else return;
+  }
+  sfx('set'); afterMove(true);
+}
+function turnBezel(dir) {
+  if (S.bulonAt !== 'taco' || S.tacoAt !== 'bench') { setMsg('Para calibrar, pon el taco en la mesa auxiliar y el bulón encima', 'warn'); return; }
+  S.bezel = r3(S.bezel + dir * 0.01); S.calibrated = Math.abs(S.bezel) < 0.0005; tacoDirty = true; sfx('click'); buzz(0.05, 10);
+  if (S.calibrated) setMsg('Taco calibrado: reloj en 0 con el bulón. Quita el bulón.', 'ok'); else info(`Taco con bulón: ${es(S.bezel)} mm`);
+}
+
+/* =================== sonido y vibración =================== */
 let ac = null, humNode = null;
 function audio() { try { ac = ac || new AudioContext(); if (ac.state === 'suspended') ac.resume(); } catch (e) { ac = null; } return ac; }
 function tone(f, d, type, vol) { const a = audio(); if (!a) return; const o = a.createOscillator(), gn = a.createGain(); o.type = type; o.frequency.value = f; gn.gain.setValueAtTime(vol, a.currentTime); gn.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + d); o.connect(gn).connect(a.destination); o.start(); o.stop(a.currentTime + d); }
-function sfx(k) { if (k === 'click') tone(1800, 0.02, 'square', 0.03); if (k === 'kick') tone(880, 0.12, 'sine', 0.15); if (k === 'crash') tone(110, 0.5, 'sawtooth', 0.25); if (k === 'set') { tone(660, 0.08, 'sine', 0.12); setTimeout(() => tone(990, 0.1, 'sine', 0.12), 90); } }
+function sfx(k) { if (k === 'click') tone(1800, 0.02, 'square', 0.03); if (k === 'kick') tone(880, 0.12, 'sine', 0.15); if (k === 'crash') tone(110, 0.5, 'sawtooth', 0.25); if (k === 'set') { tone(660, 0.08, 'sine', 0.12); setTimeout(() => tone(990, 0.1, 'sine', 0.12), 90); } if (k === 'atc') { tone(180, 0.35, 'sawtooth', 0.05); setTimeout(() => tone(240, 0.2, 'square', 0.04), 400); } }
 function hum(on) { const a = audio(); if (!a) return; if (on && !humNode) { const o = a.createOscillator(), gn = a.createGain(); o.type = 'triangle'; o.frequency.value = 80; gn.gain.value = 0.02; o.connect(gn).connect(a.destination); o.start(); humNode = { o, gn }; } else if (!on && humNode) { humNode.o.stop(); humNode = null; } }
-function buzz(v, ms) {
-  const s = renderer.xr.getSession(); if (!s) return;
-  for (const src of s.inputSources) { const gp = src.gamepad; try { if (gp && gp.hapticActuators && gp.hapticActuators[0]) gp.hapticActuators[0].pulse(v, ms); else if (gp && gp.vibrationActuator) gp.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: v, weakMagnitude: v }); } catch (e) {} }
-}
+function buzz(v, ms) { const s = renderer.xr.getSession(); if (!s) return; for (const src of s.inputSources) { const gp = src.gamepad; try { if (gp && gp.hapticActuators && gp.hapticActuators[0]) gp.hapticActuators[0].pulse(v, ms); else if (gp && gp.vibrationActuator) gp.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: v, weakMagnitude: v }); } catch (e) {} } }
 
-/* ---------- entrada ---------- */
+/* =================== entrada =================== */
 const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(), tmpM = new THREE.Matrix4();
-function hitBtn(hits) {
-  for (const h of hits) { const p = PANELS.find(q => q.m === h.object); if (!p || !h.uv) continue;
-    const x = h.uv.x * p.W, y = (1 - h.uv.y) * p.H;
-    return p.btns.find(k => x >= k.x && x <= k.x + k.w && y >= k.y && y <= k.y + k.h) || null; }
+function kindOf(o) { while (o) { if (o.userData.panel) return { panel: o.userData.panel }; if (o.userData.target) return { target: o.userData.target }; if (o.userData.kind) return { kind: o.userData.kind }; o = o.parent; } return null; }
+function resolve(hits) {
+  for (const h of hits) {
+    if (!h.object.visible) continue;
+    const k = kindOf(h.object); if (!k) continue;
+    if (k.panel) { const p = k.panel, x = h.uv.x * p.W, y = (1 - h.uv.y) * p.H; const b = p.btns.find(q => x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h); return b ? { btn: b, x, y } : null; }
+    if (k.target) return { target: k.target };
+    if (k.kind === 'bezel') { if (S.bulonAt === 'taco') return { bezel: h.uv.x < 0.5 ? -1 : 1 }; return { obj: 'taco' }; }
+    if (k.kind === 'taco' || k.kind === 'bulon') { if (S.hold === k.kind) continue; return { obj: k.kind }; }
+    if (k.kind === 'door') return { door: true };
+  }
   return null;
 }
-const meshes = PANELS.map(p => p.m);
-function press(k) {
-  if (!k) return; audio(); held = k;
-  if (k.jog) { const a = k.jog[1], d = k.jog[0] === '+' ? 1 : -1; S.axis = a; S.jogHold = { a, d, t: performance.now() }; sfx('click'); }
-  else { if (!k.id.startsWith('wh')) sfx('click'); k.act(); }
+function activate(r, src) {
+  if (!r) return; audio();
+  if (r.btn) { const k = r.btn; held = k;
+    if (k.wheel) { wheelGrab = { src, acc: 0, moved: false, side: r.x < 130 ? -1 : 1, up0: null }; dirty = true; return; }
+    if (k.jog) { S.axis = k.jog[1]; S.jogHold = { d: k.jog[0] === '+' ? 1 : -1, t: performance.now() }; sfx('click'); }
+    else { sfx('click'); k.act(); }
+  } else if (r.target) dropAt(r.target);
+  else if (r.bezel) turnBezel(r.bezel);
+  else if (r.obj) pickObj(r.obj);
+  else if (r.door) toggleDoor();
   dirty = true;
 }
-function release() { S.jogHold = null; S.cjog = 0; held = null; dirty = true; }
-function mouseHits(e) { ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(meshes); }
-renderer.domElement.addEventListener('pointerdown', e => { const k = hitBtn(mouseHits(e)); if (k) { controls.enabled = false; press(k); } });
+function release() { if (wheelGrab && !wheelGrab.moved) handle(wheelGrab.side); wheelGrab = null; S.jogHold = null; S.cjog = 0; held = null; dirty = true; }
+function mouseHits(e) { ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera); return ray.intersectObjects(clickables, true); }
+let lastMX = 0;
+renderer.domElement.addEventListener('pointerdown', e => { const r = resolve(mouseHits(e)); lastMX = e.clientX; if (r) { controls.enabled = false; activate(r, 'mouse'); } });
 addEventListener('pointerup', () => { release(); controls.enabled = true; });
-renderer.domElement.addEventListener('pointermove', e => { const k = hitBtn(mouseHits(e)); if (k !== hover) { hover = k; dirty = true; } renderer.domElement.style.cursor = k ? 'pointer' : ''; });
+renderer.domElement.addEventListener('pointermove', e => {
+  if (wheelGrab && wheelGrab.src === 'mouse') { wheelGrab.acc += e.clientX - lastMX; lastMX = e.clientX; while (Math.abs(wheelGrab.acc) >= 8) { const s = Math.sign(wheelGrab.acc); handle(s); wheelGrab.acc -= 8 * s; wheelGrab.moved = true; } return; }
+  const r = resolve(mouseHits(e)), k = r && r.btn ? r.btn : null; if (k !== hover) { hover = k; dirty = true; }
+  renderer.domElement.style.cursor = r ? 'pointer' : '';
+});
 const keysDown = {};
 addEventListener('keydown', e => {
   if (e.target.closest && e.target.closest('button,summary,a')) { if (e.key === 'Enter' || e.key === ' ') return; }
   const k = e.key; audio();
-  if (/^[xyz]$/i.test(k) && !e.ctrlKey && !e.metaKey) { S.axis = k.toUpperCase(); }
-  else if (k === 'i' || k === 'I') { S.inc = INCS[(INCS.indexOf(S.inc) + 1) % 4]; }
+  if (k === 'Enter' && e.shiftKey) { cycleStart(); dirty = true; return; }
+  if (S.screen === 'mdi' && (/^[a-zA-Z0-9.;\-]$/.test(k) || k === 'Enter' || k === 'Backspace')) {
+    if (k === 'Enter') mdiInsert(); else if (k === 'Backspace') S.input = S.input.slice(0, -1); else key(k.toUpperCase()); dirty = true; return;
+  }
+  if (/^[xyz]$/i.test(k) && !e.ctrlKey && !e.metaKey) S.axis = k.toUpperCase();
+  else if (k === 'i' || k === 'I') S.inc = INCS[(INCS.indexOf(S.inc) + 1) % 4];
   else if (k === 'ArrowRight' || k === 'ArrowLeft') { e.preventDefault(); const dir = k === 'ArrowRight' ? 1 : -1; for (let n = e.shiftKey ? 10 : 1; n--;) handle(dir); }
   else if (k === 'ArrowUp' || k === 'ArrowDown') { e.preventDefault(); moveCur(k === 'ArrowUp' ? -1 : 1, 0); }
   else if (k === '[' || k === ']') moveCur(0, k === '[' ? -1 : 1);
   else if ((k === 'a' || k === 'd') && !keysDown[k]) { keysDown[k] = 1; if (!blocked()) S.cjog = k === 'a' ? -1 : 1; }
   else if (k === 'p' || k === 'P') partZero();
+  else if (k === 'm' || k === 'M') toolOffsetMeasure();
   else if (/^[0-9.\-]$/.test(k)) key(k);
   else if (k === 'Enter') applyInput(true);
   else if (k === 'f' || k === 'F') applyInput(false);
@@ -595,63 +850,91 @@ addEventListener('keydown', e => {
   dirty = true;
 });
 addEventListener('keyup', e => { if (e.key === 'a' || e.key === 'd') { keysDown[e.key] = 0; S.cjog = 0; } });
-
+let lastCtrl = null;
 const ctrls = [0, 1].map(i => {
   const c = renderer.xr.getController(i);
   const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]), new THREE.LineBasicMaterial({ color: '#2ec5e6' }));
   line.scale.z = 2; c.add(line);
   c.add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.09), dark));
-  c.addEventListener('selectstart', () => press(hitBtn(ctrlHits(c))));
+  c.addEventListener('selectstart', () => { lastCtrl = c; activate(resolve(ctrlHits(c)), c); });
   c.addEventListener('selectend', release);
   scene.add(c); return c;
 });
-function ctrlHits(c) { tmpM.identity().extractRotation(c.matrixWorld); ray.ray.origin.setFromMatrixPosition(c.matrixWorld); ray.ray.direction.set(0, 0, -1).applyMatrix4(tmpM); return ray.intersectObjects(meshes); }
+function ctrlHits(c) { tmpM.identity().extractRotation(c.matrixWorld); ray.ray.origin.setFromMatrixPosition(c.matrixWorld); ray.ray.direction.set(0, 0, -1).applyMatrix4(tmpM); return ray.intersectObjects(clickables, true); }
 let lastStick = 0;
+const qW = new THREE.Quaternion();
+function wrist(c) { c.getWorldQuaternion(qW); return { f: new THREE.Vector3(0, 0, -1).applyQuaternion(qW), u: new THREE.Vector3(0, 1, 0).applyQuaternion(qW) }; }
 
-/* ---------- vistas de escritorio ---------- */
-const views = { v1: [[0.05, 1.65, 0.95], [0.05, 1.25, -0.5]], v2: [[0.32, 1.42, 0.42], [0.66, 1.36, -0.08]], v3: [[-0.16, 1.32, -0.5], [0, 1.08, -0.95]], v4: [[-0.28, 1.4, 0.45], [-0.61, 1.35, -0.05]] };
+/* =================== vistas =================== */
+const views = { v1: [[0.15, 1.65, 1.05], [0.15, 1.25, -0.45]], v2: [[0.32, 1.42, 0.42], [0.66, 1.36, -0.08]], v3: [[-0.16, 1.32, -0.5], [0, 1.08, -0.95]], v4: [[-0.28, 1.4, 0.45], [-0.61, 1.35, -0.05]], v5: [[0.72, 1.22, 0.62], [1.0, 0.93, 0.18]] };
 for (const id in views) document.getElementById(id).onclick = () => { camera.position.set(...views[id][0]); controls.target.set(...views[id][1]); controls.update(); document.getElementById('help').open = false; };
 const cpBtn = document.getElementById('cp');
 cpBtn.onclick = async () => { try { await navigator.clipboard.writeText(S.result.text); cpBtn.textContent = 'Copiado'; } catch (e) { cpBtn.textContent = 'No se pudo copiar'; } setTimeout(() => cpBtn.textContent = 'Copiar resumen', 1500); };
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
-/* ---------- bucle ---------- */
+/* =================== bucle =================== */
 let last = performance.now(), lastDraw = 0, flash = 0, lastDial = 0;
-const tipW = new THREE.Vector3();
+const tipW = new THREE.Vector3(), holdOff = new THREE.Vector3();
+const ease = x => x < 0 ? 0 : x > 1 ? 1 : x * x * (3 - 2 * x);
 renderer.setAnimationLoop(t => {
   const dt = Math.min((t - last) / 1000, 0.05); last = t;
-  if (S.jogHold && t - S.jogHold.t > 300) S.cjog = S.jogHold.d;
-  if (S.cjog && !S.alarm && !S.estop) {
-    const step = JOGV[S.inc] * dt, n = Math.max(1, Math.ceil(step / 0.05));
-    for (let i = 0; i < n && S.cjog; i++) if (!jog(S.axis, S.cjog * step / n)) { S.cjog = 0; S.jogHold = null; break; }
+  if (S.busy) {
+    const b = S.busy, e = (t - b.t0) / 1000;
+    if (b.kind === 'home') {
+      const kz = ease(e / 1.2), kxy = ease((e - 1.0) / 1.6);
+      S.mg = r3(b.from[2] * (1 - kz)); S.mx = r3(b.from[0] * (1 - kxy)); S.my = r3(b.from[1] * (1 - kxy));
+      if (e > 2.7) { S.busy = null; S.homed = true; S.alarm = ''; S.mx = S.my = S.mg = 0; setMsg('Máquina referenciada. Abre la puerta y coge el cero con el palpador.', 'ok'); }
+      afterMove(true);
+    } else {
+      S.mg = r3(b.from * (1 - ease(e / 0.8)));
+      const slide = e < 0.8 ? 0 : e < 1.3 ? ease((e - 0.8) / 0.5) : e < 1.8 ? 1 : 1 - ease((e - 1.8) / 0.5);
+      for (const m of parts.atc) m.position.x = slide * 0.12; pocketGroup.position.x = slide * 0.12;
+      if (e > 1.5 && !b.swapped) { b.swapped = true; S.tool = b.to; S.everTool[b.to] = true; showTool(); sfx('atc'); }
+      if (e > 2.4) { S.busy = null; for (const m of parts.atc) m.position.x = 0; pocketGroup.position.x = 0; setMsg(`T${S.tool} (${cur().n}) en el husillo.`, 'ok'); }
+      afterMove(true);
+    }
   }
+  if (S.jogHold && t - S.jogHold.t > 300) S.cjog = S.jogHold.d;
+  if (S.cjog && !S.alarm && !S.estop && !S.busy) { const step = JOGV[S.inc] * dt, n = Math.max(1, Math.ceil(step / 0.05)); for (let i = 0; i < n && S.cjog; i++) if (!jog(S.axis, S.cjog * step / n)) { S.cjog = 0; S.jogHold = null; break; } }
   const sess = renderer.xr.getSession();
   if (sess) {
     for (const src of sess.inputSources) { const ax = src.gamepad && src.gamepad.axes; const x = ax ? (ax.length > 2 ? ax[2] : ax[0]) : 0; if (Math.abs(x) > 0.6 && t - lastStick > 110) { lastStick = t; handle(Math.sign(x)); } }
-    let h = null; for (const c of ctrls) { const k = hitBtn(ctrlHits(c)); if (k) h = k; }
+    let h = null; for (const c of ctrls) { const r = resolve(ctrlHits(c)); if (r && r.btn) h = r.btn; }
     if (h !== hover) { hover = h; dirty = true; }
+    if (wheelGrab && wheelGrab.src && wheelGrab.src.isObject3D) {
+      const w = wrist(wheelGrab.src);
+      if (!wheelGrab.up0) { wheelGrab.up0 = w.u; wheelGrab.f0 = w.f; wheelGrab.ang = 0; }
+      const u0 = wheelGrab.up0.clone().projectOnPlane(wheelGrab.f0).normalize(), u1 = w.u.clone().projectOnPlane(wheelGrab.f0).normalize();
+      const a = Math.atan2(u0.clone().cross(u1).dot(wheelGrab.f0), u0.dot(u1)), step = Math.PI / 25;
+      while (Math.abs(a - wheelGrab.ang) >= step) { const s = Math.sign(a - wheelGrab.ang); handle(-s); wheelGrab.ang += s * step; wheelGrab.moved = true; }
+    }
   }
   mesa.position.set(T0 - S.mx * MM, MESA_Y, Tz0 + S.my * MM);
-  if (model) { const dx = T0 - S.mx * MM - TBL[0], dz = Tz0 + S.my * MM - TBL[1]; for (const m of parts.x) m.position.set(dx, 0, dz); for (const m of parts.y) m.position.z = dz; for (const m of parts.z) m.position.y = Hy0 + S.mz * MM + TL - NOSE; }
-  cab.position.set(SPX, Hy0 + S.mz * MM, SPZ);
-  probe.rotation.y = S.spindle ? probe.rotation.y + dt * 30 : 0;
-  // desviación visible de la bola
-  const c = S.contact; let dx = 0, dy = 0, dz = 0;
-  if (c) { const defl = Math.max(0, BALL - c.r) * MM;
-    if (c.kind === 'top') dy = defl; else { const o = c.o, px = Math.max(o.x0, Math.min(o.x1, S.mx)), py = Math.max(o.y0, Math.min(o.y1, S.my)); let vx = S.mx - px, vy = S.my - py; const L = Math.hypot(vx, vy) || 1; dx = vx / L * defl; dz = -vy / L * defl; } }
-  stylus.position.set(dx, dy, dz);
+  S.doorT += (S.door - S.doorT) * Math.min(1, dt * 4);
+  if (model) { const dx = T0 - S.mx * MM - TBL[0], dz = Tz0 + S.my * MM - TBL[1]; for (const m of parts.x) m.position.set(dx, 0, dz); for (const m of parts.y) m.position.z = dz; for (const m of parts.z) m.position.y = Hy0 + S.mg * MM - NOSE; for (const m of parts.door) m.position.x = -0.42 * S.doorT; }
+  cab.position.set(SPX, Hy0 + tip() * MM, SPZ);
+  const act = TOOLS[S.tool] && TOOLS[S.tool].spindle; if (act) act.rotation.y = S.spindle ? act.rotation.y + dt * 50 : 0;
+  inLight.intensity += ((S.homed ? 2.5 : 0) - inLight.intensity) * Math.min(1, dt * 3);
+  if (act && act.userData.stylus) { const c = S.contact; let dx = 0, dy = 0, dz = 0;
+    if (c) { const defl = Math.max(0, BALL - c.r) * MM; if (c.kind === 'top') dy = defl; else { const o = c.o, px = Math.max(o.x0, Math.min(o.x1, S.mx)), py = Math.max(o.y0, Math.min(o.y1, S.my)); const vx = S.mx - px, vy = S.my - py, Ln = Math.hypot(vx, vy) || 1; dx = vx / Ln * defl; dz = -vy / Ln * defl; } }
+    act.userData.stylus.position.set(dx, dy, dz); }
+  if (S.hold) { const hol = sess ? (lastCtrl || ctrls[0]) : camera, o = S.hold === 'taco' ? taco : bulon; hol.updateMatrixWorld(); holdOff.set(sess ? 0 : 0.12, sess ? -0.02 : -0.1, sess ? -0.08 : -0.32).applyMatrix4(hol.matrixWorld); o.position.copy(holdOff); o.rotation.set(0, 0, 0); }
+  placeObjects();
+  const showT = S.hold === 'taco', showB = S.hold === 'bulon';
+  mkBenchTaco.visible = showT; mkTable.visible = showT && S.door > 0.5; mkOnTaco.visible = showB && S.tacoAt === 'bench'; mkBenchBulon.visible = showB;
   if (flash > 0) { flash = Math.max(0, flash - dt * 2); scene.background.copy(BG).lerp(new THREE.Color(COL.red), flash * 0.6); }
-  if (dialDirty && t - lastDial > 40) { drawDial(S.read); dialDirty = false; lastDial = t; }
+  if (dialDirty && t - lastDial > 40) { drawProbeDial(S.read); dialDirty = false; lastDial = t; }
+  if (tacoDirty) { drawTacoDial(S.bulonAt === 'taco' && S.tacoAt === 'bench' ? S.bezel : S.tacoRead != null ? S.tacoRead : TACO_PRE + S.bezel); tacoDirty = false; }
   if (t - lastDraw > 80 && (dirty || t - lastDraw > 500)) { drawPendant(); drawBoard(); dirty = false; lastDraw = t; }
-  probe.getWorldPosition(tipW);
-  lupaCam.position.set(tipW.x - 0.06, tipW.y + 0.045, tipW.z + 0.21); lupaCam.lookAt(tipW.x - 0.004, tipW.y + 0.03, tipW.z);
+  if (S.bulonAt === 'taco' && S.tacoAt === 'bench') { tacoDial.getWorldPosition(tipW); lupaCam.position.set(tipW.x, tipW.y + 0.012, tipW.z + 0.1); lupaCam.lookAt(tipW); }
+  else { cab.getWorldPosition(tipW); lupaCam.position.set(tipW.x - 0.06, tipW.y + 0.045, tipW.z + 0.21); lupaCam.lookAt(tipW.x - 0.004, tipW.y + 0.03, tipW.z); }
   const xr = renderer.xr.enabled; renderer.xr.enabled = false; lupa.visible = false;
   renderer.setRenderTarget(rt); renderer.render(scene, lupaCam); renderer.setRenderTarget(null);
   renderer.xr.enabled = xr; lupa.visible = true;
   renderer.render(scene, camera);
 });
-newPart();
-drawDial(BALL); drawPendant(); drawBoard();
+initMachine(); newPart();
+drawProbeDial(BALL); drawTacoDial(TACO_PRE + S.bezel); drawPendant(); drawBoard();
 }
 </script>
 </body>
