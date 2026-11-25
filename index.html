@@ -51,6 +51,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 {
 /* =================== constantes =================== */
 const MM = 0.001, Hy0 = 1.295, MESA_Y = 0.945, SPX = 0, SPZ = -0.95, T0 = SPX - 0.203, Tz0 = SPZ + 0.152;
@@ -79,6 +80,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.xr.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.85;
 renderer.xr.setReferenceSpaceType('local-floor');
 document.body.appendChild(renderer.domElement);
 document.body.appendChild(VRButton.createButton(renderer));
@@ -88,14 +90,21 @@ const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.01, 3
 camera.position.set(0.15, 1.65, 1.05);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0.15, 1.25, -0.45); controls.update();
-scene.add(new THREE.HemisphereLight('#e6eef5', '#3a3f44', 1.7));
+scene.add(new THREE.HemisphereLight('#e6eef5', '#3a3f44', 1.0));
+{ const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.7; pm.dispose(); }
 const sun = new THREE.DirectionalLight('#ffffff', 1.4); sun.position.set(1.2, 3, 2); scene.add(sun);
 const inLight = new THREE.PointLight('#f4fbff', 0, 1.6, 1.5); inLight.position.set(0, 1.62, -0.85); scene.add(inLight);
 const M = (c, r = 0.65, m = 0.1) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
 const steel = M('#b7bec4', 0.32, 0.8), chrome = M('#e6eaed', 0.3, 0.55), dark = M('#2b3138'), black = M('#16181a', 0.5, 0.2), carb = M('#8e979f', 0.35, 0.7);
 const box = (w, h, d, mat, x, y, z, parent) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); (parent || scene).add(m); return m; };
 const cyl = (r, h, mat, parent, y, seg = 28, r2) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r2 ?? r, h, seg), mat); m.position.y = y; parent.add(m); return m; };
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), M('#2f7fc1', 0.8, 0)); floor.rotation.x = -Math.PI / 2; scene.add(floor);
+const floorTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
+  g.fillStyle = '#5d6469'; g.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 9000; i++) { const v = 80 + Math.random() * 40 | 0; g.fillStyle = `rgba(${v},${v + 4},${v + 8},.25)`; g.fillRect(Math.random() * 512, Math.random() * 512, 2, 2); }
+  g.strokeStyle = 'rgba(30,34,38,.55)'; g.lineWidth = 3; g.strokeRect(0, 0, 512, 512);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(8, 8); t.anisotropy = 8; return t; })();
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.55, metalness: 0.05 })); floor.rotation.x = -Math.PI / 2; scene.add(floor);
+{ const st = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.06), new THREE.MeshStandardMaterial({ color: '#e0b21b', roughness: 0.6 })); st.rotation.x = -Math.PI / 2; st.position.set(0, 0.002, -0.35); scene.add(st); }
 const white = M('#d9dde1');
 const grey = [box(1.4, 0.92, 0.95, white, 0, 0.46, -1.05), box(0.5, 1.35, 0.35, white, 0, 0.92 + 0.675, -1.475)];
 const mesa = new THREE.Group(); scene.add(mesa);
@@ -282,7 +291,7 @@ new GLTFLoader().load('minimill.glb', gl => {
 function plane(w, h, cw, ch) {
   const c = document.createElement('canvas'); c.width = cw; c.height = ch;
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t }));
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, toneMapped: false }));
   const p = { c, g: c.getContext('2d'), t, m, W: cw, H: ch, btns: [] }; m.userData.panel = p; return p;
 }
 function place(o, x, y, z, ry) { o.position.set(x, y, z); o.rotation.y = ry; scene.add(o); }
@@ -347,7 +356,7 @@ K('ent', 1960, 1136, 100, 58, () => S.screen === 'mdi' ? mdiInsert() : applyInpu
 
 /* =================== tablero de pasos + lupa =================== */
 const Q = plane(0.44, 0.44, 800, 800);
-place(Q.m, -0.62, 1.15, -0.04, 0.45); backing(0.46, 0.46, -0.62, 1.15, -0.04, 0.45);
+place(Q.m, -1.02, 1.15, 0.12, 0.75); backing(0.46, 0.46, -1.02, 1.15, 0.12, 0.75);
 B(Q, 'val', 20, 700, 180, 80, 'VALIDAR', () => validate(), { c: '#2fbf71', dk: true });
 B(Q, 'new', 214, 700, 180, 80, 'PIEZA NUEVA', () => newPart(), { dk: true });
 B(Q, 'mode', 408, 700, 180, 80, 'GUIADO/EXAMEN', () => { S.help = !S.help; }, { dk: true });
@@ -355,9 +364,9 @@ B(Q, 'door', 602, 700, 180, 80, 'PUERTA', () => toggleDoor(), { dk: true, c: '#2
 const rt = new THREE.WebGLRenderTarget(512, 512); rt.texture.colorSpace = THREE.SRGBColorSpace;
 const lupaCam = new THREE.PerspectiveCamera(34, 1, 0.005, 3);
 const lupa = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshBasicMaterial({ map: rt.texture }));
-place(lupa, -0.6, 1.57, -0.06, 0.45); backing(0.32, 0.34, -0.6, 1.585, -0.06, 0.45);
-const ln = new THREE.Vector3(Math.sin(0.45), 0, Math.cos(0.45));
-place(label('LUPA · herramienta y relojes', 0.3, 0.03, 1500, '#2b3138', '#e8ecef'), -0.6 + ln.x * 0.001, 1.735, -0.06 + ln.z * 0.001, 0.45);
+place(lupa, -1.0, 1.57, 0.1, 0.75); backing(0.32, 0.34, -1.0, 1.585, 0.1, 0.75);
+const ln = new THREE.Vector3(Math.sin(0.75), 0, Math.cos(0.75));
+place(label('LUPA · herramienta y relojes', 0.3, 0.03, 1500, '#2b3138', '#e8ecef'), -1.0 + ln.x * 0.001, 1.735, 0.1 + ln.z * 0.001, 0.75);
 const clickables = [P.m, Q.m, taco, bulon, mkBenchTaco, mkBenchBulon, mkOnTaco, mkTable];
 
 /* =================== dibujo del control =================== */
@@ -938,7 +947,7 @@ const qW = new THREE.Quaternion();
 function wrist(c) { c.getWorldQuaternion(qW); return { f: new THREE.Vector3(0, 0, -1).applyQuaternion(qW), u: new THREE.Vector3(0, 1, 0).applyQuaternion(qW) }; }
 
 /* =================== vistas =================== */
-const views = { v1: [[0.15, 1.65, 1.05], [0.15, 1.25, -0.45]], v2: [[0.32, 1.42, 0.42], [0.66, 1.36, -0.08]], v3: [[-0.16, 1.32, -0.5], [0, 1.08, -0.95]], v4: [[-0.28, 1.4, 0.45], [-0.61, 1.35, -0.05]], v5: [[0.72, 1.22, 0.62], [1.0, 0.93, 0.18]] };
+const views = { v1: [[0.15, 1.65, 1.05], [0.15, 1.25, -0.45]], v2: [[0.32, 1.42, 0.42], [0.66, 1.36, -0.08]], v3: [[-0.16, 1.32, -0.5], [0, 1.08, -0.95]], v4: [[-0.55, 1.4, 0.6], [-1.0, 1.35, 0.1]], v5: [[0.72, 1.22, 0.62], [1.0, 0.93, 0.18]] };
 for (const id in views) document.getElementById(id).onclick = () => { camera.position.set(...views[id][0]); controls.target.set(...views[id][1]); controls.update(); document.getElementById('help').open = false; };
 const cpBtn = document.getElementById('cp');
 cpBtn.onclick = async () => { try { await navigator.clipboard.writeText(S.result.text); cpBtn.textContent = 'Copiado'; } catch (e) { cpBtn.textContent = 'No se pudo copiar'; } setTimeout(() => cpBtn.textContent = 'Copiar resumen', 1500); };
