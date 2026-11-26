@@ -39,6 +39,7 @@ canvas{display:block}
 <details id="help" open>
   <summary>Cómo se juega</summary>
   <p style="margin:6px 0"><b>1.</b> Antes de nada, en la mesa auxiliar: apoya el bulón encima del taco de Z y comprueba que marca 0. <b>2.</b> POWER UP con la puerta cerrada. <b>3.</b> En OFFSET → Herrm pon H10 del palpador a 0 (0 y F1): es la herramienta patrón. Con el palpador toca la mesa con el reloj a 0 y haz PART ZERO SET en <b>G59 Z</b>. <b>4.</b> Pon el taco en la mesa de la máquina y activa G59 en MDI (<code>G59;</code> INSERT, CYCLE START). <b>5.</b> Resto de herramientas (el palpador no se mide): <code>T1M06;</code>, sobre el taco hasta 0, TOOL OFFSET MEASURE en OFFSET → Herrm y <b>−50 ENTER</b>. <b>6.</b> Con el palpador coge G54 X−, Y− y Z en la pieza y activa G54 en MDI. VALIDAR.</p>
+  <p style="margin:6px 0"><b>Herramientas:</b> están en el carro rojo, detrás de ti. Con la puerta abierta: coge una, apunta al husillo (círculo azul) y entra como con TOOL RELEASE; el control tiene que estar en ese número (T1M06 con el husillo vacío). Para sacarla: TOOL RELEASE y déjala en su hueco. Con M06 la herramienta del husillo va a su bolsillo del carrusel.</p>
   <p style="margin:6px 0"><b>Programas:</b> LIST PROGRAM, elige con el cursor y SELECT PROGRAM: cambia el bruto y las herramientas del programa. Haz el reglaje (si el cero está en el centro: toca X−, POSITION, <code>X</code> ORIGIN, toca X+ y ve a la mitad; o PART ZERO SET en el canto y suma el decalaje con ENTER). Luego puerta cerrada, MEMORY y CYCLE START: la máquina mecaniza con tus G54 y H. FEED HOLD para, RESET cancela, BLOQUE A BLOQUE línea a línea, FEEDRATE ±10 % y RAPID 5–100 %.</p>
   <div>Teclado: <kbd>L</kbd> lista de programas · <kbd>O</kbd> ORIGIN · <kbd>X</kbd><kbd>Y</kbd><kbd>Z</kbd> eje · <kbd>I</kbd> incremento · <kbd>←</kbd><kbd>→</kbd> volante · <kbd>A</kbd>/<kbd>D</kbd> mantener = jog · <kbd>↑</kbd><kbd>↓</kbd><kbd>[</kbd><kbd>]</kbd> cursor · <kbd>P</kbd> PART ZERO SET · <kbd>M</kbd> TOOL OFFSET MEASURE · <kbd>Enter</kbd> agregar · <kbd>F</kbd> F1 · <kbd>R</kbd> RESET · <kbd>Shift</kbd>+<kbd>Enter</kbd> CYCLE START. En la pantalla MDI el teclado escribe y <kbd>Enter</kbd> = INSERT. Arrastra el volante con el ratón para girarlo. Pulsa sobre el taco, el bulón o la puerta para cogerlos o moverlos.</div>
   <p class="note">En las gafas: gatillo = pulsar o coger; mantén el gatillo sobre el volante y gira la muñeca; joystick izquierda/derecha = volante.</p>
@@ -77,8 +78,9 @@ const fc = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(3).replace('.', ','
 const es = v => v.toFixed(3).replace('.', ',');
 const S = {};
 let obst = [], dirty = true, dialDirty = true, tacoDirty = true;
-const g54 = () => S.ofs.G54, L = n => TDEF[n].L, cur = () => TDEF[S.tool];
-const tip = () => S.mg - L(S.tool);
+const EMPTY = { n: '(husillo vacío)', type: 'none', r: 0, L: 0 };
+const g54 = () => S.ofs.G54, L = n => TDEF[n].L, loaded = () => !S.loc || S.loc[S.tool] === 'spindle', cur = () => loaded() ? TDEF[S.tool] : EMPTY;
+const tip = () => S.mg - cur().L;
 const Zs = TABLE_Z + TACO_H;
 
 /* =================== escena =================== */
@@ -192,17 +194,20 @@ let TOOLS = {};
 const pocketGroup = new THREE.Group(); scene.add(pocketGroup);
 const CAR = new THREE.Vector3(-0.38, 1.37, -0.94);
 function buildTools() {
-  for (const n in TOOLS) { cab.remove(TOOLS[n].spindle); pocketGroup.remove(TOOLS[n].pocket); }
+  for (const n in TOOLS) { const t = TOOLS[n]; cab.remove(t.spindle); pocketGroup.remove(t.pocket); scene.remove(t.cart, t.hand); const k = clickables.indexOf(t.cart); if (k >= 0) clickables.splice(k, 1); }
+  for (const t of cartTags) scene.remove(t); cartTags.length = 0;
   TOOLS = {};
   ORDER.forEach((n, i) => {
-    const sp = makeTool(n), pk = makeTool(n);
+    const sp = makeTool(n), pk = makeTool(n), ct = makeTool(n), hd = makeTool(n);
     cab.add(sp);
     const a = -0.9 + i * Math.min(0.45, 3.2 / Math.max(1, ORDER.length - 1)); pk.position.set(CAR.x + Math.cos(a) * 0.17, CAR.y - L(n) * MM, CAR.z + Math.sin(a) * 0.17); pocketGroup.add(pk);
-    TOOLS[n] = { spindle: sp, pocket: pk };
+    const q = cartSlot(i); ct.rotation.x = Math.PI; ct.position.set(q.x, q.y - 0.03 + L(n) * MM, q.z); ct.userData.kind = 'tool' + n; scene.add(ct, hd); clickables.push(ct);
+    const tg = label('T' + n, 0.05, 0.026, 200, '#ffffff', '#1a1d21'); tg.rotation.x = -Math.PI / 2; tg.position.set(q.x, CART_TOP + 0.021, q.z + 0.042); scene.add(tg); cartTags.push(tg);
+    TOOLS[n] = { spindle: sp, pocket: pk, cart: ct, hand: hd };
   });
   showTool();
 }
-function showTool() { for (const n in TOOLS) { const on = +n === S.tool; TOOLS[n].spindle.visible = on; TOOLS[n].pocket.visible = !on; } }
+function showTool() { for (const n in TOOLS) { const l = S.loc[n], t = TOOLS[n]; t.spindle.visible = l === 'spindle'; t.pocket.visible = l === 'pocket'; t.cart.visible = l === 'cart'; t.hand.visible = l === 'hand'; } }
 
 /* =================== mordaza, pieza, taco, bulón =================== */
 const lx = X => (X + 203) * MM, lz = Y => -(Y + 152) * MM, ly = Z => Hy0 + Z * MM - MESA_Y;
@@ -230,6 +235,28 @@ cyl(0.0048, 0.001, steel, bulon, 0.0505, 24);
 const markMat = new THREE.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.35, depthWrite: false });
 function marker(r, target) { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.004, 32), markMat); m.visible = false; m.userData.target = target; scene.add(m); return m; }
 const mkBenchTaco = marker(0.03, 'benchTaco'), mkBenchBulon = marker(0.02, 'benchBulon'), mkOnTaco = marker(0.02, 'onTaco'), mkTable = marker(0.032, 'table');
+const mkSpindle = marker(0.045, 'spindle'), mkCart = marker(0.035, 'cart');
+
+/* ---- carro de herramientas (detrás del alumno) ---- */
+const CART = new THREE.Vector3(0.15, 0, 1.25), CART_TOP = 0.9, cartG = new THREE.Group(); cartG.position.copy(CART); scene.add(cartG);
+const cartSlot = i => { const c = i % 6, r = Math.floor(i / 6); return new THREE.Vector3(CART.x - 0.375 + c * 0.15, CART_TOP + 0.02, CART.z - 0.165 + r * 0.11); };
+{
+  const gm = M('#9aa1aa', 0.45, 0.55), red = M('#c21f1f', 0.42, 0.1), blk = M('#141414', 0.6, 0.1), rub = M('#1d1d1d', 0.85, 0), hub = M('#b9bec4', 0.3, 0.8);
+  const bx = (w, h, d, m, x, y, z) => box(w, h, d, m, x, y, z, cartG);
+  bx(0.02, 0.72, 0.5, gm, -0.46, 0.5, 0); bx(0.02, 0.72, 0.5, gm, 0.46, 0.5, 0);
+  bx(0.94, 0.02, 0.5, gm, 0, 0.2, 0); bx(0.94, 0.06, 0.015, gm, 0, 0.24, 0.245); bx(0.94, 0.06, 0.015, gm, 0, 0.24, -0.245);
+  bx(0.94, 0.02, 0.5, gm, 0, 0.5, 0);
+  bx(0.94, 0.04, 0.5, red, 0, CART_TOP, 0); bx(0.94, 0.012, 0.5, gm, 0, CART_TOP - 0.026, 0);
+  for (let i = 0; i < 24; i++) { const q = cartSlot(i), h = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.027, 0.006, 24), blk); h.position.set(q.x - CART.x, CART_TOP + 0.018, q.z - CART.z); cartG.add(h); }
+  // bandeja inclinada intermedia (decorativa)
+  const mid = new THREE.Group(); mid.position.set(0, 0.66, 0); mid.rotation.x = 0.3; cartG.add(mid);
+  box(0.9, 0.03, 0.34, red, 0, 0, 0, mid); for (let i = 0; i < 10; i++) { const h = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.027, 0.006, 24), blk); h.position.set(-0.34 + (i % 5) * 0.17, 0.017, (i < 5 ? -0.08 : 0.08)); mid.add(h); }
+  // estantes laterales y asa
+  for (const [y, dx] of [[0.86, 0.56], [0.6, 0.6]]) { bx(0.2, 0.015, 0.44, gm, dx, y, 0); bx(0.2, 0.05, 0.012, gm, dx, y + 0.025, 0.22); bx(0.2, 0.05, 0.012, gm, dx, y + 0.025, -0.22); bx(0.012, 0.05, 0.44, gm, dx + 0.1, y + 0.025, 0); }
+  bx(0.02, 0.02, 0.36, gm, -0.53, 0.95, 0); bx(0.07, 0.02, 0.02, gm, -0.495, 0.95, 0.17); bx(0.07, 0.02, 0.02, gm, -0.495, 0.95, -0.17);
+  for (const [x, z] of [[-0.42, -0.21], [0.42, -0.21], [-0.42, 0.21], [0.42, 0.21]]) { bx(0.05, 0.05, 0.05, gm, x, 0.15, z); const w = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.035, 24), rub); w.rotation.x = Math.PI / 2; w.position.set(x, 0.06, z); w.castShadow = true; cartG.add(w); const hb = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.037, 16), hub); hb.rotation.x = Math.PI / 2; hb.position.copy(w.position); cartG.add(hb); }
+}
+const cartTags = [];
 
 function newPart() {
   viseGroup.clear();
@@ -261,9 +288,10 @@ function newPart() {
     touched: { X: false, Y: false, Z: false }, setRead: {}, cjog: 0, jogHold: null, cur: { r: 2, c: 0 }, screen: 'ofs', tab: 'Trab',
     tacoAt: 'bench', bulonAt: 'bench', hold: null, calibrated: false, contact: null, read: BALL, tacoRead: null, busy: null });
   if (S.homed) { S.mg = 0; S.alarm = ''; }
+  S.loc = {}; S.everLoad = {}; S.holdTool = 0; for (const n of ORDER) S.loc[n] = 'cart';
   buildTools(); placeObjects();
   const pm = PROG ? `${progName(PROG)} · bruto ${es0(st.sx)}×${es0(st.sy)}×${es0(st.sz)}${st.x0 || st.y0 ? ', cero en el centro' : ''}. ` : '';
-  setMsg(pm + (S.homed ? 'Pieza nueva amarrada. Empieza comprobando el taco con el bulón.' : 'Antes de nada: apoya el bulón sobre el taco de Z (mesa auxiliar) y comprueba que marca 0. Luego POWER UP.'), S.homed ? 'info' : 'warn');
+  setMsg(pm + (S.homed ? 'Pieza nueva amarrada; las herramientas están en el carro detrás de ti. Empieza comprobando el taco con el bulón.' : 'Antes de nada: apoya el bulón sobre el taco de Z (mesa auxiliar) y comprueba que marca 0. Luego POWER UP.'), S.homed ? 'info' : 'warn');
   cpBtn.hidden = true; afterMove(true);
 }
 function initMachine() { Object.assign(S, { mode: 'mdi', listSel: 0, pi: 0, fov: 1, rov: 1, single: false, mx: -180, my: -120, mg: -60, axis: 'X', inc: 0.01, homed: false, alarm: '102 SERVOS OFF', estop: false, door: 0, doorT: 0, help: true, msg: '', tone: 'info', wheel: 0 }); }
@@ -333,7 +361,7 @@ function photo(file, w, h, x, y, z, ry) { const t = texLoader.load(file); t.colo
     for (let i = 0; i < 4000; i++) { g.fillStyle = `rgba(0,0,0,${Math.random() * 0.025})`; g.fillRect(Math.random() * w, Math.random() * h, 3, 3); } }, [2, 1]);
   const wallM = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.9 });
   const wall = (w, x, z, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, RH), wallM); m.position.set(x, RH / 2, z); m.rotation.y = ry; m.receiveShadow = true; scene.add(m); };
-  wall(RW, 0, Z0, 0); wall(RD, -RW / 2, Z0 + RD / 2, Math.PI / 2); wall(RD, RW / 2, Z0 + RD / 2, -Math.PI / 2);
+  wall(RW, 0, Z0, 0); wall(RW, 0, Z0 + RD, Math.PI); wall(RD, -RW / 2, Z0 + RD / 2, Math.PI / 2); wall(RD, RW / 2, Z0 + RD / 2, -Math.PI / 2);
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(RW, RD), M('#d5d9dc', 0.95, 0)); ceil.rotation.x = Math.PI / 2; ceil.position.set(0, RH, Z0 + RD / 2); scene.add(ceil);
   const lamp = new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: '#f4f8ff', emissiveIntensity: 1.6 });
   for (const x of [-1.5, 0, 1.5]) for (const z of [-1.3, 0.4]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.04, 1.2), lamp); l.position.set(x, RH - 0.03, z); scene.add(l); }
@@ -397,7 +425,7 @@ K('F1', 686, 410, 90, 60, () => applyInput(false));
 K('F4', 1004, 410, 90, 60, () => { S.screen = 'ofs'; S.tab = S.tab === 'Trab' ? 'Herrm' : 'Trab'; });
 K('tom', 686, 486, 90, 64, () => toolOffsetMeasure());
 K('nxt', 792, 486, 90, 64, () => nextTool());
-K('rel', 898, 486, 90, 64, () => info('TOOL RELEASE: no sueltes la herramienta a mano en este ejercicio.'));
+K('rel', 898, 486, 90, 64, () => toolRelease());
 K('pzs', 1004, 486, 90, 64, () => partZero());
 [['+Z', 850, 584], ['-Y', 928, 584], ['+X', 768, 666], ['-X', 928, 666], ['+Y', 768, 750], ['-Z', 850, 750]].forEach(([k, x, y]) => K('j' + k, x, y, 76, 62, () => {}, { jog: k }));
 K('jl', 850, 666, 76, 62, () => info('JOG LOCK no se usa en este ejercicio.'));
@@ -448,7 +476,7 @@ const lupa = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshBas
 place(lupa, -1.0, 1.57, 0.1, 0.75); backing(0.32, 0.34, -1.0, 1.585, 0.1, 0.75);
 const ln = new THREE.Vector3(Math.sin(0.75), 0, Math.cos(0.75));
 place(label('LUPA · herramienta y relojes', 0.3, 0.03, 1500, '#2b3138', '#e8ecef'), -1.0 + ln.x * 0.001, 1.735, 0.1 + ln.z * 0.001, 0.75);
-const clickables = [P.m, Q.m, taco, bulon, mkBenchTaco, mkBenchBulon, mkOnTaco, mkTable];
+const clickables = [P.m, Q.m, taco, bulon, mkBenchTaco, mkBenchBulon, mkOnTaco, mkTable, mkSpindle, mkCart];
 
 /* =================== dibujo del control =================== */
 let hover = null, held = null, wheelGrab = null;
@@ -619,12 +647,13 @@ const okH = n => n === 10 ? Math.abs(S.H[10]) <= TOL : Math.abs(S.H[n] - expH(n)
 function steps() {
   return [['Antes de nada: apoya el bulón sobre el taco y comprueba que marca 0', S.calibrated], ['Quita el bulón', S.calibrated && S.bulonAt === 'bench'],
     ['POWER UP con la puerta cerrada', S.homed], ['Abre la puerta', S.door > 0.5 || ok59()],
+    ['Coge el palpador T10 del carro (detrás de ti) y mételo en el husillo', !!S.everLoad[10]],
     ['OFFSET → Herrm: H10 del palpador (patrón) a 0 (escribe 0 y F1)', okH(10)],
     ['Palpador sobre la mesa (delante de la mordaza) hasta 0', S.touched.T || ok59()],
     ['OFFSET → Trab, cursor en G59 Z y PART ZERO SET', ok59()],
     ['Pon el taco en la mesa de la máquina', S.tacoAt === 'table' || okH(3)],
     ['Cierra la puerta. MDI: G59; INSERT y CYCLE START', S.woSet.G59 || okH(1)],
-    ...TL().map((n, i) => [i ? `T${n} (${TDEF[n].n}): mídela igual` : `T${n}M06; · T${n} sobre el taco a 0 · Herrm · TOOL OFFSET MEASURE · −50 ENTER`, okH(n)]),
+    ...TL().map((n, i) => [i ? `T${n}M06; · cárgala del carro · mídela igual` : `T${n}M06; · mete la T${n} del carro · taco a 0 · TOOL OFFSET MEASURE · −50 ENTER`, okH(n)]),
     ['Vuelve al palpador: T10M06;', (S.tool === 10 && TL().every(okH)) || okG('X')],
     ...['X', 'Y'].map(c => { const o = c === 'X' ? S.stock.x0 : S.stock.y0, w = c === 'X' ? S.stock.sx : S.stock.sy;
       return [!o ? `G54 ${c}−: reloj a 0 y PART ZERO SET` : Math.abs(2 * o + w) < 0.01 ? `G54 ${c} al centro: ${c}− · ${c} ORIGIN · ${c}+ · ve a la mitad (o canto y ${fc(-o)} ENTER)` : `G54 ${c} a ${es0(-o)} mm del canto ${c}−: PART ZERO SET en el canto y ${fc(-o)} ENTER`, okG(c)]; }),
@@ -648,7 +677,7 @@ function drawBoard() {
     st.slice(from, from + 9).forEach(([t, d], i) => { const y = 174 + i * 40, isNext = from + i === first && !d; txt(g, d ? '✓' : isNext ? '▶' : '○', 30, y, '700 24px system-ui', d ? COL.green : isNext ? COL.cyan : COL.quiet); txt(g, `${from + i + 1}. ${t}`, 64, y, (isNext ? '600 ' : '') + '20px system-ui', d ? COL.ink : isNext ? COL.cyan : COL.quiet, 'left', 710); });
     txt(g, readLine(), 30, 552, '700 24px system-ui', readCol(), 'left', 740);
     txt(g, `T${S.tool} ${cur().n} · volante ${S.axis} · ${es(S.inc)} mm/clic · puerta ${S.door > 0.5 ? 'abierta' : 'cerrada'}`, 30, 600, '19px system-ui', COL.quiet, 'left', 740);
-    if (S.hold) txt(g, S.hold === 'taco' ? 'Llevas el taco: apunta a un círculo azul para dejarlo' : 'Llevas el bulón: apunta al círculo azul sobre el taco', 30, 646, '600 20px system-ui', COL.amber, 'left', 740);
+    if (S.hold) txt(g, S.hold === 'taco' ? 'Llevas el taco: apunta a un círculo azul para dejarlo' : S.hold === 'tool' ? `Llevas la T${S.holdTool}: husillo (puerta abierta) o su hueco del carro` : 'Llevas el bulón: apunta al círculo azul sobre el taco', 30, 646, '600 20px system-ui', COL.amber, 'left', 740);
   } else {
     ['Sin pistas: lee los relojes en la lupa o acercándote.', centred() ? 'G54 en el centro de la pieza en X e Y, Z arriba.' : 'G54 en la esquina X−, Y− y Z arriba de la pieza.', `Calibra el taco antes de medir ${TL().map(n => 'T' + n).join(', ')}.`, `Tolerancia ${es(TOL)} mm. Al terminar, VALIDAR.`]
       .forEach((t, i) => txt(g, t, 30, 200 + i * 52, '23px system-ui', COL.ink, 'left', 740));
@@ -805,6 +834,7 @@ function partZero() {
 }
 function toolOffsetMeasure() {
   if (blocked()) return;
+  if (!loaded()) { setMsg(`No hay herramienta en el husillo: mete la T${S.tool} del carro`, 'warn'); return; }
   if (S.screen !== 'ofs' || S.tab !== 'Herrm') { setMsg('Abre OFFSET → pestaña Herrm para medir la herramienta', 'warn'); return; }
   S.H[S.tool] = r3(S.mg - wof()[2]); S.Hinfo[S.tool] = { read: S.tacoRead, wo: S.wo, cal: S.calibrated, m50: 0, manual: false };
   setMsg(`H${hh(S.tool)} = ${f3(S.H[S.tool])} (Máquina Z − ${S.wo} Z). Ahora resta el taco: −50 y ENTER.`, 'info'); sfx('set');
@@ -905,8 +935,18 @@ function setMsg(t, tone) { S.msg = t; S.tone = tone; dirty = true; }
 function info(t) { setMsg(t, 'info'); }
 
 /* ---- objetos: taco y bulón ---- */
-function pickObj(kind) {
+function toolRelease() {
+  if (S.hold) { setMsg('Tienes la mano ocupada: deja primero lo que llevas', 'warn'); return; }
+  if (!loaded()) { setMsg('El husillo está vacío', 'warn'); return; }
+  if (S.door < 0.5) { setMsg('Abre la puerta para sacar la herramienta con TOOL RELEASE', 'warn'); return; }
+  if (S.spindle || S.run || S.busy) { setMsg('Para el husillo y el programa antes de soltar la herramienta', 'warn'); return; }
+  const n = S.tool; S.loc[n] = 'hand'; S.hold = 'tool'; S.holdTool = n; showTool(); thump(70, 0.12, 0.15); burst(0.2, 3000, 1, 0.06);
+  setMsg(`TOOL RELEASE: tienes la T${n} en la mano. Déjala en su hueco del carro (círculo azul).`, 'info'); afterMove(true);
+}
+function pickObj(kind, n) {
   if (S.hold) { info('Ya llevas un objeto: déjalo en un círculo azul'); return; }
+  if (kind === 'tool') { if (S.loc[n] !== 'cart') return; S.loc[n] = 'hand'; S.hold = 'tool'; S.holdTool = n; showTool(); sfx('click');
+    setMsg(`Llevas la T${n} (${TDEF[n].n}). Abre la puerta y apunta al husillo (círculo azul) con el control en T${n}, o déjala en el carro.`, 'info'); afterMove(true); return; }
   if (kind === 'taco') {
     if (S.bulonAt === 'taco') { setMsg('Quita primero el bulón de encima del taco', 'warn'); return; }
     if (S.tacoAt === 'table' && S.door < 0.5) { setMsg('Abre la puerta para coger el taco', 'warn'); return; }
@@ -918,6 +958,19 @@ function pickObj(kind) {
 }
 function dropAt(target) {
   const h = S.hold; if (!h) return;
+  if (h === 'tool') {
+    const n = S.holdTool;
+    if (target === 'cart') { S.loc[n] = 'cart'; S.hold = null; showTool(); sfx('set'); info(`T${n} en el carro.`); afterMove(true); return; }
+    if (target !== 'spindle') return;
+    if (S.door < 0.5) { setMsg('Abre la puerta para meter la herramienta', 'warn'); return; }
+    if (S.spindle || S.busy || S.run) { setMsg('Con el husillo girando o la máquina trabajando no se mete herramienta', 'warn'); return; }
+    if (loaded()) { setMsg(`El husillo ya tiene la T${S.tool}: sácala con TOOL RELEASE o haz T${n}M06`, 'warn'); return; }
+    if (n !== S.tool) { setMsg(`El control tiene T${S.tool} en el husillo. Cierra la puerta y haz T${n}M06; antes de meter la T${n}`, 'warn'); return; }
+    if (tip() - L(n) < -280 && !S.homed) { setMsg('Sube Z antes de meter la herramienta', 'warn'); return; }
+    S.loc[n] = 'spindle'; S.hold = null; S.everLoad[n] = true; showTool(); thump(90, 0.15, 0.2); burst(0.2, 3500, 1, 0.07);
+    const r = sense(); if (r.crash) { S.loc[n] = 'hand'; S.hold = 'tool'; showTool(); setMsg('No cabe: la herramienta tocaría la pieza o la mordaza. Sube Z primero.', 'warn'); return; }
+    setMsg(`T${n} metida en el husillo (TOOL RELEASE).${n === 10 ? ' Ahora pon H10 a 0.' : ' Ya puedes medirla.'}`, 'ok'); afterMove(true); return;
+  }
   if (h === 'taco') {
     if (target === 'table') {
       if (S.door < 0.5) { setMsg('Abre la puerta para meter el taco en la máquina', 'warn'); return; }
@@ -1206,6 +1259,7 @@ function memStart() {
   if (blocked()) return;
   if (S.door > 0.5) { setMsg('Cierra la puerta para ejecutar el programa', 'warn'); return; }
   if (S.hold) { setMsg('Deja primero el objeto que llevas en la mano', 'warn'); return; }
+  const falta = TL().filter(n => S.loc[n] !== 'pocket' && S.loc[n] !== 'spindle'); if (!S.run && falta.length) { setMsg(`Faltan herramientas en la máquina: ${falta.map(n => 'T' + n).join(', ')} siguen en el carro`, 'warn'); return; }
   S.screen = 'prog';
   if (S.run) { if (S.run.hold) { S.run.hold = false; info('Seguimos.'); } return; }
   S.run = { ops: PROG.ops, i: 0, ln: 0, hold: false, m: null }; S.ranOk = false; buildStock(); afterMove(true);
@@ -1335,6 +1389,7 @@ function resolve(hits) {
     if (k.target) return { target: k.target };
     if (k.kind === 'bezel') return S.bulonAt === 'taco' ? null : { obj: 'taco' };
     if (k.kind === 'taco' || k.kind === 'bulon') { if (S.hold === k.kind) continue; return { obj: k.kind }; }
+    if (k.kind.startsWith('tool')) { const n = +k.kind.slice(4); if (S.loc[n] !== 'cart') continue; return { obj: 'tool', n }; }
     if (k.kind === 'door') return { door: true };
   }
   return null;
@@ -1347,7 +1402,7 @@ function activate(r, src) {
     else { sfx('click'); k.act(); }
   } else if (r.target) dropAt(r.target);
   else if (r.bezel) turnBezel(r.bezel);
-  else if (r.obj) pickObj(r.obj);
+  else if (r.obj) pickObj(r.obj, r.n);
   else if (r.door) toggleDoor();
   dirty = true;
 }
@@ -1433,10 +1488,10 @@ renderer.setAnimationLoop(t => {
       for (const m of parts.atc) m.position.x = slide * 0.12; pocketGroup.position.x = slide * 0.12;
       if (e > 0.8 && !b.s1) { b.s1 = true; motor(0.5, 120, 0.06); }
       if (e > 1.32 && !b.s2) { b.s2 = true; thump(70, 0.18, 0.25); burst(0.35, 2800, 0.8, 0.12); }
-      if (e > 1.5 && !b.swapped) { b.swapped = true; S.tool = b.to; S.everTool[b.to] = true; showTool(); thump(90, 0.15, 0.2); burst(0.25, 3500, 1, 0.08); }
+      if (e > 1.5 && !b.swapped) { b.swapped = true; if (S.loc[S.tool] === 'spindle') S.loc[S.tool] = 'pocket'; if (S.loc[b.to] === 'pocket') S.loc[b.to] = 'spindle'; S.tool = b.to; S.everTool[b.to] = true; showTool(); thump(90, 0.15, 0.2); burst(0.25, 3500, 1, 0.08); }
       if (e > 1.8 && !b.s3) { b.s3 = true; motor(0.5, 110, 0.06); }
       if (e > 2.3 && !b.s4) { b.s4 = true; thump(60, 0.2, 0.22); }
-      if (e > 2.4) { S.busy = null; for (const m of parts.atc) m.position.x = 0; pocketGroup.position.x = 0; setMsg(`T${S.tool} (${cur().n}) en el husillo.`, 'ok'); }
+      if (e > 2.4) { S.busy = null; for (const m of parts.atc) m.position.x = 0; pocketGroup.position.x = 0; setMsg(loaded() ? `T${S.tool} (${cur().n}) en el husillo.` : `Husillo vacío como T${S.tool}: abre la puerta y mete la T${S.tool} del carro.`, loaded() ? 'ok' : 'warn'); }
       afterMove(true);
     }
   }
@@ -1467,9 +1522,11 @@ renderer.setAnimationLoop(t => {
   if (act && act.userData.stylus) { const c = S.contact; let dx = 0, dy = 0, dz = 0;
     if (c) { const defl = Math.max(0, BALL - c.r) * MM; if (c.kind === 'top') dy = defl; else { const o = c.o, px = Math.max(o.x0, Math.min(o.x1, S.mx)), py = Math.max(o.y0, Math.min(o.y1, S.my)); const vx = S.mx - px, vy = S.my - py, Ln = Math.hypot(vx, vy) || 1; dx = vx / Ln * defl; dz = -vy / Ln * defl; } }
     act.userData.stylus.position.set(dx, dy, dz); }
-  if (S.hold) { const hol = sess ? (lastCtrl || ctrls[0]) : camera, o = S.hold === 'taco' ? taco : bulon; hol.updateMatrixWorld(); holdOff.set(sess ? 0 : 0.12, sess ? -0.02 : -0.1, sess ? -0.08 : -0.32).applyMatrix4(hol.matrixWorld); o.position.copy(holdOff); o.rotation.set(0, 0, 0); }
+  if (S.hold) { const hol = sess ? (lastCtrl || ctrls[0]) : camera, o = S.hold === 'taco' ? taco : S.hold === 'bulon' ? bulon : TOOLS[S.holdTool].hand; hol.updateMatrixWorld(); holdOff.set(sess ? 0 : 0.12, sess ? -0.02 : -0.1, sess ? -0.08 : -0.32).applyMatrix4(hol.matrixWorld); o.position.copy(holdOff); o.rotation.set(0, 0, 0); }
   placeObjects();
   const showT = S.hold === 'taco', showB = S.hold === 'bulon';
+  if (S.hold === 'tool') { const sp = TOOLS[S.tool] && TOOLS[S.tool].spindle; if (sp) { sp.getWorldPosition(tipW); mkSpindle.position.set(tipW.x, tipW.y + L(S.tool) * MM * 0.45, tipW.z); } mkCart.position.copy(cartSlot(ORDER.indexOf(S.holdTool))).add(new THREE.Vector3(0, 0.004, 0)); }
+  mkSpindle.visible = S.hold === 'tool' && S.door > 0.5 && !loaded(); mkCart.visible = S.hold === 'tool';
   mkBenchTaco.visible = showT; mkTable.visible = showT && S.door > 0.5; mkOnTaco.visible = showB && S.tacoAt === 'bench'; mkBenchBulon.visible = showB;
   if (flash > 0) { flash = Math.max(0, flash - dt * 2); scene.background.copy(BG).lerp(new THREE.Color(COL.red), flash * 0.6); }
   if (dialDirty && t - lastDial > 40) { drawProbeDial(S.read); dialDirty = false; lastDial = t; }
