@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jardin Kawaii VR</title>
+<script src="https://cdn.jsdelivr.net/npm/aframe@1.6.0/dist/aframe-v1.6.0.min.js"></script>
+<style>
+/* VOICE: tierno, juguetón, para una niña de 7 años
+   IDEA: un jardín de caramelo al atardecer con tres amigos que reaccionan
+   PICTURE: la escena 3D ocupa toda la pantalla
+   COLOUR and TYPE: rosa algodón, lila y menta; Baloo 2 redondeada
+   LAYOUT: escena a pantalla completa, aviso pequeño arriba */
+html,body{margin:0;height:100%;overflow:hidden;font-family:"Baloo 2",system-ui,sans-serif}
+#tip{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:10;background:#fff8fcee;color:#7a2c63;
+ padding:10px 18px;border-radius:22px;font-size:16px;box-shadow:0 4px 14px #c0609040;text-align:center;max-width:92vw}
+#tip b{color:#d0458f}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="tip">¡Hola, Helene! Toca a los amigos y dales magdalenas. <b>Busca las 8 estrellas</b><br>Gafas VR: pulsa el botón VR abajo a la derecha</div>
+
+<a-scene renderer="antialias:true" fog="type:linear;color:#ffe1f0;near:12;far:38"
+  cursor="rayOrigin:mouse;fuse:false" raycaster="objects:.clickable;far:30" vr-mode-ui="enabled:true">
+
+  <a-sky color="#ffd3ea"></a-sky>
+  <a-entity light="type:ambient;color:#fff;intensity:0.75"></a-entity>
+  <a-entity light="type:directional;color:#fff4e6;intensity:0.7" position="2 6 3"></a-entity>
+  <a-circle radius="34" rotation="-90 0 0" color="#bff0cf"></a-circle>
+  <a-circle radius="3.2" rotation="-90 0 0" position="0 0.01 0" color="#e8fbe9"></a-circle>
+  <a-entity id="decor"></a-entity>
+
+  <!-- Arcoiris -->
+  <a-entity position="0 0 -12">
+    <a-torus radius="6.0" radius-tubular="0.18" arc="180" color="#ff9cc2"></a-torus>
+    <a-torus radius="5.6" radius-tubular="0.18" arc="180" color="#ffc79c"></a-torus>
+    <a-torus radius="5.2" radius-tubular="0.18" arc="180" color="#fff2a1"></a-torus>
+    <a-torus radius="4.8" radius-tubular="0.18" arc="180" color="#b9f2b5"></a-torus>
+    <a-torus radius="4.4" radius-tubular="0.18" arc="180" color="#a9d8ff"></a-torus>
+    <a-torus radius="4.0" radius-tubular="0.18" arc="180" color="#d6b5ff"></a-torus>
+  </a-entity>
+
+  <!-- Cartel de bienvenida -->
+  <a-entity id="hello" position="0 3.3 -4.2" animation="property:position;from:0 3.25 -4.2;to:0 3.4 -4.2;dir:alternate;loop:true;dur:1600;easing:easeInOutSine">
+    <a-entity label="text:¡Hola, Helene!;bg:#ff8cc6;color:#ffffff;w:3.4;h:0.8"></a-entity>
+  </a-entity>
+
+  <!-- Cartel de estrellas -->
+  <a-entity position="0 2.55 -4">
+    <a-entity id="score" label="text:Estrellas: 0 / 8;bg:#ffffff;color:#c2408a;w:2.8;h:0.6"></a-entity>
+  </a-entity>
+  <a-entity id="replay" class="clickable" react="replay" position="0 1.95 -4" visible="false">
+    <a-entity label="text:Jugar otra vez;bg:#ff8cc6;color:#ffffff;w:1.8;h:0.45"></a-entity>
+  </a-entity>
+
+  <!-- NUBI: gatita nube -->
+  <a-entity id="nubi" class="clickable friend" react="nubi" position="-1.5 0 -2.6" rotation="0 25 0">
+    <a-entity class="bob" animation="property:position;from:0 0.75 0;to:0 0.85 0;dir:alternate;loop:true;dur:1300;easing:easeInOutSine">
+      <a-sphere class="puff" radius="0.32" color="#ffffff"></a-sphere>
+      <a-sphere class="puff" radius="0.22" position="-0.3 -0.05 0" color="#ffffff"></a-sphere>
+      <a-sphere class="puff" radius="0.22" position="0.3 -0.05 0" color="#ffffff"></a-sphere>
+      <a-sphere class="puff" radius="0.2" position="0 -0.12 -0.25" color="#ffffff"></a-sphere>
+      <a-sphere class="puff" radius="0.26" position="0 0.33 0.05" color="#ffffff"></a-sphere>
+      <a-cone class="puff" radius-bottom="0.09" radius-top="0.01" height="0.18" position="-0.15 0.6 0.05" rotation="0 0 12" color="#ffffff"></a-cone>
+      <a-cone class="puff" radius-bottom="0.09" radius-top="0.01" height="0.18" position="0.15 0.6 0.05" rotation="0 0 -12" color="#ffffff"></a-cone>
+      <a-cone radius-bottom="0.05" radius-top="0.005" height="0.1" position="-0.15 0.6 0.09" rotation="0 0 12" color="#ffc4dd"></a-cone>
+      <a-cone radius-bottom="0.05" radius-top="0.005" height="0.1" position="0.15 0.6 0.09" rotation="0 0 -12" color="#ffc4dd"></a-cone>
+      <a-sphere class="eye" radius="0.04" position="-0.09 0.37 0.28" color="#3a2440"></a-sphere>
+      <a-sphere class="eye" radius="0.04" position="0.09 0.37 0.28" color="#3a2440"></a-sphere>
+      <a-sphere radius="0.012" position="-0.08 0.39 0.315" color="#fff" material="shader:flat"></a-sphere>
+      <a-sphere radius="0.012" position="0.1 0.39 0.315" color="#fff" material="shader:flat"></a-sphere>
+      <a-sphere radius="0.045" scale="1 0.6 0.4" position="-0.16 0.3 0.25" color="#ffa8c8"></a-sphere>
+      <a-sphere radius="0.045" scale="1 0.6 0.4" position="0.16 0.3 0.25" color="#ffa8c8"></a-sphere>
+      <a-sphere radius="0.018" position="0 0.31 0.3" color="#ff7fae"></a-sphere>
+      <a-torus radius="0.18" radius-tubular="0.035" arc="200" position="0.35 0.05 -0.2" rotation="0 60 0" color="#c9b4ff"></a-torus>
+    </a-entity>
+  </a-entity>
+
+  <!-- LUNITA: buho lunar -->
+  <a-entity id="lunita" class="clickable friend" react="lunita" position="0 0 -3.1">
+    <a-cylinder radius="0.06" height="0.9" position="0 0.45 0" color="#c48e6a"></a-cylinder>
+    <a-cylinder radius="0.35" height="0.04" position="0 0.9 0" color="#f6c7a8"></a-cylinder>
+    <a-entity class="bob" animation="property:position;from:0 1.18 0;to:0 1.24 0;dir:alternate;loop:true;dur:1700;easing:easeInOutSine">
+      <a-sphere radius="0.26" scale="1 1.1 0.9" color="#c7a6f2"></a-sphere>
+      <a-sphere radius="0.17" scale="1 1 0.4" position="0 -0.06 0.17" color="#efe3ff"></a-sphere>
+      <a-torus radius="0.06" radius-tubular="0.018" arc="220" position="0 -0.07 0.25" rotation="0 0 110" color="#ffd75e"></a-torus>
+      <a-sphere radius="0.085" position="-0.1 0.1 0.19" color="#fff"></a-sphere>
+      <a-sphere radius="0.085" position="0.1 0.1 0.19" color="#fff"></a-sphere>
+      <a-sphere class="eye" radius="0.045" position="-0.1 0.1 0.27" color="#40275a"></a-sphere>
+      <a-sphere class="eye" radius="0.045" position="0.1 0.1 0.27" color="#40275a"></a-sphere>
+      <a-cone radius-bottom="0.03" height="0.06" position="0 0.02 0.27" rotation="-90 0 0" color="#ffb85e"></a-cone>
+      <a-cone radius-bottom="0.06" radius-top="0.005" height="0.12" position="-0.15 0.28 0" rotation="0 0 25" color="#a985e0"></a-cone>
+      <a-cone radius-bottom="0.06" radius-top="0.005" height="0.12" position="0.15 0.28 0" rotation="0 0 -25" color="#a985e0"></a-cone>
+      <a-entity class="wing" position="-0.25 0 0"><a-sphere radius="0.13" scale="0.4 1 0.8" position="-0.03 -0.05 0" color="#a985e0"></a-sphere></a-entity>
+      <a-entity class="wing wr" position="0.25 0 0"><a-sphere radius="0.13" scale="0.4 1 0.8" position="0.03 -0.05 0" color="#a985e0"></a-sphere></a-entity>
+    </a-entity>
+  </a-entity>
+
+  <!-- MENTA: dragoncito que te sigue -->
+  <a-entity id="menta" class="clickable friend" react="menta" follow-player position="1.1 0 -1.9">
+    <a-entity class="bob">
+      <a-sphere radius="0.24" scale="1 0.95 1" color="#9ff0cf"></a-sphere>
+      <a-sphere radius="0.15" scale="1 1 0.4" position="0 -0.05 0.17" color="#e9fff4"></a-sphere>
+      <a-sphere radius="0.2" position="0 0.3 0.05" color="#9ff0cf"></a-sphere>
+      <a-sphere class="eye" radius="0.035" position="-0.08 0.34 0.21" color="#24433a"></a-sphere>
+      <a-sphere class="eye" radius="0.035" position="0.08 0.34 0.21" color="#24433a"></a-sphere>
+      <a-sphere radius="0.04" scale="1 0.6 0.4" position="-0.13 0.27 0.18" color="#ffb0cc"></a-sphere>
+      <a-sphere radius="0.04" scale="1 0.6 0.4" position="0.13 0.27 0.18" color="#ffb0cc"></a-sphere>
+      <a-entity id="mouth" position="0 0.26 0.24"></a-entity>
+      <a-cone radius-bottom="0.035" height="0.09" position="-0.08 0.5 0" color="#ffe27a"></a-cone>
+      <a-cone radius-bottom="0.035" height="0.09" position="0.08 0.5 0" color="#ffe27a"></a-cone>
+      <a-entity class="wing" position="-0.22 0.08 -0.1"><a-cone radius-bottom="0.12" radius-top="0.01" height="0.22" rotation="0 0 70" position="-0.08 0 0" color="#ffc0e0"></a-cone></a-entity>
+      <a-entity class="wing wr" position="0.22 0.08 -0.1"><a-cone radius-bottom="0.12" radius-top="0.01" height="0.22" rotation="0 0 -70" position="0.08 0 0" color="#ffc0e0"></a-cone></a-entity>
+      <a-cone radius-bottom="0.08" radius-top="0.01" height="0.3" position="0 -0.12 -0.25" rotation="-70 0 0" color="#9ff0cf"></a-cone>
+    </a-entity>
+  </a-entity>
+
+  <!-- Mesa de magdalenas -->
+  <a-entity position="1.7 0 -1.6">
+    <a-cylinder radius="0.07" height="0.75" position="0 0.375 0" color="#f3b7d4"></a-cylinder>
+    <a-cylinder radius="0.42" height="0.05" position="0 0.77 0" color="#fff"></a-cylinder>
+  </a-entity>
+  <a-entity id="treats"></a-entity>
+
+  <a-entity id="stars"></a-entity>
+
+  <a-entity id="rig">
+    <a-camera position="0 1.6 0" wasd-controls="acceleration:20"></a-camera>
+    <a-entity laser-controls="hand:left" raycaster="objects:.clickable;far:30;lineColor:#ff7fbf;lineOpacity:0.8"></a-entity>
+    <a-entity laser-controls="hand:right" raycaster="objects:.clickable;far:30;lineColor:#ff7fbf;lineOpacity:0.8"></a-entity>
+  </a-entity>
+</a-scene>
+
+<script>
+{
+const $ = s => document.querySelector(s);
+const scene = $('a-scene');
+const V = () => new THREE.Vector3();
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pastel = ['#ffffff','#ffd1e8','#d9c8ff','#c8f5e1','#fff1b8','#cde8ff'];
+
+/* ---------- Sonidos (sintetizados, sin archivos) ---------- */
+let ctx = null;
+function audio(){ if(!ctx){ try{ ctx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(ctx && ctx.state==='suspended') ctx.resume(); return ctx; }
+function tone(f, dur, opt={}){
+  const c = audio(); if(!c) return;
+  const t = c.currentTime + (opt.at||0);
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = opt.type||'sine'; o.frequency.setValueAtTime(f, t);
+  if(opt.to) o.frequency.exponentialRampToValueAtTime(opt.to, t+dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(opt.vol||0.18, t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+0.05);
+}
+const sfx = {
+  miau(){ tone(650,0.14,{type:'triangle',to:1150}); tone(1150,0.3,{type:'triangle',to:600,at:0.14}); },
+  canto(){ [523,659,784,659,880,1047].forEach((f,i)=>tone(f,0.22,{at:i*0.18,vol:0.15})); },
+  burbujas(){ for(let i=0;i<7;i++) tone(rnd(900,1600),0.08,{at:i*0.09,to:rnd(1700,2200),vol:0.1}); },
+  estrella(){ [784,988,1175,1568].forEach((f,i)=>tone(f,0.18,{at:i*0.07,type:'triangle',vol:0.13})); },
+  nam(){ tone(330,0.12,{type:'triangle',to:260}); tone(300,0.14,{type:'triangle',to:220,at:0.18}); },
+  fiesta(){ [523,659,784,1047,784,1047].forEach((f,i)=>tone(f,0.25,{at:i*0.16,type:'triangle',vol:0.16})); }
+};
+
+/* ---------- Ayudantes ---------- */
+function anim(el, name, cfg){ el.removeAttribute('animation__'+name); el.setAttribute('animation__'+name, cfg); }
+function wpos(el){ const v = V(); el.object3D.getWorldPosition(v); return v; }
+function make(tag, attrs, parent){ const e = document.createElement(tag); for(const k in attrs) e.setAttribute(k, attrs[k]); (parent||scene).appendChild(e); return e; }
+
+function heart(p, color){
+  const h = make('a-entity', {position:`${p.x} ${p.y} ${p.z}`, scale:'0.8 0.8 0.8'});
+  make('a-sphere',{radius:0.05,position:'-0.035 0.03 0',color},h);
+  make('a-sphere',{radius:0.05,position:'0.035 0.03 0',color},h);
+  make('a-cone',{'radius-bottom':0.082,'radius-top':0.001,height:0.1,position:'0 -0.025 0',rotation:'180 0 0',color},h);
+  return h;
+}
+function burst(p, kind, n=8){
+  for(let i=0;i<n;i++){
+    const col = kind==='heart' ? ['#ff7fb0','#ff9fd0','#ff5f9e'][i%3] : pastel[1+i%5];
+    const el = kind==='heart' ? heart(p, col)
+      : make('a-sphere',{radius:kind==='bubble'?0.06:0.035,position:`${p.x} ${p.y} ${p.z}`,color:kind==='bubble'?'#c8f4ff':col,
+          material:kind==='bubble'?'opacity:0.55;transparent:true':'shader:flat'});
+    const to = `${p.x+rnd(-0.6,0.6)} ${p.y+rnd(0.4,1.1)} ${p.z+rnd(-0.6,0.6)}`;
+    el.setAttribute('animation__m',{property:'position',to,dur:1200,easing:'easeOutQuad'});
+    el.setAttribute('animation__s',{property:'scale',to:'0 0 0',dur:1200,delay:400,easing:'easeInQuad'});
+    setTimeout(()=>el.remove(), 1700);
+  }
+}
+function jump(el, h=0.35){
+  const b = el.querySelector('.bob') || el;
+  anim(el,'jump',{property:'object3D.position.y',from:0,to:h,dur:220,dir:'alternate',loop:2,easing:'easeOutQuad'});
+}
+function blink(el){ el.querySelectorAll('.eye').forEach(e=>anim(e,'blink',{property:'scale',from:'1 1 1',to:'1 0.1 1',dur:90,dir:'alternate',loop:2})); }
+function flap(el, times=6){ el.querySelectorAll('.wing').forEach(w=>{ const r = w.classList.contains('wr') ? -40 : 40;
+  anim(w,'flap',{property:'rotation',from:'0 0 0',to:`0 0 ${r}`,dur:140,dir:'alternate',loop:times,easing:'easeInOutSine'}); }); }
+function spin(el){ const b = el.querySelector('.bob'); anim(b,'spin',{property:'rotation',from:'0 0 0',to:'0 360 0',dur:700,easing:'easeInOutCubic'}); }
+
+/* ---------- Carteles con texto propio (sin fuentes externas) ---------- */
+AFRAME.registerComponent('label', {
+  schema:{text:{type:'string'},color:{default:'#fff'},bg:{default:'#ff8cc6'},w:{default:2},h:{default:0.5}},
+  update(){
+    const d = this.data, W = 1024, H = Math.round(W*d.h/d.w);
+    const c = this.cv || (this.cv = document.createElement('canvas')); c.width = W; c.height = H;
+    const g = c.getContext('2d'); g.clearRect(0,0,W,H);
+    const r = H*0.45; g.fillStyle = d.bg; g.beginPath(); g.roundRect(0,0,W,H,r); g.fill();
+    let fs = H*0.55; g.font = `800 ${fs}px "Baloo 2", system-ui, sans-serif`;
+    while(g.measureText(d.text).width > W*0.88 && fs > 10){ fs -= 4; g.font = `800 ${fs}px "Baloo 2", system-ui, sans-serif`; }
+    g.fillStyle = d.color; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(d.text, W/2, H/2+fs*0.06);
+    if(!this.mesh){
+      this.tex = new THREE.CanvasTexture(c); this.tex.colorSpace = THREE.SRGBColorSpace;
+      this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(d.w,d.h), new THREE.MeshBasicMaterial({map:this.tex,transparent:true}));
+      this.el.setObject3D('mesh', this.mesh);
+    } else this.tex.needsUpdate = true;
+  }
+});
+if(document.fonts) document.fonts.ready.then(()=>document.querySelectorAll('[label]').forEach(e=>e.components.label && e.components.label.update()));
+
+/* ---------- Reacciones ---------- */
+let nubiColor = 0, stars = 0;
+const TOTAL = 8;
+const actions = {
+  nubi(el){ nubiColor = (nubiColor+1) % pastel.length;
+    el.querySelectorAll('.puff').forEach(p=>p.setAttribute('color', pastel[nubiColor]));
+    jump(el); blink(el); sfx.miau(); burst(wpos(el).add(new THREE.Vector3(0,1,0)),'spark',10); },
+  lunita(el){ blink(el); flap(el,8); sfx.canto();
+    for(let i=0;i<6;i++) setTimeout(()=>burst(wpos(el).add(new THREE.Vector3(0,1.4,0)),'spark',2), i*180); },
+  menta(el){ spin(el); flap(el); sfx.burbujas();
+    const m = $('#mouth'); for(let i=0;i<6;i++) setTimeout(()=>burst(wpos(m),'bubble',2), i*90); },
+  replay(){ resetStars(); }
+};
+AFRAME.registerComponent('react', {
+  schema:{type:'string'},
+  init(){ this.last = 0;
+    this.el.addEventListener('click', ()=>{ const now = performance.now(); if(now-this.last<700) return; this.last = now;
+      audio(); const a = actions[this.data]; if(a) a(this.el); }); }
+});
+
+/* ---------- Menta te sigue ---------- */
+AFRAME.registerComponent('follow-player', {
+  init(){ this.cam = null; this.t = 0; this.tmp = V(); this.dir = V(); },
+  tick(time, dt){
+    if(!this.cam) this.cam = scene.camera && scene.camera.el; if(!this.cam || !dt) return;
+    const cp = V(); this.cam.object3D.getWorldPosition(cp);
+    this.cam.object3D.getWorldDirection(this.dir); this.dir.y = 0; this.dir.normalize().multiplyScalar(-1);
+    const side = new THREE.Vector3(-this.dir.z, 0, this.dir.x);
+    this.tmp.copy(cp).addScaledVector(this.dir, 1.9).addScaledVector(side, 1.1); this.tmp.y = 0;
+    const o = this.el.object3D; o.position.lerp(this.tmp, Math.min(1, dt/1000*0.9));
+    const look = cp.clone(); look.y = o.position.y; o.lookAt(look);
+    const b = this.el.querySelector('.bob'); if(b) b.object3D.position.y = 1.15 + Math.sin(time/450)*0.07;
+  }
+});
+
+/* ---------- Magdalenas ---------- */
+const treatSpots = [[1.55,0.8,-1.5],[1.8,0.8,-1.75],[1.85,0.8,-1.4]];
+const treatColors = ['#ffb3d6','#c9b4ff','#a8ecd0'];
+treatSpots.forEach((p,i)=>{
+  const t = make('a-entity',{class:'clickable treat',position:p.join(' ')}, $('#treats'));
+  make('a-cylinder',{radius:0.06,'radius-top':0.075,height:0.08,position:'0 0.04 0',color:'#f6d18f'},t);
+  make('a-sphere',{radius:0.075,scale:'1 0.75 1',position:'0 0.1 0',color:treatColors[i]},t);
+  make('a-sphere',{radius:0.022,position:'0 0.17 0',color:'#ff4f7f'},t);
+  t.dataset.home = p.join(' ');
+  t.addEventListener('click', ()=>feed(t));
+});
+function feed(t){
+  if(t.dataset.busy) return; t.dataset.busy = 1; audio();
+  const friends = [...document.querySelectorAll('.friend')];
+  const f = friends[Math.floor(Math.random()*friends.length)];
+  const target = wpos(f.querySelector('.bob')); target.y += 0.1;
+  anim(t,'fly',{property:'position',to:`${target.x} ${target.y} ${target.z}`,dur:750,easing:'easeInOutQuad'});
+  setTimeout(()=>{ t.setAttribute('visible',false); sfx.nam(); jump(f,0.25); blink(f);
+    burst(wpos(f.querySelector('.bob')).add(new THREE.Vector3(0,0.3,0)),'heart',7); }, 760);
+  setTimeout(()=>{ t.removeAttribute('animation__fly'); t.setAttribute('position', t.dataset.home); t.setAttribute('scale','0 0 0');
+    t.setAttribute('visible',true); anim(t,'pop',{property:'scale',to:'1 1 1',dur:400,easing:'easeOutBack'}); delete t.dataset.busy; }, 2600);
+}
+
+/* ---------- Estrellas escondidas ---------- */
+const starSpots = [[-3.2,0.6,-4],[3.4,1.9,-3.6],[0.4,2.7,-5.5],[-4.2,1.3,0.4],[4.1,0.5,1.2],[-2.2,0.4,3.6],[2.6,1.6,3.9],[-0.6,0.35,-1.6]];
+function makeStars(){
+  const box = $('#stars'); box.innerHTML = '';
+  starSpots.forEach(p=>{
+    const s = make('a-entity',{class:'clickable',position:p.join(' ')}, box);
+    make('a-octahedron',{radius:0.16,color:'#ffd84a',material:'emissive:#ffb000;emissiveIntensity:0.5',
+      animation:'property:rotation;to:0 360 0;loop:true;dur:3000;easing:linear'}, s);
+    make('a-sphere',{radius:0.26,color:'#fff6b0',material:'opacity:0.25;transparent:true;shader:flat'}, s);
+    s.addEventListener('click', ()=>collect(s), {once:true});
+  });
+}
+function collect(s){
+  audio(); sfx.estrella(); const p = wpos(s); burst(p,'spark',12);
+  anim(s,'gone',{property:'scale',to:'0 0 0',dur:350,easing:'easeInBack'});
+  s.classList.remove('clickable'); setTimeout(()=>s.remove(), 400);
+  stars++; $('#score').setAttribute('label','text',`Estrellas: ${stars} / ${TOTAL}`);
+  if(stars === TOTAL) setTimeout(win, 500);
+}
+function win(){
+  $('#score').setAttribute('label','text','¡Muy bien, Helene! ¡Todas!');
+  sfx.fiesta();
+  document.querySelectorAll('.friend').forEach((f,i)=>setTimeout(()=>{ jump(f,0.5); spin(f); flap(f,10); }, i*200));
+  for(let i=0;i<5;i++) setTimeout(()=>burst(new THREE.Vector3(rnd(-2,2),rnd(1.5,2.6),rnd(-4,-2)),i%2?'heart':'spark',10), i*300);
+  const r = $('#replay'); r.setAttribute('visible',true); r.classList.add('clickable');
+}
+function resetStars(){
+  stars = 0; $('#score').setAttribute('label','text',`Estrellas: 0 / ${TOTAL}`);
+  const r = $('#replay'); r.setAttribute('visible',false); r.classList.remove('clickable');
+  makeStars(); sfx.estrella();
+}
+$('#replay').classList.remove('clickable');
+
+/* ---------- Decorado: arboles de algodon, setas y nubes ---------- */
+function decor(){
+  const d = $('#decor');
+  const trees = [[-5,-5],[5.5,-5.5],[-7,-1],[7,0],[-6,4],[6,5],[-2.5,7],[2.5,7.5],[-9,-7],[9,-8],[0,-8]];
+  const tops = ['#ffb6d9','#d4bcff','#ffd1a8','#b8f0d8'];
+  trees.forEach(([x,z],i)=>{
+    const t = make('a-entity',{position:`${x} 0 ${z}`}, d);
+    make('a-cylinder',{radius:0.12,height:1.6,position:'0 0.8 0',color:'#d9a184'}, t);
+    make('a-sphere',{radius:0.85,position:'0 2.1 0',color:tops[i%4]}, t);
+    make('a-sphere',{radius:0.55,position:'0.55 1.8 0.2',color:tops[(i+1)%4]}, t);
+    make('a-sphere',{radius:0.5,position:'-0.5 1.85 -0.1',color:tops[(i+2)%4]}, t);
+  });
+  const shrooms = [[-3,-2.5],[3,-2.8],[-3.5,1.8],[3.2,2.2],[-1,4],[1.2,-4.6]];
+  shrooms.forEach(([x,z])=>{
+    const m = make('a-entity',{position:`${x} 0 ${z}`,scale:'1.3 1.3 1.3'}, d);
+    make('a-cylinder',{radius:0.07,height:0.25,position:'0 0.12 0',color:'#fff4ea'}, m);
+    make('a-sphere',{radius:0.2,'theta-length':90,position:'0 0.22 0',color:'#ff8fb6'}, m);
+    [[0.08,0.33,0.1],[-0.1,0.32,0.05],[0,0.38,-0.08]].forEach(q=>make('a-sphere',{radius:0.03,position:q.join(' '),color:'#fff'}, m));
+  });
+  const clouds = [[-6,7,-12],[5,8,-14],[10,6,-4],[-11,7,2],[0,9,10]];
+  clouds.forEach(([x,y,z],i)=>{
+    const c = make('a-entity',{position:`${x} ${y} ${z}`,
+      animation:`property:position;to:${x+1.5} ${y} ${z};dir:alternate;loop:true;dur:${7000+i*900};easing:easeInOutSine`}, d);
+    [[0,0,0,1],[0.9,-0.2,0,0.7],[-0.9,-0.2,0,0.75],[0.4,0.4,0,0.6]].forEach(([a,b,cz,r])=>make('a-sphere',{radius:r,position:`${a} ${b} ${cz}`,color:'#fff',material:'shader:flat'}, c));
+  });
+}
+
+function hello(){ document.querySelectorAll('.friend').forEach((f,i)=>setTimeout(()=>{ jump(f,0.4); blink(f); flap(f,6); }, 400+i*250)); }
+scene.addEventListener('loaded', ()=>{ decor(); makeStars(); hello(); });
+scene.addEventListener('enter-vr', ()=>{ $('#tip').style.display='none'; audio(); hello(); setTimeout(()=>sfx.fiesta(),500); });
+scene.addEventListener('exit-vr', ()=>{ $('#tip').style.display=''; });
+}
+</script>
+</body>
+</html>
